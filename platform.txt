@@ -67,7 +67,7 @@ compiler.size.cmd={compiler.prefix}size
 
 # These can be overridden in platform.local.txt
 compiler.c.extra_flags=-Ofast -ffunction-sections -fdata-sections -fstrict-aliasing -funroll-loops -flto
-compiler.cpp.extra_flags=-Ofast -ffunction-sections -fdata-sections -fstrict-aliasing -fno-exceptions -fno-rtti -funroll-loops -flto
+compiler.cpp.extra_flags=-Ofast -ffunction-sections -fdata-sections -fstrict-aliasing -fno-exceptions -fno-rtti -funroll-loops -flto -DOPTIMIZATION_FLAGS
 compiler.S.extra_flags=-Ofast
 compiler.c.elf.extra_flags=-Wl,--gc-sections -flto
 compiler.ar.extra_flags=

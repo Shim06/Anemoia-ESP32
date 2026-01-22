@@ -21,6 +21,9 @@
 #define TEXT2_COLOR 0xA800
 #define SELECTED_TEXT_COLOR 0x57CA
 #define SELECTED_BG_COLOR 0x0560
+#ifndef OPTIMIZATION_FLAGS
+#error The optimization flags were not applied! Please refer to *Step 4* of the README how to build and upload section.
+#endif
 
 TFT_eSPI screen = TFT_eSPI();
 SPIClass SD_SPI(HSPI);
