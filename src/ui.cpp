@@ -36,6 +36,8 @@ Cartridge* UI::selectGame()
                     scroll_offset = selected - max_items + 1;
                 }
                 else if (selected < scroll_offset) scroll_offset = selected; 
+                if (scroll_offset < 0) scroll_offset = 0;
+                if (scroll_offset > size - 1) scroll_offset = size - 1;
                 drawFileList();
                 last_input_time = now;
             }
@@ -49,6 +51,8 @@ Cartridge* UI::selectGame()
                     scroll_offset = selected;
                 }
                 else if (selected >= scroll_offset + max_items) scroll_offset = selected - max_items + 1;
+                if (scroll_offset < 0) scroll_offset = 0;
+                if (scroll_offset > size - 1) scroll_offset = size - 1;
                 drawFileList();
                 last_input_time = now;
             }
