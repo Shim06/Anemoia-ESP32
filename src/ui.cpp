@@ -13,7 +13,6 @@ Cartridge* UI::selectGame()
 {
     unsigned int last_input_time = 0;
     constexpr unsigned int delay = 250; 
-    const int size = files.size();
     max_items = (screen->width() - 56) / ITEM_HEIGHT;
 
     drawWindowBox(2, 20, screen->width() - 4, screen->height() - 40);
@@ -21,6 +20,7 @@ Cartridge* UI::selectGame()
     getNesFiles();
     drawFileList();
 
+    const int size = files.size();
     while (true)
     {
         unsigned int now = millis();
