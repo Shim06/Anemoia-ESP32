@@ -32,7 +32,7 @@ Want to make a PCB? NextPCB offers PCB fabrication and assembly services with fa
 ---
 
 ## Performance
-Anemoia-ESP32 is heavily optimized to achieve native NES speeds on the ESP32, running at ~60.098 FPS (NTSC) with full audio emulation enabled.
+Anemoia-ESP32 is heavily optimized to achieve native NES speeds on the ESP32, running at ~60.098 FPS (NTSC) with 1 frame skip and full audio emulation enabled.
 
 Here are the performance benchmarks for several popular NES games. 
 > [!NOTE]
@@ -74,13 +74,23 @@ Feel free to open an issue if a game has glitches or fails to boot.
 ---
 
 ## Hardware Overview
+Anemoia-ESP32 requires a dual-core ESP32 with a minimum of 1 MB flash memory and <u><strong>NO PSRAM IS REQUIRED</strong></u>.
 
-- **ESP32**
-- **320x240 TFT Display**
-- **MicroSD card module**
-- **Audio Amplifier**
-- **Speaker**
-- **Tactile push buttons/Supported Controller**
+- ESP32
+  - e.g. ESP32-DevKitC or ESP32-WROOM-32
+- A 320x240 SPI TFT screen (no touch needed)
+  - Either an ST7789-based screen as depicted, or
+  - an ILI9341-based screen with 320x240 pixels
+- Audio Amplifier
+  - e.g. a PAM8403 or PAM8302
+- Speaker
+- MicroSD card module
+- 8 Tactile push buttons, or
+- Supported Controller
+  - NES controller
+  - SNES controller
+  - PS1 controller
+  - PS2 controller
 
 ### Default Pin Setup
 ## TFT Display
