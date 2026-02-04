@@ -388,7 +388,10 @@ inline void Apu2A03::generateSample()
 	if (!(noise.shift_register & 0x01) && noise.len_counter.timer > 0)
 		sample += noise.env.output;
 		
+	// Clip audio and apply a low-pass filter
 	// audio_buffer[index] = (uint8_t)((audio_buffer[index] * audio_volume) + 0.5f);
+	sample += prev_sample;
+	sample >>= 1;
 	sample &= 0xFF;
     audio_buffer[index] = sample << 8;	
 

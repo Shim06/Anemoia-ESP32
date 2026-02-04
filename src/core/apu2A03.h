@@ -36,6 +36,7 @@ private:
 	Cpu6502* cpu = nullptr;
     uint32_t clock_counter = 0;
 	uint32_t pulse_hz = 0;
+	uint16_t prev_sample = 0;
 	bool four_step_sequence_mode = true;
 
     // double pulse_out = 0.0;
