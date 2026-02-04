@@ -34,7 +34,6 @@ public:
 private:
 	Bus* bus = nullptr;
 	Cpu6502* cpu = nullptr;
-	double output = 0.0;
     uint32_t clock_counter = 0;
 	uint32_t pulse_hz = 0;
 	bool four_step_sequence_mode = true;
