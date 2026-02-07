@@ -105,11 +105,14 @@ IRAM_ATTR void emulate()
         // Start + Select opens the pause menu
         if ((nes.controller & CONTROLLER::Start) && (nes.controller & CONTROLLER::Select)) 
         {
-            vTaskSuspend(apu_task_handle);
-            ui.pauseMenu(&nes);
-            vTaskResume(apu_task_handle);
-            next_frame = esp_timer_get_time() + FRAME_TIME;
-            nes.controller = 0;
+            if (!ui.paused)
+            {
+                vTaskSuspend(apu_task_handle);
+                ui.pauseMenu(&nes);
+                vTaskResume(apu_task_handle);
+                next_frame = esp_timer_get_time() + FRAME_TIME;
+                nes.controller = 0;
+            }
         }
 
         // Generate one frame

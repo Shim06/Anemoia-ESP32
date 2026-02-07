@@ -26,7 +26,10 @@ public:
     void drawBars();
     void pauseMenu(Bus* nes);
 
+    bool paused = false;
+
 private:
+    void drawText(const char* text, const int x, const int y);
     TFT_eSPI* screen = nullptr;
     int selected = 0;
     int prev_selected = 0;

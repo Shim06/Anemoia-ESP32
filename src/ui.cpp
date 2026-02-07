@@ -181,6 +181,7 @@ void UI::pauseMenu(Bus* nes)
     __attribute__((used, section(".text"), aligned(64)))
     static const uint8_t padding[128] = {0};
 
+    paused = true;
     int prev_select = 0;
     int select = 0;
 
@@ -191,12 +192,7 @@ void UI::pauseMenu(Bus* nes)
     const char* text2 = "Pause";
     int text2_x = screen->width() - screen->textWidth(text2) - 12;
     screen->fillRect(text2_x - 4, 0, screen->textWidth(text2) + 8, 16, SELECTED_BG_COLOR);
-    screen->setTextColor(TFT_BLACK, SELECTED_BG_COLOR);
-    screen->setCursor(text2_x, 4);
-    screen->print(text2);
-    screen->setCursor(text2_x, 4);
-    screen->setTextColor(TEXT2_COLOR, SELECTED_BG_COLOR);
-    screen->print(text2[0]);
+    drawText(text2, text2_x, 4);
 
     // Draw pause window 
     constexpr int window_w = 124;
@@ -206,21 +202,31 @@ void UI::pauseMenu(Bus* nes)
     screen->fillRect(window_x, window_y, window_w, window_h, BAR_COLOR);
 
 
-    const char* items[] = 
+    constexpr int section_count[] = { 2, 2, 1 };
+    constexpr const char* items[] = 
     { 
         "Resume", "Reset", 
         "Quick Save State", "Quick Load State", 
         "Save and Quit" 
     };
+    enum ItemSelect
+    {
+        Resume,
+        Reset,
+        QuickSaveState,
+        QuickLoadState,
+        SaveAndQuit
+    };
+    constexpr int items_y[] = { 28, 40, 60, 72, 90 };
     constexpr int num_items = sizeof(items) / sizeof(items[0]);
+    constexpr int num_sections = sizeof(section_count) / sizeof(section_count[0]);
     constexpr int item_height = 12;
     constexpr int text_height = 8;
     constexpr int text_padding = (item_height - text_height) / 2;
 
     // Draw section borders
-    constexpr int section_count[] = { 2, 2, 1 };
     int section_y = window_y + 8;
-    for (int s = 0; s < 3; s++)
+    for (int s = 0; s < num_sections; s++)
     {
         int w = window_w - 16;
         int h = (section_count[s] * item_height) + 8;
@@ -231,17 +237,11 @@ void UI::pauseMenu(Bus* nes)
     }
 
     // Draw items
-    constexpr int items_y[] = { 28, 40, 60, 72, 90 };
     screen->fillRect(window_x + 10, items_y[0], window_w - 19, item_height, SELECTED_BG_COLOR);
     for (int i = 0; i < num_items; i++)
     {
         int y = items_y[i] + text_padding;
-        screen->setTextColor(TFT_BLACK);
-        screen->setCursor(window_x + 12, y);
-        screen->print(items[i]);
-        screen->setCursor(window_x + 12, y);
-        screen->setTextColor(TEXT2_COLOR);
-        screen->print(items[i][0]);
+        drawText(items[i], window_x + 12, y);
     }
 
     constexpr int initial_delay = 500;
@@ -270,29 +270,33 @@ void UI::pauseMenu(Bus* nes)
             {
                 switch (select)
                 {
-                case 0: // Resume
+                case Resume:
                     screen->fillScreen(TFT_BLACK);
                     screen->startWrite();
+                    paused = false;
                     return;
             
-                case 1: // Reset
+                case Reset:
                     nes->reset();
                     screen->startWrite();
+                    paused = false;
                     return;
 
-                case 2: // Quick Save State
+                case QuickSaveState:
                     nes->saveState();
                     screen->fillScreen(TFT_BLACK);
                     screen->startWrite();
+                    paused = false;
                     return;
 
-                case 3: // Quick Load State
+                case QuickLoadState:
                     nes->loadState();
                     screen->fillScreen(TFT_BLACK);
                     screen->startWrite();
+                    paused = false;
                     return;
 
-                case 4: // Save and Quit
+                case SaveAndQuit:
                     ESP.restart();
                     return;
                 }
@@ -306,24 +310,24 @@ void UI::pauseMenu(Bus* nes)
             // Redraw old selection
             screen->fillRect(window_x + 10, items_y[prev_select], window_w - 19, item_height, BAR_COLOR);
             y = items_y[prev_select] + text_padding;
-            screen->setTextColor(TFT_BLACK);
-            screen->setCursor(window_x + 12, y);
-            screen->print(items[prev_select]);
-            screen->setCursor(window_x + 12, y);
-            screen->setTextColor(TEXT2_COLOR);
-            screen->print(items[prev_select][0]);
+            drawText(items[prev_select], window_x + 12, y);
 
             // Draw new selection
             screen->fillRect(window_x + 10, items_y[select], window_w - 19, item_height, SELECTED_BG_COLOR);
             y = items_y[select] + text_padding;
-            screen->setTextColor(TFT_BLACK);
-            screen->setCursor(window_x + 12, y);
-            screen->print(items[select]);
-            screen->setCursor(window_x + 12, y);
-            screen->setTextColor(TEXT2_COLOR);
-            screen->print(items[select][0]);
+            drawText(items[select], window_x + 12, y);
         }
 
         prev_select = select;
     }
+}
+
+void UI::drawText(const char* text, const int x, const int y)
+{
+    screen->setTextColor(TFT_BLACK);
+    screen->setCursor(x, y);
+    screen->print(text);
+    screen->setCursor(x, y);
+    screen->setTextColor(TEXT2_COLOR);
+    screen->print(text[0]);
 }
