@@ -22,6 +22,7 @@ public:
     void connectCPU(Cpu6502* n) { cpu = n; }
     void cpuWrite(uint16_t addr, uint8_t data);
     uint8_t cpuRead(uint16_t addr);
+	void setVolume(uint8_t vol);
     void clock();
     void reset();
     static uint16_t audio_buffer[AUDIO_BUFFER_SIZE * 2];
@@ -29,7 +30,7 @@ public:
     uint8_t DMC_sample_byte = 0;
 	bool IRQ = false;
 	uint16_t buffer_index = 0;
-
+	uint8_t volume = 100;
 
 private:
 	Bus* bus = nullptr;

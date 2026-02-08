@@ -76,6 +76,7 @@ IRAM_ATTR void emulate()
     nes.insertCartridge(cart);
     nes.connectScreen(&screen);
     nes.reset();
+    ui.initializeSettings(&nes);
 
     TaskHandle_t apu_task_handle;
     xTaskCreatePinnedToCore(

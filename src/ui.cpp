@@ -194,35 +194,35 @@ void UI::pauseMenu(Bus* nes)
     screen->fillRect(text2_x - 4, 0, screen->textWidth(text2) + 8, 16, SELECTED_BG_COLOR);
     drawText(text2, text2_x, 4);
 
-    // Draw pause window 
-    constexpr int window_w = 124;
-    constexpr int window_h = 104;
-    int window_x = screen->width() - window_w;
-    constexpr int window_y = 16;
-    screen->fillRect(window_x, window_y, window_w, window_h, BAR_COLOR);
-
-
-    constexpr int section_count[] = { 2, 2, 1 };
+    constexpr int section_count[] = { 3, 2, 1 };
     constexpr const char* items[] = 
     { 
-        "Resume", "Reset", 
+        "Resume", "Settings", "Reset", 
         "Quick Save State", "Quick Load State", 
         "Save and Quit" 
     };
     enum ItemSelect
     {
         Resume,
+        Settings,
         Reset,
         QuickSaveState,
         QuickLoadState,
         SaveAndQuit
     };
-    constexpr int items_y[] = { 28, 40, 60, 72, 90 };
+    constexpr int items_y[] = { 28, 40, 52, 72, 84, 102 };
     constexpr int num_items = sizeof(items) / sizeof(items[0]);
     constexpr int num_sections = sizeof(section_count) / sizeof(section_count[0]);
     constexpr int item_height = 12;
     constexpr int text_height = 8;
     constexpr int text_padding = (item_height - text_height) / 2;
+
+    // Draw pause window 
+    constexpr int window_w = 124;
+    constexpr int window_h = 104;
+    int window_x = screen->width() - window_w;
+    constexpr int window_y = 16;
+    screen->fillRect(window_x, window_y, window_w, window_h, BAR_COLOR);
 
     // Draw section borders
     int section_y = window_y + 8;
@@ -275,6 +275,30 @@ void UI::pauseMenu(Bus* nes)
                     screen->startWrite();
                     paused = false;
                     return;
+
+                case Settings:
+                    settingsMenu(nes);
+
+                    // Redraw pause menu
+                    screen->fillRect(window_x, window_y, window_w, window_h, BAR_COLOR);
+                    section_y = window_y + 8;
+                    for (int s = 0; s < num_sections; s++)
+                    {
+                        int w = window_w - 16;
+                        int h = (section_count[s] * item_height) + 8;
+                        screen->drawRect(window_x + 8, section_y, w, h, TFT_BLACK);
+                        screen->drawRect(window_x + 9, section_y, w, h, TFT_BLACK);
+
+                        section_y += (h - 1);
+                    }
+                    screen->fillRect(window_x + 10, items_y[select], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    for (int i = 0; i < num_items; i++)
+                    {
+                        int y = items_y[i] + text_padding;
+                        drawText(items[i], window_x + 12, y);
+                    }
+                    last_input_time = millis() + 500;
+                    break;
             
                 case Reset:
                     nes->reset();
@@ -320,6 +344,166 @@ void UI::pauseMenu(Bus* nes)
 
         prev_select = select;
     }
+}
+
+
+void UI::settingsMenu(Bus* nes)
+{
+    // Draw settings window 
+
+    int prev_select = 0;
+    int select = 0;
+
+    constexpr int window_w = 124;
+    constexpr int window_h = 104;
+    int window_x = screen->width() - window_w;
+    constexpr int window_y = 16;
+    screen->fillRect(window_x, window_y, window_w, window_h, BAR_COLOR);
+
+    const char* text2 = "Settings";
+    int text2_x = screen->width() - screen->textWidth(text2) - 12;
+    screen->fillRect(text2_x - 4, 0, screen->textWidth(text2) + 8, 16, SELECTED_BG_COLOR);
+    drawText(text2, text2_x, 4);
+
+    static char volume_text[15];
+    snprintf(volume_text, sizeof(volume_text), "Volume: %d%%", settings.volume);
+    char* items[] = 
+    { 
+        volume_text,
+        "Save & Return"
+    };
+    enum ItemSelect
+    {
+        Volume,
+        Back
+    };
+    constexpr int items_y[] = { 30, 42, 54 };
+    constexpr int num_items = sizeof(items) / sizeof(items[0]);
+    constexpr int item_height = 12;
+    constexpr int text_height = 8;
+    constexpr int text_padding = (item_height - text_height) / 2;
+
+    screen->drawRect(window_x + 8, window_y + 8, window_w - 16, window_h - 16, TFT_BLACK);
+    screen->drawRect(window_x + 9, window_y + 8, window_w - 16, window_h - 16, TFT_BLACK);
+    
+    screen->fillRect(window_x + 10, items_y[0], window_w - 19, item_height, SELECTED_BG_COLOR);
+    for (int i = 0; i < num_items; i++)
+    {
+        int y = items_y[i] + text_padding;
+        drawText(items[i], window_x + 12, y);
+    }
+
+    constexpr int initial_delay = 500;
+    int last_input_time = millis() + initial_delay;
+    while (true)
+    {
+        constexpr int delay = 250; 
+        int now = millis();
+        if (now - last_input_time > delay)
+        {
+            if (isDownPressed(CONTROLLER::Up)) 
+            {
+                select--;
+                if (select < 0) select = (num_items - 1);
+                last_input_time = now;
+            }
+
+            if (isDownPressed(CONTROLLER::Down)) 
+            {
+                select++; 
+                if (select > (num_items - 1)) select = 0;
+                last_input_time = now;
+            }
+
+            if (isDownPressed(CONTROLLER::Left)) 
+            {
+                switch (select)
+                {
+                case Volume:
+                    if (settings.volume >= 5) settings.volume -= 5;
+                    snprintf(volume_text, sizeof(volume_text), "Volume: %d%%", settings.volume);
+                    screen->fillRect(window_x + 10, items_y[Volume], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    drawText(items[Volume], window_x + 12, items_y[Volume] + text_padding);
+                    break;
+                }
+                last_input_time = now;
+            }
+
+            if (isDownPressed(CONTROLLER::Right)) 
+            {
+                switch (select)
+                {
+                case Volume:
+                    if (settings.volume <= 95) settings.volume += 5;
+                    snprintf(volume_text, sizeof(volume_text), "Volume: %d%%", settings.volume);
+                    screen->fillRect(window_x + 10, items_y[Volume], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    drawText(items[Volume], window_x + 12, items_y[Volume] + text_padding);
+                    break;
+                }
+                last_input_time = now;
+            }
+
+            if (isDownPressed(CONTROLLER::A)) 
+            {
+                switch (select)
+                {
+                case Back:
+                    nes->cpu.apu.setVolume(settings.volume);
+                    saveSettings(&settings);
+                    return;
+                }
+            }
+        }
+
+        // Update Selection
+        if (prev_select != select)
+        {
+            int y;
+            // Redraw old selection
+            screen->fillRect(window_x + 10, items_y[prev_select], window_w - 19, item_height, BAR_COLOR);
+            y = items_y[prev_select] + text_padding;
+            drawText(items[prev_select], window_x + 12, y);
+    
+
+            // Draw new selection
+            screen->fillRect(window_x + 10, items_y[select], window_w - 19, item_height, SELECTED_BG_COLOR);
+            y = items_y[select] + text_padding;
+            drawText(items[select], window_x + 12, y);
+        }
+
+        prev_select = select;
+    }
+}
+
+void UI::initializeSettings(Bus* nes)
+{
+    if (!SD.exists("/settings.bin"))
+    {
+        Settings temp;
+        saveSettings(&temp);
+    }
+    loadSettings(&settings);
+    
+    nes->cpu.apu.setVolume(settings.volume);
+}
+
+void UI::saveSettings(const Settings* s)
+{
+    File f = SD.open("/settings.bin", FILE_WRITE);
+    if (!f) return;
+        
+    f.seek(0);
+    f.write((uint8_t*)s, sizeof(*s));
+    f.close();
+}
+
+void UI::loadSettings(Settings* s)
+{
+    File f = SD.open("/settings.bin", FILE_READ);
+    if (!f) return;
+
+    f.read((uint8_t*)s, sizeof(*s));
+    f.close();
 }
 
 void UI::drawText(const char* text, const int x, const int y)

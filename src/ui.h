@@ -25,6 +25,8 @@ public:
     void drawWindowBox(int x, int y, int w, int h);
     void drawBars();
     void pauseMenu(Bus* nes);
+    void settingsMenu(Bus* nes);
+    void initializeSettings(Bus* nes);
 
     bool paused = false;
 
@@ -37,6 +39,14 @@ private:
     int max_items = 0;
     static constexpr int ITEM_HEIGHT = 12;
     std::vector<std::string> files;
+
+    typedef struct Settings
+    {
+        uint8_t volume = 100;
+    };
+    Settings settings;
+    void saveSettings(const Settings* s);
+    void loadSettings(Settings* s);
 };
 
 #endif
