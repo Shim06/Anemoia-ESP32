@@ -6,19 +6,6 @@
 DMA_ATTR uint16_t Ppu2C02::display_buffer[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
 constexpr uint8_t Ppu2C02::palette_mirror[32];
 
-// NTSC Palette in RGB565
-static constexpr DRAM_ATTR uint16_t nes_palette[64] = 
-{
-    0x630C, 0x00F2, 0x1835, 0x4013, 0x600D, 0x6804, 0x6020, 0x48E0,
-    0x21A0, 0x0240, 0x0260, 0x0242, 0x01AB, 0x0000, 0x0000, 0x0000,
-    0xAD55, 0x0A7B, 0x397F, 0x70BE, 0x9857, 0xB08C, 0xA920, 0x8A20,
-    0x5320, 0x23E0, 0x0440, 0x0406, 0x0372, 0x0000, 0x0000, 0x0000,
-    0xFFFF, 0x553F, 0x843F, 0xB37F, 0xDB1F, 0xFB18, 0xFBAD, 0xDC84,
-    0xB560, 0x8640, 0x56A4, 0x3E8D, 0x3E19, 0x4A69, 0x0000, 0x0000,
-    0xFFFF, 0xBF1F, 0xCEBF, 0xE65F, 0xF63F, 0xFE3D, 0xFE59, 0xF6B5,
-    0xE6F3, 0xD753, 0xC775, 0xB778, 0xB75C, 0xBDD7, 0x0000, 0x0000,
-};
-
 Ppu2C02::Ppu2C02()
 {
     memset(nametable, 0, sizeof(nametable));
@@ -204,7 +191,7 @@ inline void Ppu2C02::renderBackground()
     // Show transparency pixel if not rendering background
     if (!mask.render_background)
     {
-        uint16_t bg_color = nes_palette[palette_table[0]];
+        uint16_t bg_color = nes_palette[mask.emphasize][palette_table[0]];
         uint32_t color32 = ((uint32_t)bg_color << 16) | bg_color;
         uint32_t* buffer = (uint32_t*)scanline_buffer;
         for (int i = 0, size = (BUFFER_SIZE >> 1); i < size; i++) 
@@ -216,7 +203,7 @@ inline void Ppu2C02::renderBackground()
         return;
     }
 
-    uint16_t bg_color = nes_palette[palette_table[0]];
+    uint16_t bg_color = nes_palette[mask.emphasize][palette_table[0]];
     ptr_buffer = scanline_buffer;
     ptr_scanline_meta = scanline_metadata;
     x_tile = v.coarse_x;
@@ -245,7 +232,7 @@ inline void Ppu2C02::renderBackground()
                     | ((ptr_pattern_tile[0] & 0xAA) << 7) | (ptr_pattern_tile[0] & 0x55);
         uint16_t tile_palette[4];
         tile_palette[0] = bg_color;
-        for (int t = 1; t < 4; t++) tile_palette[t] = nes_palette[READ_PALETTE(attribute + t)];
+        for (int t = 1; t < 4; t++) tile_palette[t] = nes_palette[mask.emphasize][READ_PALETTE(attribute + t)];
         for (int i = 0; i < 8; i++)
         {   
             uint8_t pixel = (pattern >> pixel_shift[i]) & 3;
@@ -290,7 +277,7 @@ inline void Ppu2C02::renderSprites(uint16_t scanline)
     uint8_t sprite_size;
     uint8_t sprite_count = 0;
 
-    uint16_t bg_color = nes_palette[palette_table[0]];
+    uint16_t bg_color = nes_palette[mask.emphasize][palette_table[0]];
     uint16_t tile_palette[4];
     tile_palette[0] = bg_color;
 
@@ -341,7 +328,7 @@ inline void Ppu2C02::renderSprites(uint16_t scanline)
         {
             uint8_t pixel[8];
             uint8_t palette_offset = 16 + attribute;
-            for (int t = 1; t < 4; t++) tile_palette[t] = nes_palette[READ_PALETTE(palette_offset + t)];
+            for (int t = 1; t < 4; t++) tile_palette[t] = nes_palette[mask.emphasize][READ_PALETTE(palette_offset + t)];
 
             if (attribute_byte & 0x40) // If flip sprite horizontally
             {
