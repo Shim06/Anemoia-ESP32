@@ -501,6 +501,13 @@ void UI::loadSettings(Settings* s)
 {
     File f = SD.open("/settings.bin", FILE_READ);
     if (!f) return;
+    if (f.size() != sizeof(Settings)) 
+    {
+        f.close();
+        Settings temp;
+        saveSettings(&temp);
+        *s = temp;
+    }
 
     f.read((uint8_t*)s, sizeof(*s));
     f.close();
