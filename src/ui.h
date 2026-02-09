@@ -43,6 +43,7 @@ private:
     typedef struct Settings
     {
         uint8_t volume = 100;
+        uint8_t palette = 0;
     };
     Settings settings;
     void saveSettings(const Settings* s);

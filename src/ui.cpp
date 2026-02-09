@@ -346,7 +346,6 @@ void UI::pauseMenu(Bus* nes)
     }
 }
 
-
 void UI::settingsMenu(Bus* nes)
 {
     // Draw settings window 
@@ -366,15 +365,27 @@ void UI::settingsMenu(Bus* nes)
     drawText(text2, text2_x, 4);
 
     static char volume_text[15];
+    static char palette_text[20];
+    const char* palette_names[] =
+    {
+        "NTSC 565",
+        "PAL 565",
+        "NTSC 222",
+        "PAL 222"
+    };
+
     snprintf(volume_text, sizeof(volume_text), "Volume: %d%%", settings.volume);
+    snprintf(palette_text, sizeof(palette_text), "Palette: %s", palette_names[settings.palette]);
     char* items[] = 
     { 
         volume_text,
+        palette_text,
         "Save & Return"
     };
     enum ItemSelect
     {
         Volume,
+        Palette,
         Back
     };
     constexpr int items_y[] = { 30, 42, 54 };
@@ -425,6 +436,14 @@ void UI::settingsMenu(Bus* nes)
                     screen->fillRect(window_x + 10, items_y[Volume], window_w - 19, item_height, SELECTED_BG_COLOR);
                     drawText(items[Volume], window_x + 12, items_y[Volume] + text_padding);
                     break;
+                case Palette:
+                    if (settings.palette == 0)
+                        settings.palette = Ppu2C02::Palette::PaletteCount - 1;
+                    else settings.palette--;
+                    snprintf(palette_text, sizeof(palette_text), "Palette: %s", palette_names[settings.palette]);
+                    screen->fillRect(window_x + 10, items_y[Palette], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    drawText(items[Palette], window_x + 12, items_y[Palette] + text_padding);
+                    break;
                 }
                 last_input_time = now;
             }
@@ -439,6 +458,12 @@ void UI::settingsMenu(Bus* nes)
                     screen->fillRect(window_x + 10, items_y[Volume], window_w - 19, item_height, SELECTED_BG_COLOR);
                     drawText(items[Volume], window_x + 12, items_y[Volume] + text_padding);
                     break;
+                case Palette:
+                    settings.palette = (settings.palette + 1) % Ppu2C02::Palette::PaletteCount;
+                    snprintf(palette_text, sizeof(palette_text), "Palette: %s", palette_names[settings.palette]);
+                    screen->fillRect(window_x + 10, items_y[Palette], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    drawText(items[Palette], window_x + 12, items_y[Palette] + text_padding);
+                    break;
                 }
                 last_input_time = now;
             }
@@ -448,6 +473,7 @@ void UI::settingsMenu(Bus* nes)
                 switch (select)
                 {
                 case Back:
+                    nes->ppu.setPalette(settings.palette);
                     nes->cpu.apu.setVolume(settings.volume);
                     saveSettings(&settings);
                     return;
@@ -484,6 +510,7 @@ void UI::initializeSettings(Bus* nes)
     }
     loadSettings(&settings);
     
+    nes->ppu.setPalette(settings.palette);
     nes->cpu.apu.setVolume(settings.volume);
 }
 

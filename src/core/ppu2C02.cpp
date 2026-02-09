@@ -571,6 +571,28 @@ Cartridge::MIRROR Ppu2C02::getMirror()
     return Cartridge::MIRROR::HORIZONTAL;
 }
 
+void Ppu2C02::setPalette(uint8_t palette)
+{
+    switch (palette)
+    {
+    case NTSC565:
+        nes_palette = palette_NTSC565;
+        break;
+
+    case PAL565:
+        nes_palette = palette_PAL565;
+        break;
+
+    case NTSC222:
+        nes_palette = palette_NTSC222;
+        break;
+    
+    case PAL222:
+        nes_palette = palette_PAL222;
+        break;
+    }
+}
+
 void Ppu2C02::dumpState(File& state)
 {
     state.write((uint8_t*)scanline_buffer, sizeof(scanline_buffer));
