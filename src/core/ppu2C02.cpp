@@ -151,16 +151,17 @@ IRAM_ATTR void Ppu2C02::clearVBlank()
     status.sprite_overflow = 0;
 }
 
-IRAM_ATTR void Ppu2C02::renderScanline(uint16_t scanline)
+IRAM_ATTR void Ppu2C02::renderScanline(uint16_t current_scanline)
 {
-    transferScroll(scanline);
+    scanline = current_scanline;
+    transferScroll();
     renderBackground();
-    renderSprites(scanline);
+    renderSprites();
     incrementY();
-    finishScanline(scanline);
+    finishScanline();
 }
 
-inline void Ppu2C02::transferScroll(uint16_t scanline)
+inline void Ppu2C02::transferScroll()
 {
     if (!(mask.reg & (1 << 3) || mask.reg & (1 << 4))) return;
     v.reg = (scanline == 0) ? t.reg : v.reg = (v.reg & ~0x041F) | (t.reg & 0x041F);
@@ -266,7 +267,7 @@ inline void Ppu2C02::renderBackground()
     ptr_buffer = scanline_buffer + x;
 }
 
-inline void Ppu2C02::renderSprites(uint16_t scanline)
+inline void Ppu2C02::renderSprites()
 {
     if (!mask.render_sprite) 
     {
@@ -398,8 +399,9 @@ inline void Ppu2C02::renderSprites(uint16_t scanline)
     ptr_buffer = buffer_offset;
 }
 
-void Ppu2C02::fakeSpriteHit(uint16_t scanline)
+void Ppu2C02::fakeSpriteHit(uint16_t current_scanline)
 {
+    scanline = current_scanline;
     if (mask.render_background || mask.render_sprite) cart->ppuScanline();
     if (!mask.render_sprite || status.sprite_zero_hit) return;
 
@@ -476,7 +478,7 @@ void Ppu2C02::fakeSpriteHit(uint16_t scanline)
     }
 }
 
-inline void Ppu2C02::finishScanline(uint16_t scanline)
+inline void Ppu2C02::finishScanline()
 {
     if (mask.render_background || mask.render_sprite) 
         cart->ppuScanline();
