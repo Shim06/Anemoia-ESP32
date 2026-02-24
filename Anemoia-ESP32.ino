@@ -82,7 +82,7 @@ IRAM_ATTR void emulate()
     xTaskCreatePinnedToCore(
     apuTask,
     "APU Task",
-    768,
+    1024,
     &nes.cpu.apu,
     1,
     &apu_task_handle,
