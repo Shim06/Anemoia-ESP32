@@ -232,7 +232,6 @@ void pollingTask(void* param)
     while (true)
     {
         // Read button input
-        nes->controller = 0;
         nes->controller = controllerRead();
 
         vTaskDelayUntil(&lastWakeTime, frameTicks);
