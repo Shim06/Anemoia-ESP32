@@ -25,8 +25,8 @@ public:
     void cpuWrite(uint16_t addr, uint8_t data);
     uint8_t cpuRead(uint16_t addr);
 
-    void renderScanline(uint16_t scanline);
-    void fakeSpriteHit(uint16_t scanline);
+    void renderScanline(uint16_t current_scanline);
+    void fakeSpriteHit(uint16_t current_scanline);
     void setVBlank();
     void clearVBlank();
     void reset();
@@ -53,10 +53,10 @@ private:
     Bus* bus = nullptr;
 
     void renderBackground();
-    void renderSprites(uint16_t scanline);
-    void transferScroll(uint16_t scanline);
+    void renderSprites();
+    void transferScroll();
     void incrementY();
-    void finishScanline(uint16_t scanline);
+    void finishScanline();
     uint16_t scanline_buffer[BUFFER_SIZE];
     uint8_t scanline_metadata[BUFFER_SIZE];
     static uint16_t display_buffer[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
@@ -505,6 +505,7 @@ private:
     uint8_t attribute_shift = 0x00;
     uint8_t attribute = 0x00;
     uint8_t tile_index = 0x00;
+    uint16_t scanline = 0x00;
     uint8_t* ptr_tile = nullptr;
     uint8_t* ptr_attribute = nullptr;
     uint8_t* ptr_pattern_tile = nullptr;
