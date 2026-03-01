@@ -7,6 +7,7 @@
 #include "config.h"
 #include "driver/i2s.h"
 
+#define SAMPLE_RATE 44100
 #define AUDIO_BUFFER_SIZE 128
 
 class Bus;

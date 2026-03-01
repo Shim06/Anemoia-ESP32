@@ -50,9 +50,6 @@
 
 #define DAC_PIN 1 // 0 = GPIO25, 1 = GPIO26
 
-// Sound sample rate
-#define SAMPLE_RATE 44100
-
 #define FRAMESKIP
 // #define DEBUG // Uncomment this line if you want debug prints from serial
 
