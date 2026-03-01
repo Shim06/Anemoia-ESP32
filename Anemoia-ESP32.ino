@@ -39,6 +39,14 @@ void setup()
     esp_bt_mem_release(ESP_BT_MODE_BTDM);
     esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);
 
+    #ifdef TFT_BACKLIGHT_ENABLE
+        pinMode(TFT_BACKLIGHT_PIN, OUTPUT);
+        ledcSetup(BL_CHANNEL, BL_FREQ, BL_RESOLUTION);
+        ledcAttachPin(TFT_BACKLIGHT_PIN, BL_CHANNEL);
+        ledcWrite(BL_CHANNEL, 255);
+    #endif
+
+    ui.initializeSettings();
     setupI2SDAC();
 
     // Initialize TFT screen
@@ -76,7 +84,7 @@ IRAM_ATTR void emulate()
     nes.insertCartridge(cart);
     nes.connectScreen(&screen);
     nes.reset();
-    ui.initializeSettings(&nes);
+    ui.loadEmulatorSettings(&nes);
 
     TaskHandle_t apu_task_handle;
     xTaskCreatePinnedToCore(

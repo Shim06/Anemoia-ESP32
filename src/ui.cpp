@@ -366,6 +366,7 @@ void UI::settingsMenu(Bus* nes)
 
     static char volume_text[15];
     static char palette_text[20];
+    static char brightness_text[20];
     const char* palette_names[] =
     {
         "NTSC 565",
@@ -376,19 +377,22 @@ void UI::settingsMenu(Bus* nes)
 
     snprintf(volume_text, sizeof(volume_text), "Volume: %d%%", settings.volume);
     snprintf(palette_text, sizeof(palette_text), "Palette: %s", palette_names[settings.palette]);
+    snprintf(brightness_text, sizeof(brightness_text), "Brightness: %d%%", settings.brightness);
     char* items[] = 
     { 
         volume_text,
+        brightness_text,
         palette_text,
         "Save & Return"
     };
     enum ItemSelect
     {
         Volume,
+        Brightness,
         Palette,
         Back
     };
-    constexpr int items_y[] = { 30, 42, 54 };
+    constexpr int items_y[] = { 30, 42, 54, 66 };
     constexpr int num_items = sizeof(items) / sizeof(items[0]);
     constexpr int item_height = 12;
     constexpr int text_height = 8;
@@ -401,7 +405,18 @@ void UI::settingsMenu(Bus* nes)
     for (int i = 0; i < num_items; i++)
     {
         int y = items_y[i] + text_padding;
-        drawText(items[i], window_x + 12, y);
+        if (i == Brightness)
+        {
+            #ifdef TFT_BACKLIGHT_ENABLE
+                drawText(items[i], window_x + 12, y);
+            #else
+                screen->setCursor(window_x + 12, y);
+                screen->setTextColor(TFT_DARKGREY);
+                screen->print(items[i]);
+            #endif
+        }
+        else
+            drawText(items[i], window_x + 12, y);
     }
 
     constexpr int initial_delay = 500;
@@ -416,6 +431,13 @@ void UI::settingsMenu(Bus* nes)
             {
                 select--;
                 if (select < 0) select = (num_items - 1);
+                #ifndef TFT_BACKLIGHT_ENABLE
+                    if (select == Brightness)
+                    {
+                        select--;
+                        if (select < 0) select = (num_items - 1);
+                    }
+                #endif
                 last_input_time = now;
             }
 
@@ -423,6 +445,13 @@ void UI::settingsMenu(Bus* nes)
             {
                 select++; 
                 if (select > (num_items - 1)) select = 0;
+                #ifndef TFT_BACKLIGHT_ENABLE
+                    if (select == Brightness)
+                    {
+                        select++;
+                        if (select > (num_items - 1)) select = 0;
+                    }
+                #endif
                 last_input_time = now;
             }
 
@@ -435,6 +464,13 @@ void UI::settingsMenu(Bus* nes)
                     snprintf(volume_text, sizeof(volume_text), "Volume: %d%%", settings.volume);
                     screen->fillRect(window_x + 10, items_y[Volume], window_w - 19, item_height, SELECTED_BG_COLOR);
                     drawText(items[Volume], window_x + 12, items_y[Volume] + text_padding);
+                    break;
+                case Brightness:
+                    if (settings.brightness >= 5) settings.brightness -= 5;
+                    snprintf(brightness_text, sizeof(brightness_text), "Brightness: %d%%", settings.brightness);
+                    screen->fillRect(window_x + 10, items_y[Brightness], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    drawText(items[Brightness], window_x + 12, items_y[Brightness] + text_padding);
+                    setBrightness(settings.brightness);
                     break;
                 case Palette:
                     if (settings.palette == 0)
@@ -458,6 +494,13 @@ void UI::settingsMenu(Bus* nes)
                     screen->fillRect(window_x + 10, items_y[Volume], window_w - 19, item_height, SELECTED_BG_COLOR);
                     drawText(items[Volume], window_x + 12, items_y[Volume] + text_padding);
                     break;
+                case Brightness:
+                    if (settings.brightness <= 95) settings.brightness += 5;
+                    snprintf(brightness_text, sizeof(brightness_text), "Brightness: %d%%", settings.brightness);
+                    screen->fillRect(window_x + 10, items_y[Brightness], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    drawText(items[Brightness], window_x + 12, items_y[Brightness] + text_padding);
+                    setBrightness(settings.brightness);
+                    break;
                 case Palette:
                     settings.palette = (settings.palette + 1) % Ppu2C02::Palette::PaletteCount;
                     snprintf(palette_text, sizeof(palette_text), "Palette: %s", palette_names[settings.palette]);
@@ -473,8 +516,7 @@ void UI::settingsMenu(Bus* nes)
                 switch (select)
                 {
                 case Back:
-                    nes->ppu.setPalette(settings.palette);
-                    nes->cpu.apu.setVolume(settings.volume);
+                    loadEmulatorSettings(nes);
                     saveSettings(&settings);
                     return;
                 }
@@ -501,7 +543,7 @@ void UI::settingsMenu(Bus* nes)
     }
 }
 
-void UI::initializeSettings(Bus* nes)
+void UI::initializeSettings()
 {
     if (!SD.exists("/settings.bin"))
     {
@@ -509,9 +551,22 @@ void UI::initializeSettings(Bus* nes)
         saveSettings(&temp);
     }
     loadSettings(&settings);
-    
+
+    #ifdef TFT_BACKLIGHT_ENABLE
+        setBrightness(settings.brightness)
+    #endif
+}
+
+void UI::loadEmulatorSettings(Bus* nes)
+{
     nes->ppu.setPalette(settings.palette);
     nes->cpu.apu.setVolume(settings.volume);
+}
+
+void UI::setBrightness(int value)
+{
+    uint8_t pwm = ((value * 255) + 50) / 100;
+    ledcWrite(BL_CHANNEL, pwm);
 }
 
 void UI::saveSettings(const Settings* s)

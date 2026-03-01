@@ -7,6 +7,10 @@
 #include "controller.h"
 #include "core/bus.h"
 
+#define BL_CHANNEL 0
+#define BL_FREQ 5000
+#define BL_RESOLUTION 8
+
 #define BG_COLOR 0x0015
 #define BAR_COLOR 0xAD55
 #define TEXT_COLOR 0xFFFF
@@ -26,11 +30,12 @@ public:
     void drawBars();
     void pauseMenu(Bus* nes);
     void settingsMenu(Bus* nes);
-    void initializeSettings(Bus* nes);
-
+    void initializeSettings();
+    void loadEmulatorSettings(Bus* nes);
     bool paused = false;
 
 private:
+    void setBrightness(int value);
     void drawText(const char* text, const int x, const int y);
     TFT_eSPI* screen = nullptr;
     int selected = 0;
@@ -43,6 +48,7 @@ private:
     typedef struct Settings
     {
         uint8_t volume = 100;
+        uint8_t brightness = 100;
         uint8_t palette = 0;
     };
     Settings settings;
