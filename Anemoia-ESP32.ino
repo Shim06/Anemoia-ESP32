@@ -57,7 +57,6 @@ void setup()
     #endif
     screen.fillScreen(BG_COLOR);
     screen.startWrite();
-    screen.setSwapBytes(SCREEN_SWAP_BYTES);
 
     // Initialize microsd card
     if(!initSD()) while (true);
