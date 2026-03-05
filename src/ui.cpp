@@ -553,7 +553,7 @@ void UI::initializeSettings()
     loadSettings(&settings);
 
     #ifdef TFT_BACKLIGHT_ENABLE
-        setBrightness(settings.brightness)
+        setBrightness(settings.brightness);
     #endif
 }
 
