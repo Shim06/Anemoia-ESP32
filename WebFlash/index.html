@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script type="module"
+    src="https://unpkg.com/esp-web-tools@9/dist/web/install-button.js?module"></script>
+  <style>
+    .hidden {
+      display: none;
+    }
+
+    .option {
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Anemoia-ESP32 NES Emulator</h1>
+  <p>Select your hardware configuration and flash the firmware.</p>
+
+  <div id="main" style="display:none">
+
+    <!-- Device type selection -->
+    <div class="option">
+      <label for="device">Device Type:</label>
+      <select id="device">
+        <option value="esp32">ESP32</option>
+        <!-- <option value="cyd">CYD</option> -->
+      </select>
+    </div>
+
+    <!-- Display -->
+    <div class="option">
+      <label for="display">SPI Display Driver:</label>
+      <select id="display">
+        <option value="ST7789">ST7789</option>
+        <option value="ILI9341">ILI9341</option>
+      </select>
+    </div>
+
+    <!-- Backlight -->
+    <div class="option">
+      <label for="backlight">Display Backlight Pin Enable:</label>
+      <select id="backlight">
+        <option value="backlight_off">Off</option>
+        <option value="backlight_on">On</option>
+      </select>
+    </div>
+
+    <!-- Color byte -->
+    <div class="option">
+      <label for="swap">Color Byte Order:</label>
+      <select id="swap">
+        <option value="swap_bytes">Normal</option>
+        <option value="swap_bytes_off">Swap Bytes</option>
+      </select>
+    </div>
+
+    <!-- Screen SPI frequency (compile-time) -->
+    <div class="option">
+      <label for="screen_freq">Screen SPI Frequency:</label>
+      <select id="screen_freq">
+        <option value="screen_freq_80MHz">80 MHz</option>
+        <option value="screen_freq_40MHz">40 MHz</option>
+      </select>
+    </div>
+
+    <hr>
+
+    <!-- Controller type (runtime) -->
+    <div class="option">
+      <label for="controller">Controller:</label>
+      <select id="controller">
+        <option value="gpio">GPIO Buttons</option>
+        <option value="nes">NES Controller</option>
+        <option value="snes">SNES Controller</option>
+        <option value="psx">PSX Controller</option>
+      </select>
+    </div>
+
+    <!-- Screen rotation (runtime) -->
+    <div class="option">
+      <label for="rotation">Screen Rotation:</label>
+      <select id="rotation">
+        <option value="rotation1">Landscape</option>
+        <option value="rotation3">Landscape Flipped</option>
+      </select>
+    </div>
+
+    <!-- SD frequency (runtime) -->
+    <div class="option">
+      <label for="sd_freq">SD Frequency:</label>
+      <select id="sd_freq">
+        <option value="sd_freq_80MHz">80 MHz</option>
+        <option value="sd_freq_40MHz">40 MHz</option>
+      </select>
+    </div>
+
+    <!-- DAC Audio Pin (runtime, hidden for CYD) -->
+    <div class="option" id="dacOption">
+      <label for="dacpin">DAC Audio Pin:</label>
+      <select id="dacpin">
+        <option value="dac_gpio25">GPIO 25</option>
+        <option value="dac_gpio26">GPIO 26</option>
+      </select>
+    </div>
+
+    <!-- Frameskip (compile-time) -->
+    <!--
+    <div class="option">
+      <label for="frameskip">Frameskip:</label>
+      <select id="frameskip">
+        <option value="frameskip_on">Enabled</option>
+        <option value="frameskip_off">Disabled</option>
+      </select>
+    </div>
+    -->
+
+    <!-- Debug (compile-time) -->
+    <div class="option">
+      <label for="debug">Debug:</label>
+      <select id="debug">
+        <option value="debug_on">Enabled</option>
+        <option value="debug_off">Disabled</option>
+      </select>
+    </div>
+
+    <br>
+    <esp-web-install-button id="installButton"></esp-web-install-button>
+
+    <p><b>Note:</b> Close any serial monitor before flashing.</p>
+
+  </div>
+
+  <div id="notSupported" style="display:none">
+    Your browser does not support the Web Serial API. Use Chrome or Edge.
+  </div>
+
+  <script>
+    const installButton = document.getElementById("installButton");
+    const deviceSelect = document.getElementById("device");
+
+    function updateManifest() {
+      const device      = document.getElementById("device").value;
+      const display     = document.getElementById("display").value;
+      const swap        = document.getElementById("swap").value;
+      const screen_freq = document.getElementById("screen_freq").value;
+      const frameskip   = "off"; // temporarily hardcoded — UI option commented out
+      const debug       = document.getElementById("debug").value;
+
+      // Runtime config values — baked into config.bin at the same path
+      const controller  = document.getElementById("controller").value;
+      const rotation    = document.getElementById("rotation").value;
+      const sd_freq     = document.getElementById("sd_freq").value;
+      const dacpin      = document.getElementById("dacpin").value;
+      const backlight   = document.getElementById("backlight").value;
+
+      // Manifest path — compile-time axes only determine which binary is used
+      const manifestPath = "manifests/" +
+      device + "-" + display + "-" + backlight + "-" + swap + "-" + screen_freq + "-" +
+      controller + "-" + rotation + "-" + sd_freq + "-" + dacpin + "-" + debug +
+      ".json";
+
+      installButton.manifest = manifestPath;
+    }
+
+    function updateVisibility() {
+      const device = deviceSelect.value;
+      document.getElementById("dacOption").classList.toggle("hidden", device === "cyd");
+      document.getElementById("backlight").classList.toggle("hidden", device === "cyd");
+    }
+
+    document.querySelectorAll("select").forEach(el =>
+      el.addEventListener("change", () => { updateManifest(); updateVisibility(); })
+    );
+
+    updateManifest();
+    updateVisibility();
+
+    if (navigator.serial) {
+      document.getElementById("main").style.display = "block";
+    } else {
+      document.getElementById("notSupported").style.display = "block";
+    }
+  </script>
+
+</body>
+</html>
