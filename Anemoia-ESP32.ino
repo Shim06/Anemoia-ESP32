@@ -247,7 +247,12 @@ void setupI2SDAC()
         .data_out_num = I2S_DOUT_PIN,
         .data_in_num = I2S_PIN_NO_CHANGE
     };
-    i2s_set_pin(I2S_NUM_0, &pin_config);
+    err = i2s_set_pin(I2S_NUM_0, &pin_config);
+    if (err != ESP_OK) {
+        LOGF("I2S pin config failed: %d\n", err);
+        return;
+    }
+    LOGF("I2S initialized: BCLK=%d, LRC=%d, DOUT=%d\n", I2S_BCLK_PIN, I2S_LRC_PIN, I2S_DOUT_PIN);
 #endif
 }
 
