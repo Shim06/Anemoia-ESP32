@@ -27,7 +27,7 @@
       <label for="device">Device Type:</label>
       <select id="device">
         <option value="esp32">ESP32</option>
-        <!-- <option value="cyd">CYD</option> -->
+        <option value="cyd">CYD</option>
       </select>
     </div>
 
@@ -41,7 +41,7 @@
     </div>
 
     <!-- Backlight -->
-    <div class="option">
+    <div class="option" id="backlightOption">
       <label for="backlight">Display Backlight Pin Enable:</label>
       <select id="backlight">
         <option value="backlight_off">Off</option>
@@ -50,7 +50,7 @@
     </div>
 
     <!-- Color byte -->
-    <div class="option">
+    <div class="option" id="swapOption">
       <label for="swap">Color Byte Order:</label>
       <select id="swap">
         <option value="swap_bytes">Normal</option>
@@ -70,7 +70,7 @@
     <hr>
 
     <!-- Controller type (runtime) -->
-    <div class="option">
+    <div class="option" id="controllerOption">
       <label for="controller">Controller:</label>
       <select id="controller">
         <option value="gpio">GPIO Buttons</option>
@@ -169,7 +169,12 @@
     function updateVisibility() {
       const device = deviceSelect.value;
       document.getElementById("dacOption").classList.toggle("hidden", device === "cyd");
-      document.getElementById("backlight").classList.toggle("hidden", device === "cyd");
+      document.getElementById("backlightOption").classList.toggle("hidden", device === "cyd");
+      document.getElementById("swapOption").classList.toggle("hidden", device === "cyd");
+      document.getElementById("controllerOption").classList.toggle("hidden", device === "cyd");
+      if (device === "cyd") {
+        document.getElementById("controller").value = "nes";
+      }
     }
 
     document.querySelectorAll("select").forEach(el =>

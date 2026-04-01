@@ -72,15 +72,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # device:     [esp32, cyd]
-        device:     [esp32]
+        device:     [esp32, cyd]
         display:    [ST7789, ILI9341]
         swap:       [swap_bytes, swap_bytes_off]
         screen_freq: [screen_freq_80MHz, screen_freq_40MHz]
         debug:      [debug_on, debug_off]
-        # exclude:
-        #   - device: cyd
-        #     dacpin: dac_gpio26
+        exclude:
+          - device: cyd
+            swap: swap_bytes_off
 
     steps:
       - uses: actions/checkout@v5
@@ -109,8 +108,12 @@ jobs:
           # Copy platform.txt from Anemoia-ESP32 repo
           cp platform.txt ~/.arduino15/packages/esp32/hardware/esp32/3.2.1/platform.txt
           
-          # Copy and configure user_setup.h based on display type
-          cp User_Setup.h ~/Arduino/libraries/TFT_eSPI/User_Setup.h
+          # Copy and configure user_setup.h based on device type and display type
+          if [ "${{ matrix.device }}" = "cyd" ]; then
+            cp User_Setup_CYD.h ~/Arduino/libraries/TFT_eSPI/User_Setup.h
+          else
+            cp User_Setup.h ~/Arduino/libraries/TFT_eSPI/User_Setup.h
+          fi
           
           if [ "${{ matrix.display }}" = "ST7789" ]; then
             sed -i 's|^// #define ST7789_DRIVER|#define ST7789_DRIVER|' ~/Arduino/libraries/TFT_eSPI/User_Setup.h
@@ -131,6 +134,7 @@ jobs:
           DEFINES=""
           [ "${{ matrix.swap }}"  = "swap_bytes" ] && DEFINES="$DEFINES -DSCREEN_SWAP_BYTES" || DEFINES="$DEFINES -USCREEN_SWAP_BYTES"
           [ "${{ matrix.debug }}" = "debug_on"   ] && DEFINES="$DEFINES -DDEBUG"             || DEFINES="$DEFINES -UDEBUG"
+          [ "${{ matrix.device }}" = "cyd" ] && DEFINES="$DEFINES -DCHEAP_YELLOW_DISPLAY_CONF"
 
           VARIANT="${{ matrix.device }}-${{ matrix.display }}-${{ matrix.swap }}-${{ matrix.screen_freq }}-${{ matrix.debug }}"
           PLATFORM_FLAGS="-Ofast -ffunction-sections -fdata-sections -fno-exceptions -fno-rtti -funroll-loops -fno-tree-vectorize -frename-registers -fno-plt -flto"
@@ -201,17 +205,19 @@ jobs:
             cp "$PARTITIONS" "WebFlash/$FW_DEST/partitions.bin"
             cp "$FIRMWARE" "WebFlash/$FW_DEST/firmware.bin"
 
-            for CONTROLLER in $CONTROLLERS; do
+            CONTROLLER_LIST="$CONTROLLERS"
+            DACPIN_LIST="$DACPINS"
+            BACKLIGHT_LIST="$BACKLIGHTS"
+
+            if [ "$DEVICE" = "cyd" ]; then
+              CONTROLLER_LIST="nes"
+              DACPIN_LIST="dac_gpio26"
+              BACKLIGHT_LIST="backlight_on"
+            fi
+
+            for CONTROLLER in $CONTROLLER_LIST; do
               for ROTATION in $ROTATIONS; do
                 for SD_FREQ in $SD_FREQS; do
-                  if [ "$DEVICE" = "cyd" ]; then
-                    DACPIN_LIST="none"
-                    BACKLIGHT_LIST="backlight_on"
-                  else
-                    DACPIN_LIST="$DACPINS"
-                    BACKLIGHT_LIST="$BACKLIGHTS"
-                  fi
-
                   for DACPIN in $DACPIN_LIST; do
                     for BACKLIGHT in $BACKLIGHT_LIST; do
                       # Map to byte values matching HWConfig struct

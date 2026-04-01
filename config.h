@@ -1,6 +1,11 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+// #define CHEAP_YELLOW_DISPLAY_CONF // Uncomment this line if using the CYD
+#ifdef CHEAP_YELLOW_DISPLAY_CONF
+  #include "config_cyd.h"
+#else
+
 // Controller Configuration
 // 0 = CONTROLLER_GPIO, 1 = CONTROLLER_NES, 
 // 2 = CONTROLLER_SNES, 3 = CONTROLLER_PSX
@@ -62,5 +67,7 @@
 #define I2S_BCLK_PIN   38   // Bit clock (BCLK)
 #define I2S_LRC_PIN    39   // Word select / Left-Right clock (LRC / WS)
 #define I2S_DOUT_PIN   40   // Serial data output (DIN)
+
+#endif
 
 #endif
