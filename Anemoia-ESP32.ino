@@ -197,6 +197,7 @@ bool initSD()
         return false;
     }
 
+    LOG("SD Card initialized.");
     return true;
 }
 
