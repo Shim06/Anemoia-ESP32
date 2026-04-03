@@ -43,14 +43,6 @@ void setup()
     esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);
 
     hw_config = loadConfig();
-
-    if (hw_config.backlight)
-    {
-        pinMode(TFT_BACKLIGHT_PIN, OUTPUT);
-        ledcAttach(TFT_BACKLIGHT_PIN, BL_FREQ, BL_RESOLUTION);
-        ledcWrite(TFT_BACKLIGHT_PIN, 255);
-    }
-
     setupI2SDAC();
 
     // Initialize TFT screen
@@ -61,6 +53,13 @@ void setup()
     #endif
     screen.fillScreen(BG_COLOR);
     screen.startWrite();
+
+    if (hw_config.backlight)
+    {
+        pinMode(TFT_BACKLIGHT_PIN, OUTPUT);
+        ledcAttach(TFT_BACKLIGHT_PIN, BL_FREQ, BL_RESOLUTION);
+        ledcWrite(TFT_BACKLIGHT_PIN, 255);
+    }
 
     // Initialize microsd card
     if(!initSD()) while (true);
