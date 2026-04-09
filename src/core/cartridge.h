@@ -47,6 +47,7 @@ public:
 
     void dumpState(File& state);
     void loadState(File& state);
+    bool isValid();
 
     uint8_t hardware_mirror;
     uint8_t mirror = HORIZONTAL;
@@ -54,6 +55,7 @@ public:
 
 private:
 	Bus* bus = nullptr;
+    bool is_valid = true;
     uint32_t prg_base;
     uint32_t chr_base;
 

@@ -51,6 +51,7 @@ Cartridge::Cartridge(const char* filename)
         case 3: mapper = createMapper003(number_PRG_banks, number_CHR_banks, this); break;
         case 4: mapper = createMapper004(number_PRG_banks, number_CHR_banks, this); break;
         case 69: mapper = createMapper069(number_PRG_banks, number_CHR_banks, this); break;
+        default: is_valid = false; break;
     }
 
     // Calculate ROM CRC32
@@ -146,6 +147,11 @@ void Cartridge::dumpState(File& state)
 void Cartridge::loadState(File& state)
 {
     mapper.vtable->loadState(&mapper, state);
+}
+
+bool Cartridge::isValid()
+{
+    return is_valid;
 }
 
 uint32_t Cartridge::crc32(const void* buf, size_t size, uint32_t seed)

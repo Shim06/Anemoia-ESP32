@@ -72,7 +72,12 @@ void setup()
 void loop() 
 {
     cart = ui.selectGame();
-    emulate();
+    if (cart && cart->isValid())
+    {
+        emulate();
+    }
+
+    invalidCartridge();
 }
 
 #ifdef DEBUG
@@ -198,6 +203,16 @@ bool initSD()
 
     LOG("SD Card initialized.");
     return true;
+}
+
+void invalidCartridge()
+{
+    screen.fillScreen(BG_COLOR);
+    screen.setTextColor(TFT_WHITE);
+    screen.setTextDatum(MC_DATUM);
+    screen.drawString("ROM Mapper not supported!", screen.width() / 2, screen.height() / 2, 2);
+    delay(3000);
+    ESP.restart();
 }
 
 void setupI2SDAC()
