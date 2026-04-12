@@ -47,7 +47,7 @@ private:
     static constexpr int ITEM_HEIGHT = 12;
     std::vector<std::string> files;
 
-    typedef struct Settings
+    struct Settings
     {
         uint8_t volume = 100;
         uint8_t brightness = 100;
