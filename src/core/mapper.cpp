@@ -15,10 +15,10 @@ void bankInit(BankCache* cache, Bank* banks, uint8_t num_banks, uint32_t bank_si
         cache->banks[i].size = bank_size;
 
         uint8_t* ptr = (uint8_t*)malloc(bank_size);
-        if (!ptr) LOGF("%i KB for bank %d Allocation failed.\n", bank_size / 1024, i);
+        if (!ptr) LOGF("%lu KB for bank %d Allocation failed.\n", bank_size / 1024, i);
         else
         {
-            LOGF("Allocated %i KB for bank %d, free heap: %u bytes\n",
+            LOGF("Allocated %lu KB for bank %d, free heap: %u bytes\n",
             bank_size / 1024, i, heap_caps_get_free_size(MALLOC_CAP_DEFAULT));
         }
         cache->banks[i].bank_ptr = ptr;
