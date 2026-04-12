@@ -541,6 +541,7 @@ void Ppu2C02::setMirror(Cartridge::MIRROR mirror)
         case Cartridge::MIRROR::ONESCREEN_HIGH:
             ptr_nametable[0] = ptr_nametable[1] = ptr_nametable[2] = ptr_nametable[3] = &nametable[0x0400];
             break;
+        default: break;
     }
 }
 
