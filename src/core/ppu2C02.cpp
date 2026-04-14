@@ -409,7 +409,7 @@ void Ppu2C02::fakeSpriteHit(uint16_t current_scanline)
     offset = (control.sprite_table_addr ? 0x1000 : 0);
     sprite_size = (control.sprite_size ? 16 : 8);
 
-    uint8_t sprite_x, sprite_y;
+    uint8_t sprite_y;
     sprite_y = sprite[0].y + 1;
     // Check if sprite is in scanline
     if ((sprite_y > scanline) || (sprite_y <= (scanline - sprite_size)) 
@@ -419,7 +419,6 @@ void Ppu2C02::fakeSpriteHit(uint16_t current_scanline)
     int16_t y_offset;
     uint16_t tile_addr;
 
-    sprite_x = sprite[0].x;
     tile_index = sprite[0].index;
     attribute_byte = sprite[0].attribute;
 
