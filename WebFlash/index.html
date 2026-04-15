@@ -27,6 +27,8 @@
       <p>Device Type:
         <label><input type="radio" name="device" value="esp32" checked>ESP32</label>
         <label><input type="radio" name="device" value="cyd">CYD</label>
+        <label><input type="radio" name="device" value="module">Module-Based PCB</label>
+        <label><input type="radio" name="device" value="discrete">Discrete PCB</label>
       </p>
     </div>
 
@@ -144,6 +146,20 @@
         dacpin     = "dac_gpio26";
       }
 
+      if (device == "module") {
+        controller = "gpio";
+        backlight  = "backlight_off";
+        swap       = "swap_bytes";
+        dacpin     = "dac_gpio26";
+      }
+
+      if (device == "discrete") {
+        controller = "gpio";
+        backlight  = "backlight_on";
+        swap       = "swap_bytes";
+        dacpin     = "dac_gpio25";
+      }
+
       const manifestPath = "manifests/" +
         device + "-" + display + "-" + backlight + "-" + swap + "-" + screen_freq + "-" +
         controller + "-" + rotation + "-" + sd_freq + "-" + dacpin + "-" + debug +
@@ -155,10 +171,14 @@
     function updateVisibility() {
       const device = getRadio("device");
       const isCyd = device === "cyd";
-      document.getElementById("dacOption").style.display      = isCyd ? "none" : "";
-      document.getElementById("backlightOption").style.display = isCyd ? "none" : "";
-      document.getElementById("swapOption").style.display     = isCyd ? "none" : "";
-      document.getElementById("controllerOption").style.display = isCyd ? "none" : "";
+      const isModule = device === "module";
+      const isDiscrete = device === "discrete";
+      const isHidden = isCyd || isModule || isDiscrete;
+      document.getElementById("dacOption").style.display       = isHidden ? "none" : "";
+      document.getElementById("backlightOption").style.display = isHidden ? "none" : "";
+      document.getElementById("swapOption").style.display      = isHidden ? "none" : "";
+      document.getElementById("controllerOption").style.display = isHidden ? "none" : "";
+
     }
 
     document.querySelectorAll("input").forEach(el =>
