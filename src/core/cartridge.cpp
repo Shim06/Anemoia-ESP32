@@ -28,7 +28,7 @@ Cartridge::Cartridge(const char* filename)
 
     // Check file format
     uint8_t file_type = 1;
-    if ((header.mapper2 & 0x0C) == 0x08);
+    //if ((header.mapper2 & 0x0C) == 0x08);
     switch (file_type)
     {
     case 1:
