@@ -481,10 +481,13 @@ inline void Ppu2C02::finishScanline()
 {
     if (mask.render_background || mask.render_sprite) 
         cart->ppuScanline();
+
+    // Transfer internal scanline buffer to display buffer
     uint32_t* display = (uint32_t*)(ptr_display + (scanline_counter * SCANLINE_SIZE));
     uint32_t* buffer = (uint32_t*)ptr_buffer;
     for (int i = 0, size = (SCANLINE_SIZE >> 1); i < size; i++) 
         display[i] = buffer[i];
+
     scanline_counter++;
     if (scanline_counter >= SCANLINES_PER_BUFFER) 
     { 
