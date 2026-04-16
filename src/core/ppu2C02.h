@@ -13,6 +13,11 @@
 #define TILES_PER_SCANLINE 32
 #define PIXELS_PER_TILE 8
 
+#ifdef ILI9341_DRIVER
+    #undef SCANLINES_PER_BUFFER
+    #define SCANLINES_PER_BUFFER 4
+#endif
+
 class Bus;
 class Ppu2C02
 {
@@ -58,13 +63,19 @@ private:
     void transferScroll();
     void incrementY();
     void finishScanline();
-    uint16_t scanline_buffer[BUFFER_SIZE];
-    uint8_t scanline_metadata[BUFFER_SIZE];
-    static uint16_t display_buffer[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
     uint8_t nametable[2048];
     uint8_t* ptr_nametable[4];
     uint8_t palette_table[32];
     uint8_t scanline_counter = 0;
+
+    uint16_t scanline_buffer[BUFFER_SIZE];
+    uint8_t scanline_metadata[BUFFER_SIZE];
+    #ifdef ILI9341_DRIVER
+        static uint16_t display_buffer_front[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
+        static uint16_t display_buffer_back[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
+    #else 
+        static uint16_t display_buffer[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
+    #endif
 
 #ifndef SCREEN_SWAP_BYTES
     static constexpr uint16_t palette_NTSC565[8][64] = 
@@ -855,7 +866,12 @@ private:
 public:
     uint8_t* ptr_sprite = (uint8_t*)sprite;
     uint16_t* ptr_buffer = scanline_buffer;
-    static constexpr uint16_t* ptr_display = display_buffer;
+    #ifdef ILI9341_DRIVER
+        static uint16_t* ptr_display;
+        static uint16_t* ptr_back_buffer;
+    #else
+        static constexpr uint16_t* ptr_display = display_buffer;
+    #endif
 };
 
 #endif

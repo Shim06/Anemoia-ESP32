@@ -3,7 +3,14 @@
 
 
 #define READ_PALETTE(x) palette_table[((x) & 0x1F) ^ (((x) & 0x13) == 0x10 ? 0x10 : 0x00)]
-DMA_ATTR uint16_t Ppu2C02::display_buffer[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
+#ifdef ILI9341_DRIVER
+    DMA_ATTR uint16_t Ppu2C02::display_buffer_front[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
+    DMA_ATTR uint16_t Ppu2C02::display_buffer_back[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
+    uint16_t* Ppu2C02::ptr_display = Ppu2C02::display_buffer_front;
+    uint16_t* Ppu2C02::ptr_back_buffer = Ppu2C02::display_buffer_back;
+#else
+    DMA_ATTR uint16_t Ppu2C02::display_buffer[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
+#endif
 constexpr uint8_t Ppu2C02::palette_mirror[32];
 
 Ppu2C02::Ppu2C02()
@@ -12,7 +19,12 @@ Ppu2C02::Ppu2C02()
     memset(palette_table, 0, sizeof(palette_table));
     memset(scanline_buffer, 0, sizeof(scanline_buffer));
     memset(scanline_metadata, 0, sizeof(scanline_metadata));
-    memset(display_buffer, 0, sizeof(display_buffer));
+    #ifdef ILI9341_DRIVER
+        memset(display_buffer_front, 0, sizeof(display_buffer_front));
+        memset(display_buffer_back, 0, sizeof(display_buffer_back));
+    #else
+        memset(display_buffer, 0, sizeof(display_buffer));
+    #endif
     memset(sprite, 0, sizeof(sprite));
 }
 
@@ -483,7 +495,11 @@ inline void Ppu2C02::finishScanline()
         cart->ppuScanline();
 
     // Transfer internal scanline buffer to display buffer
-    uint32_t* display = (uint32_t*)(ptr_display + (scanline_counter * SCANLINE_SIZE));
+    #ifdef ILI9341_DRIVER
+        uint32_t* display = (uint32_t*)(ptr_back_buffer + (scanline_counter * SCANLINE_SIZE));
+    #else
+        uint32_t* display = (uint32_t*)(ptr_display + (scanline_counter * SCANLINE_SIZE));
+    #endif
     uint32_t* buffer = (uint32_t*)ptr_buffer;
     for (int i = 0, size = (SCANLINE_SIZE >> 1); i < size; i++) 
         display[i] = buffer[i];
@@ -491,6 +507,12 @@ inline void Ppu2C02::finishScanline()
     scanline_counter++;
     if (scanline_counter >= SCANLINES_PER_BUFFER) 
     { 
+        #ifdef ILI9341_DRIVER
+            uint16_t* temp = ptr_display;
+            ptr_display = ptr_back_buffer;
+            ptr_back_buffer = temp;
+        #endif
+            
         bus->renderImage(scanline - (SCANLINES_PER_BUFFER - 1));
         scanline_counter = 0;
     }
