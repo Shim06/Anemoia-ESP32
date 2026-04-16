@@ -18,4 +18,12 @@ struct Mapper003_state
 
 Mapper createMapper003(uint8_t PRG_banks, uint8_t CHR_banks, Cartridge* cart);
 
+bool mapper003_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data);
+bool mapper003_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data);
+bool mapper003_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data);
+bool mapper003_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data);
+uint8_t* mapper003_ppuReadPtr(Mapper* mapper, uint16_t addr);
+void mapper003_reset(Mapper* mapper);
+void mapper003_dumpState(Mapper* mapper, File& state);
+void mapper003_loadState(Mapper* mapper, File& state);
 #endif

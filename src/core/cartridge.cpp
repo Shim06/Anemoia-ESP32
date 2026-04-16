@@ -74,42 +74,104 @@ Cartridge::~Cartridge()
 
 IRAM_ATTR bool Cartridge::cpuRead(uint16_t addr, uint8_t& data)
 {
-	return mapper.vtable->cpuRead(&mapper, addr, data);
+    switch (mapper_ID)
+    {
+    case 0:  return mapper000_cpuRead(&mapper, addr, data);
+    case 1:  return mapper001_cpuRead(&mapper, addr, data);
+    case 2:  return mapper002_cpuRead(&mapper, addr, data);
+    case 3:  return mapper003_cpuRead(&mapper, addr, data);
+    case 4:  return mapper004_cpuRead(&mapper, addr, data);
+    case 69: return mapper069_cpuRead(&mapper, addr, data);
+    default: return false;
+    }
 }
 
 IRAM_ATTR bool Cartridge::cpuWrite(uint16_t addr, uint8_t data)
 {
-	return mapper.vtable->cpuWrite(&mapper, addr, data);
+    switch (mapper_ID)
+    {
+    case 0:  return mapper000_cpuWrite(&mapper, addr, data);
+    case 1:  return mapper001_cpuWrite(&mapper, addr, data);
+    case 2:  return mapper002_cpuWrite(&mapper, addr, data);
+    case 3:  return mapper003_cpuWrite(&mapper, addr, data);
+    case 4:  return mapper004_cpuWrite(&mapper, addr, data);
+    case 69: return mapper069_cpuWrite(&mapper, addr, data);
+    default: return false;
+    }
 }
 
 IRAM_ATTR bool Cartridge::ppuRead(uint16_t addr, uint8_t& data)
 {
-	return mapper.vtable->ppuRead(&mapper, addr, data);
+    switch (mapper_ID)
+    {
+    case 0:  return mapper000_ppuRead(&mapper, addr, data);
+    case 1:  return mapper001_ppuRead(&mapper, addr, data);
+    case 2:  return mapper002_ppuRead(&mapper, addr, data);
+    case 3:  return mapper003_ppuRead(&mapper, addr, data);
+    case 4:  return mapper004_ppuRead(&mapper, addr, data);
+    case 69: return mapper069_ppuRead(&mapper, addr, data);
+    default: return false;
+    }
 }
 
 IRAM_ATTR bool Cartridge::ppuWrite(uint16_t addr, uint8_t data)
 {
-	return mapper.vtable->ppuWrite(&mapper, addr, data);	
+    switch (mapper_ID)
+    {
+    case 0:  return mapper000_ppuWrite(&mapper, addr, data);
+    case 1:  return mapper001_ppuWrite(&mapper, addr, data);
+    case 2:  return mapper002_ppuWrite(&mapper, addr, data);
+    case 3:  return mapper003_ppuWrite(&mapper, addr, data);
+    case 4:  return mapper004_ppuWrite(&mapper, addr, data);
+    case 69: return mapper069_ppuWrite(&mapper, addr, data);
+    default: return false;
+    }
 }
 
 IRAM_ATTR uint8_t* Cartridge::ppuReadPtr(uint16_t addr)
 {
-	return mapper.vtable->ppuReadPtr(&mapper, addr);
+    switch (mapper_ID)
+    {
+    case 0:  return mapper000_ppuReadPtr(&mapper, addr);
+    case 1:  return mapper001_ppuReadPtr(&mapper, addr);
+    case 2:  return mapper002_ppuReadPtr(&mapper, addr);
+    case 3:  return mapper003_ppuReadPtr(&mapper, addr);
+    case 4:  return mapper004_ppuReadPtr(&mapper, addr);
+    case 69: return mapper069_ppuReadPtr(&mapper, addr);
+    default: return nullptr;
+    }
 }
 
 void Cartridge::ppuScanline()
 {
-    mapper.vtable->scanline(&mapper);
+    switch (mapper_ID)
+    {
+        case 4: return mapper004_scanline(&mapper);
+        default: return;
+    }
 }
 
 void Cartridge::cpuCycle(int cycles)
 {
-    mapper.vtable->cycle(&mapper, cycles);
+    switch (mapper_ID)
+    {
+        case 69: return mapper069_cycle(&mapper, cycles);
+        default: return;
+    }
 }
 
 void Cartridge::reset()
 {
-    mapper.vtable->reset(&mapper);
+    switch (mapper_ID)
+    {
+        case 0:  return mapper000_reset(&mapper);
+        case 1:  return mapper001_reset(&mapper);
+        case 2:  return mapper002_reset(&mapper);
+        case 3:  return mapper003_reset(&mapper);
+        case 4:  return mapper004_reset(&mapper);
+        case 69: return mapper069_reset(&mapper);
+        default: return;
+    }
 }
 
 IRAM_ATTR void Cartridge::loadPRGBank(uint8_t* bank, uint16_t size, uint32_t offset)
@@ -141,12 +203,32 @@ void Cartridge::IRQ()
 
 void Cartridge::dumpState(File& state)
 {
-    mapper.vtable->dumpState(&mapper, state);
+    // mapper.vtable->dumpState(&mapper, state);
+    switch (mapper_ID)
+    {
+    case 0:  return mapper000_dumpState(&mapper, state);
+    case 1:  return mapper001_dumpState(&mapper, state);
+    case 2:  return mapper002_dumpState(&mapper, state);
+    case 3:  return mapper003_dumpState(&mapper, state);
+    case 4:  return mapper004_dumpState(&mapper, state);
+    case 69: return mapper069_dumpState(&mapper, state);
+    default: return;
+    }
 }
 
 void Cartridge::loadState(File& state)
 {
-    mapper.vtable->loadState(&mapper, state);
+    // mapper.vtable->loadState(&mapper, state);
+    switch (mapper_ID)
+    {
+    case 0:  return mapper000_loadState(&mapper, state);
+    case 1:  return mapper001_loadState(&mapper, state);
+    case 2:  return mapper002_loadState(&mapper, state);
+    case 3:  return mapper003_loadState(&mapper, state);
+    case 4:  return mapper004_loadState(&mapper, state);
+    case 69: return mapper069_loadState(&mapper, state);
+    default: return;
+    }
 }
 
 bool Cartridge::isValid()

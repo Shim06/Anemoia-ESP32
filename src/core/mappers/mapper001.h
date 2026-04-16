@@ -9,4 +9,12 @@
 
 Mapper createMapper001(uint8_t PRG_banks, uint8_t CHR_banks, Cartridge* cart);
 
+bool mapper001_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data);
+bool mapper001_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data);
+bool mapper001_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data);
+bool mapper001_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data);
+uint8_t* mapper001_ppuReadPtr(Mapper* mapper, uint16_t addr);
+void mapper001_reset(Mapper* mapper);
+void mapper001_dumpState(Mapper* mapper, File& state);
+void mapper001_loadState(Mapper* mapper, File& state);
 #endif
