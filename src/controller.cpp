@@ -186,8 +186,8 @@ static uint8_t PSXControllerRead()
     digitalWrite(CONTROLLER_PSX_ATTENTION, LOW);
 
     PSXTransferByte(0x01);
-	PSXTransferByte(0x42); 
-	PSXTransferByte(0xFF); 
+    PSXTransferByte(0x42); 
+    PSXTransferByte(0xFF); 
     b1 = PSXTransferByte(0xFF);
     b2 = PSXTransferByte(0xFF);
 
@@ -230,11 +230,15 @@ static uint8_t PSXControllerRead()
     return state;
 }
 
-void initController()
+static uint8_t dummyControllerRead()
 {
-    switch (hw_config.controller_type)
+    return 0x00;
+}
+
+void initController(enum ControllerType controller_type) {
+    switch (controller_type)
     {
-    case 0:
+    case GP_GPIO:
         pinMode(A_BUTTON, INPUT_PULLUP);
         pinMode(B_BUTTON, INPUT_PULLUP);
         pinMode(LEFT_BUTTON, INPUT_PULLUP);
@@ -246,21 +250,21 @@ void initController()
         _controllerRead = gpioRead;
         break;
 
-    case 1:
+    case GP_NES:
         pinMode(CONTROLLER_NES_CLK, OUTPUT);
         pinMode(CONTROLLER_NES_LATCH, OUTPUT);
         pinMode(CONTROLLER_NES_DATA, INPUT);
         _controllerRead = NESControllerRead;
         break;
 
-    case 2:
+    case GP_SNES:
         pinMode(CONTROLLER_SNES_CLK, OUTPUT);
         pinMode(CONTROLLER_SNES_LATCH, OUTPUT);
         pinMode(CONTROLLER_SNES_DATA, INPUT);
         _controllerRead = SNESControllerRead;
         break;
 
-    case 3:
+    case GP_PSX:
         pinMode(CONTROLLER_PSX_DATA, INPUT_PULLUP);
         pinMode(CONTROLLER_PSX_COMMAND, OUTPUT);
         pinMode(CONTROLLER_PSX_ATTENTION, OUTPUT);
@@ -283,6 +287,10 @@ void initController()
             delayMicroseconds(12);
         }
         _controllerRead = PSXControllerRead;
+        break;
+    case GP_NC:
+    default:
+        _controllerRead = dummyControllerRead;
         break;
     }
 }

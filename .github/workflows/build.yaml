@@ -227,7 +227,7 @@ jobs:
           mkdir -p WebFlash/manifests
           mkdir -p WebFlash/configs
 
-          CONTROLLERS="gpio nes snes psx"
+          CONTROLLERS="no_controller gpio nes snes psx"
           ROTATIONS="rotation1 rotation3"
           SD_FREQS="sd_freq_80MHz sd_freq_40MHz"
           DACPINS="dac_gpio25 dac_gpio26"
@@ -284,6 +284,7 @@ jobs:
                       esac
 
                       case "$CONTROLLER" in 
+                        no_controller) CONTROLLER_VAL=255 ;;
                         gpio) CONTROLLER_VAL=0 ;;
                         nes) CONTROLLER_VAL=1 ;;
                         snes) CONTROLLER_VAL=2 ;;

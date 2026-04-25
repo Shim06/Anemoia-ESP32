@@ -9,7 +9,7 @@ struct __attribute__((packed)) HWConfig
 {
     uint8_t rotation;
     uint8_t dac_pin;
-    uint8_t controller_type;
+    enum ControllerType controller_type;
     uint8_t sd_freq;
     bool backlight;
 };
@@ -28,6 +28,10 @@ inline HWConfig loadConfig()
         .backlight = false,
         #endif
     };
+    // hwconfig.bin can make development difficult because it will override #defines
+    // if you return cfg here early you can avoid that issue
+    // the alternative is to erase the entire flash before starting development
+    //return cfg;
 
     if (!LittleFS.begin()) 
     { 

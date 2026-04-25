@@ -1,6 +1,7 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 #include <stdint.h>
+#include "ControllerTypes.h"
 
 enum CONTROLLER
 {
@@ -16,7 +17,7 @@ enum CONTROLLER
 
 extern uint8_t (*_controllerRead)();
 
-void initController();
+void initController(enum ControllerType controller_type);
 uint8_t controllerRead();
 bool isDownPressed(CONTROLLER button);
 

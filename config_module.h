@@ -1,8 +1,9 @@
 #ifndef CONFIG_MODULE_H
 #define CONFIG_MODULE_H
 
+#include "src/ControllerTypes.h"
 // Controller Configuration
-#define CONTROLLER_TYPE 0
+#define CONTROLLER_TYPE GP_GPIO
 
 // Screen Configuration
 // #define TFT_BACKLIGHT_ENABLE

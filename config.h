@@ -12,10 +12,10 @@
   #include "config_discrete.h"
 #else
 
+#include "src/ControllerTypes.h"
 // Controller Configuration
-// 0 = CONTROLLER_GPIO, 1 = CONTROLLER_NES, 
-// 2 = CONTROLLER_SNES, 3 = CONTROLLER_PSX
-#define CONTROLLER_TYPE 0
+// see src/ControllerTypes.h for options
+#define CONTROLLER_TYPE GP_GPIO
 
 // Screen Configuration
 // #define TFT_BACKLIGHT_ENABLE // Uncomment this line if using a screen with backlight pin
