@@ -253,7 +253,7 @@ jobs:
             BACKLIGHT_LIST="$BACKLIGHTS"
 
             if [ "$DEVICE" = "cyd" ]; then
-              CONTROLLER_LIST="nes"
+              CONTROLLER_LIST=="no_controller nes"
               DACPIN_LIST="dac_gpio26"
               BACKLIGHT_LIST="backlight_on"
             elif [ "$DEVICE" = "module" ]; then
