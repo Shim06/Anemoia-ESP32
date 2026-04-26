@@ -3,7 +3,9 @@
 
 #include "src/ControllerTypes.h"
 // Controller Configuration
-// Only the NES controller is practical when wiring directly to the CYD
+// Because of the limited pins brought out by the CYD, it is only practical to use a
+// NES controller if wiring a controller directly to the board is desired.
+// #define CONTROLLER_TYPE GP_NES
 #define CONTROLLER_TYPE GP_NC  // no input device, always outputs 0x00 so code operates properly when a controller is not connected.
 
 // Screen Configuration

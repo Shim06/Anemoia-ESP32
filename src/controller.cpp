@@ -235,7 +235,7 @@ static uint8_t dummyControllerRead()
     return 0x00;
 }
 
-void initController(enum ControllerType controller_type) {
+void initController(ControllerType controller_type) {
     switch (controller_type)
     {
     case GP_GPIO:

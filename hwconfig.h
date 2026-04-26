@@ -9,7 +9,7 @@ struct __attribute__((packed)) HWConfig
 {
     uint8_t rotation;
     uint8_t dac_pin;
-    enum ControllerType controller_type;
+    ControllerType controller_type;
     uint8_t sd_freq;
     bool backlight;
 };

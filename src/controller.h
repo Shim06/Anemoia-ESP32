@@ -17,7 +17,7 @@ enum CONTROLLER
 
 extern uint8_t (*_controllerRead)();
 
-void initController(enum ControllerType controller_type);
+void initController(ControllerType controller_type);
 uint8_t controllerRead();
 bool isDownPressed(CONTROLLER button);
 
