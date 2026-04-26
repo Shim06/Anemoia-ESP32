@@ -1,9 +1,12 @@
 #ifndef CONFIG_CYD_H
 #define CONFIG_CYD_H
 
+#include "src/ControllerTypes.h"
 // Controller Configuration
-// Only NES controller supported for CYD
-#define CONTROLLER_TYPE 1 // 1 = CONTROLLER_NES
+// Because of the limited pins brought out by the CYD, it is only practical to use a
+// NES controller if wiring a controller directly to the board is desired.
+// #define CONTROLLER_TYPE GP_NES
+#define CONTROLLER_TYPE GP_NC  // no input device, always outputs 0x00 so code operates properly when a controller is not connected.
 
 // Screen Configuration
 #define TFT_BACKLIGHT_ENABLE

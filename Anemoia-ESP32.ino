@@ -66,7 +66,7 @@ void setup()
     ui.initializeSettings();
 
     // Setup buttons
-    initController();
+    initController(hw_config.controller_type);
 }
 
 void loop() 

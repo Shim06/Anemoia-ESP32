@@ -51,6 +51,7 @@
     <!-- Controller type (runtime) -->
     <div id="controllerOption">
       <p>Controller:
+        <label><input type="radio" name="controller" value="no_controller">No Controller</label>
         <label><input type="radio" name="controller" value="gpio" checked>GPIO Buttons</label>
         <label><input type="radio" name="controller" value="nes">NES Controller</label>
         <label><input type="radio" name="controller" value="snes">SNES Controller</label>
@@ -123,7 +124,7 @@
     const installButton = document.getElementById("installButton");
 
     function getRadio(name) {
-      return document.querySelector(`input[name="${name}"]:checked`).value;
+      return document.querySelector(`input[name="${name}"]:checked`)?.value;
     }
 
     function updateManifest() {
@@ -140,10 +141,20 @@
       const debug    = document.getElementById("debug").checked ? "debug_on" : "debug_off";
 
       if (device === "cyd") {
-        controller = "nes";
         backlight  = "backlight_on";
         swap       = "swap_bytes";
         dacpin     = "dac_gpio26";
+
+        if (!controller) {
+          controller = "nes";
+          const container = document.getElementById("controllerOption");
+          const options = container.querySelectorAll("input");
+          options.forEach(option => {
+            if (option.value === controller) {
+              option.checked = "checked";
+            }
+          });
+        }
       }
 
       if (device == "module") {
@@ -164,7 +175,7 @@
         device + "-" + display + "-" + backlight + "-" + swap + "-" + screen_freq + "-" +
         controller + "-" + rotation + "-" + sd_freq + "-" + dacpin + "-" + debug +
         ".json";
-
+      console.log(manifestPath);
       installButton.manifest = manifestPath;
     }
 
@@ -177,16 +188,28 @@
       document.getElementById("dacOption").style.display       = isHidden ? "none" : "";
       document.getElementById("backlightOption").style.display = isHidden ? "none" : "";
       document.getElementById("swapOption").style.display      = isHidden ? "none" : "";
-      document.getElementById("controllerOption").style.display = isHidden ? "none" : "";
+      document.getElementById("controllerOption").style.display = (isModule || isDiscrete) ? "none" : "";
+      
+      const container = document.getElementById("controllerOption");
+      const options = container.querySelectorAll("input");
+      options.forEach(option => {
+        if (isCyd && option.value !== "no_controller" && option.value !== "nes") {
+          option.parentElement.style.display = "none";
+          option.checked = "";
+        }
+        else {
+          option.parentElement.style.display = "";
+        }
+      });
 
     }
 
     document.querySelectorAll("input").forEach(el =>
-      el.addEventListener("change", () => { updateManifest(); updateVisibility(); })
+      el.addEventListener("change", () => { updateVisibility(); updateManifest(); })
     );
 
-    updateManifest();
     updateVisibility();
+    updateManifest();
 
     if (navigator.serial) {
       document.getElementById("main").style.display = "block";
