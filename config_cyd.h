@@ -5,8 +5,10 @@
 // Controller Configuration
 // Because of the limited pins brought out by the CYD, it is only practical to use a
 // NES controller if wiring a controller directly to the board is desired.
-// #define CONTROLLER_TYPE GP_NES
-#define CONTROLLER_TYPE GP_NC  // no input device, always outputs 0x00 so code operates properly when a controller is not connected.
+// #define CONTROLLER_TYPE CT_NES
+// #define CONTROLLER_TYPE CT_NC  // no input device, always outputs 0x00 so code operates properly when a controller is not connected.
+#define CONTROLLER_TYPE CT_UART  // reads button presses over USB to serial connection or a dedicated UART https://github.com/jethomson/SerialGameControllerAdapter
+
 
 // Screen Configuration
 #define TFT_BACKLIGHT_ENABLE
@@ -47,6 +49,11 @@
 #define CONTROLLER_PSX_COMMAND -1
 #define CONTROLLER_PSX_ATTENTION -1
 #define CONTROLLER_PSX_CLK -1
+
+// For Serial1 connection to receive button presses from a separate controller adapter device.
+// Using a controller adapter allows for easier wiring and makes it possible to use bluetooth controllers.
+#define CONTROLLER_UART_TX 27
+#define CONTROLLER_UART_RX 22
 
 #define DAC_PIN 1 // 0 = GPIO25, 1 = GPIO26 (CYD uses GPIO26)
 

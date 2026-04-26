@@ -253,7 +253,7 @@ jobs:
             BACKLIGHT_LIST="$BACKLIGHTS"
 
             if [ "$DEVICE" = "cyd" ]; then
-              CONTROLLER_LIST="no_controller nes"
+              CONTROLLER_LIST="no_controller nes uart"
               DACPIN_LIST="dac_gpio26"
               BACKLIGHT_LIST="backlight_on"
             elif [ "$DEVICE" = "module" ]; then
@@ -289,6 +289,7 @@ jobs:
                         nes) CONTROLLER_VAL=1 ;;
                         snes) CONTROLLER_VAL=2 ;;
                         psx) CONTROLLER_VAL=3 ;;
+                        uart) CONTROLLER_VAL=4 ;;
                       esac
 
                       case "$SD_FREQ" in 
