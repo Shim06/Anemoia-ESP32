@@ -51,11 +51,12 @@
     <!-- Controller type (runtime) -->
     <div id="controllerOption">
       <p>Controller:
-        <label><input type="radio" name="controller" value="no_controller">No Controller</label>
-        <label><input type="radio" name="controller" value="gpio" checked>GPIO Buttons</label>
-        <label><input type="radio" name="controller" value="nes">NES Controller</label>
-        <label><input type="radio" name="controller" value="snes">SNES Controller</label>
-        <label><input type="radio" name="controller" value="psx">PSX Controller</label>
+        <label title="For testing or a passive display piece"><input type="radio" name="controller" value="no_controller">No Controller</label>
+        <label title="Custom"><input type="radio" name="controller" value="gpio" checked>GPIO Buttons</label>
+        <label title="Nintendo"><input type="radio" name="controller" value="nes">NES Controller</label>
+        <label title="Super Nintendo"><input type="radio" name="controller" value="snes">SNES Controller</label>
+        <label title="PlayStation 1 and 2"><input type="radio" name="controller" value="psx">PSX Controller</label>
+        <label title="Send input from a WebSerial webpage or a separate controller adapter device"><input type="radio" name="controller" value="uart">Serial Port Controller</label>
       </p>
     </div>
 
@@ -192,8 +193,9 @@
       
       const container = document.getElementById("controllerOption");
       const options = container.querySelectorAll("input");
+      const cyd_options = new Set(["no_controller", "nes", "uart"]);
       options.forEach(option => {
-        if (isCyd && option.value !== "no_controller" && option.value !== "nes") {
+        if (isCyd && !cyd_options.has(option.value)) {
           option.parentElement.style.display = "none";
           option.checked = "";
         }

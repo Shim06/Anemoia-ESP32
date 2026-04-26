@@ -15,7 +15,7 @@
 #include "src/ControllerTypes.h"
 // Controller Configuration
 // see src/ControllerTypes.h for options
-#define CONTROLLER_TYPE GP_GPIO
+#define CONTROLLER_TYPE CT_GPIO
 
 // Screen Configuration
 // #define TFT_BACKLIGHT_ENABLE // Uncomment this line if using a screen with backlight pin

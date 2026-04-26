@@ -230,6 +230,36 @@ static uint8_t PSXControllerRead()
     return state;
 }
 
+static uint8_t UartControllerRead()
+{
+    static uint8_t state = 0x00;
+    static uint8_t no_data_count = 0;
+
+    int b0 = Serial.read();
+    int b1 = Serial1.read();
+    if (b0 >= 0 || b1 >= 0)
+    {
+        // if received button presses from both Serial and Serial1 combine them
+        state = 0x00;
+        if (b0 >= 0) state = (uint8_t)b0;
+        if (b1 >= 0) state |= (uint8_t)b1;
+
+        no_data_count = 0;
+        return state;
+    }
+
+    // if there is no data, then  reuse previous state 10 times before
+    // setting state to 0x00 (no buttons pressed)
+    no_data_count++;
+    if (no_data_count >= 10)
+    {
+        state = 0x00;
+        no_data_count = 10; // pin at 10 to prevent overflow
+    }
+
+    return state;
+}
+
 static uint8_t dummyControllerRead()
 {
     return 0x00;
@@ -238,7 +268,7 @@ static uint8_t dummyControllerRead()
 void initController(ControllerType controller_type) {
     switch (controller_type)
     {
-    case GP_GPIO:
+    case CT_GPIO:
         pinMode(A_BUTTON, INPUT_PULLUP);
         pinMode(B_BUTTON, INPUT_PULLUP);
         pinMode(LEFT_BUTTON, INPUT_PULLUP);
@@ -250,21 +280,21 @@ void initController(ControllerType controller_type) {
         _controllerRead = gpioRead;
         break;
 
-    case GP_NES:
+    case CT_NES:
         pinMode(CONTROLLER_NES_CLK, OUTPUT);
         pinMode(CONTROLLER_NES_LATCH, OUTPUT);
         pinMode(CONTROLLER_NES_DATA, INPUT);
         _controllerRead = NESControllerRead;
         break;
 
-    case GP_SNES:
+    case CT_SNES:
         pinMode(CONTROLLER_SNES_CLK, OUTPUT);
         pinMode(CONTROLLER_SNES_LATCH, OUTPUT);
         pinMode(CONTROLLER_SNES_DATA, INPUT);
         _controllerRead = SNESControllerRead;
         break;
 
-    case GP_PSX:
+    case CT_PSX:
         pinMode(CONTROLLER_PSX_DATA, INPUT_PULLUP);
         pinMode(CONTROLLER_PSX_COMMAND, OUTPUT);
         pinMode(CONTROLLER_PSX_ATTENTION, OUTPUT);
@@ -288,7 +318,26 @@ void initController(ControllerType controller_type) {
         }
         _controllerRead = PSXControllerRead;
         break;
-    case GP_NC:
+    case CT_UART:
+#ifndef DEBUG
+        // If DEBUG is defined then Serial.begin() was called during setup().
+        // Here Serial is not being used for debugging but for reading button
+        // states sent from a WebSerial game controller webpage over USB to serial.
+        // debug messages will remain off
+        Serial.begin(115200);
+#endif
+
+        // Serial1 is used by an adapter board that supports multiple controller types and
+        // sends the button presses over serial. A different serial port is used instead of
+        // Serial (Serial0) to prevent the adapter from interfering with programming.
+        // Arduino ignores parity errors so there is nothing to be gained by setting the parity bit
+        Serial1.begin(115200, SERIAL_8N1, CONTROLLER_UART_RX, CONTROLLER_UART_TX);
+        delay(200); // allow controller adapter to finish booting
+
+        Serial1.write(hw_config.controller_type);
+        _controllerRead = UartControllerRead;
+        break;
+    case CT_NC:
     default:
         _controllerRead = dummyControllerRead;
         break;
