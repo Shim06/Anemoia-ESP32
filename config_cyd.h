@@ -7,7 +7,7 @@
 // NES controller if wiring a controller directly to the board is desired.
 // #define CONTROLLER_TYPE CT_NES
 // #define CONTROLLER_TYPE CT_NC  // no input device, always outputs 0x00 so code operates properly when a controller is not connected.
-#define CONTROLLER_TYPE CT_UART  // reads button presses over USB to serial connection or a dedicated UART https://github.com/jethomson/SerialGameControllerAdpater
+#define CONTROLLER_TYPE CT_UART  // reads button presses over USB to serial connection or a dedicated UART https://github.com/jethomson/SerialGameControllerAdapter
 
 
 // Screen Configuration
