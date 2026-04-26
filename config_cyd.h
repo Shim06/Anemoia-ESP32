@@ -51,9 +51,7 @@
 #define CONTROLLER_PSX_CLK -1
 
 // For Serial1 connection to receive button presses from a separate controller adapter device.
-// Using a separate device allows for easier wiring with the limited CYD pins and makes it
-// possible to use bluetooth controllers.
-
+// Using a controller adapter allows for easier wiring and makes it possible to use bluetooth controllers.
 #define CONTROLLER_UART_TX 27
 #define CONTROLLER_UART_RX 22
 
