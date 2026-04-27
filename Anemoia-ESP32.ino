@@ -105,6 +105,7 @@ IRAM_ATTR void emulate()
     0
     );
 
+#if CONTROLLER_TYPE != CT_IO_EXPANDER
     TaskHandle_t polling_task_handle;
     xTaskCreatePinnedToCore(
     pollingTask,
@@ -115,6 +116,7 @@ IRAM_ATTR void emulate()
     &polling_task_handle,
     0
     );
+#endif
     screen.setAddrWindow(32, 0, 256, 240);
 
     #ifdef DEBUG
@@ -127,14 +129,25 @@ IRAM_ATTR void emulate()
     // Emulation Loop
     while (true) 
     {
+#if CONTROLLER_TYPE == CT_IO_EXPANDER
+        // Poll controller synchronously to avoid I2C bit-bang being interrupted by other tasks
+        nes.controller = controllerRead();
+#endif
+
         // Start + Select opens the pause menu
         if ((nes.controller & CONTROLLER::Start) && (nes.controller & CONTROLLER::Select)) 
         {
             if (!ui.paused)
             {
+#if CONTROLLER_TYPE != CT_IO_EXPANDER
+                vTaskSuspend(polling_task_handle);
+#endif
                 vTaskSuspend(apu_task_handle);
                 ui.pauseMenu(&nes);
                 vTaskResume(apu_task_handle);
+#if CONTROLLER_TYPE != CT_IO_EXPANDER
+                vTaskResume(polling_task_handle);
+#endif
                 next_frame = esp_timer_get_time() + FRAME_TIME;
                 nes.controller = 0;
                 screen.setAddrWindow(32, 0, 256, 240);

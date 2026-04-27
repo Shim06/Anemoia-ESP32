@@ -7,8 +7,109 @@
 extern HWConfig hw_config;
 uint8_t (*_controllerRead)() = nullptr;
 
+static SemaphoreHandle_t i2c_mutex = NULL;
+
+// --- Bit-bang I2C Implementation ---
+static void i2c_sda_hi() { pinMode(I2C_SDA, INPUT_PULLUP); }
+static void i2c_sda_lo() { digitalWrite(I2C_SDA, LOW); pinMode(I2C_SDA, OUTPUT); }
+static void i2c_scl_hi() { pinMode(I2C_SCL, INPUT_PULLUP); delayMicroseconds(2); }
+static void i2c_scl_lo() { digitalWrite(I2C_SCL, LOW); pinMode(I2C_SCL, OUTPUT); delayMicroseconds(2); }
+
+static void i2c_start() {
+    i2c_sda_hi(); i2c_scl_hi();
+    i2c_sda_lo(); delayMicroseconds(2);
+    i2c_scl_lo();
+}
+
+static void i2c_stop() {
+    i2c_sda_lo(); i2c_scl_hi();
+    i2c_sda_hi(); delayMicroseconds(2);
+}
+
+static bool i2c_write(uint8_t byte) {
+    for (int i = 0; i < 8; i++) {
+        if (byte & 0x80) i2c_sda_hi(); else i2c_sda_lo();
+        i2c_scl_hi(); i2c_scl_lo();
+        byte <<= 1;
+    }
+    i2c_sda_hi();
+    i2c_scl_hi();
+    bool ack = (digitalRead(I2C_SDA) == LOW);
+    i2c_scl_lo();
+    return ack;
+}
+
+static uint8_t i2c_read(bool ack) {
+    uint8_t byte = 0;
+    i2c_sda_hi();
+    for (int i = 0; i < 8; i++) {
+        i2c_scl_hi();
+        if (digitalRead(I2C_SDA)) byte |= (1 << (7 - i));
+        i2c_scl_lo();
+    }
+    if (ack) i2c_sda_lo(); else i2c_sda_hi();
+    i2c_scl_hi(); i2c_scl_lo();
+    i2c_sda_hi();
+    return byte;
+}
+
+static uint8_t IOExpanderControllerRead()
+{
+    static uint8_t last_good_state = 0x00;
+    uint8_t state = 0x00;
+    uint16_t buttons = 0xFFFF;
+    bool success = false;
+
+#if CONTROLLER_IO_EXPANDER_TYPE == 0 // MCP23017
+    i2c_start();
+    if (i2c_write(IO_EXPANDER_ADDRESS << 1)) {
+        i2c_write(0x12); // GPIOA
+        i2c_start(); // Repeated start
+        i2c_write((IO_EXPANDER_ADDRESS << 1) | 1);
+        buttons = i2c_read(false);
+        success = true;
+    }
+    i2c_stop();
+#elif CONTROLLER_IO_EXPANDER_TYPE == 1 // PCF8575
+    i2c_start();
+    if (i2c_write((IO_EXPANDER_ADDRESS << 1) | 1)) {
+        buttons = i2c_read(true);
+        buttons |= (i2c_read(false) << 8);
+        success = true;
+    }
+    i2c_stop();
+#endif
+
+    if (!success) return last_good_state;
+
+    // Mapping: bit 0: Left, bit 1: Right, bit 2: Up, bit 3: Down
+    // bit 4: A, bit 5: B, bit 6: Select, bit 7: Start
+    if (!(buttons & (1 << 0))) state |= CONTROLLER::Left;
+    if (!(buttons & (1 << 1))) state |= CONTROLLER::Right;
+    if (!(buttons & (1 << 2))) state |= CONTROLLER::Up;
+    if (!(buttons & (1 << 3))) state |= CONTROLLER::Down;
+    if (!(buttons & (1 << 4))) state |= CONTROLLER::A;
+    if (!(buttons & (1 << 5))) state |= CONTROLLER::B;
+    if (!(buttons & (1 << 6))) state |= CONTROLLER::Start;
+    if (!(buttons & (1 << 7))) state |= CONTROLLER::Select;
+
+    last_good_state = state;
+    return state;
+}
+// ------------------------------------
+
 uint8_t controllerRead()
 {
+    if (!_controllerRead) return 0;
+    
+    if (_controllerRead == IOExpanderControllerRead) {
+        if (i2c_mutex && xSemaphoreTake(i2c_mutex, portMAX_DELAY)) {
+            uint8_t state = _controllerRead();
+            xSemaphoreGive(i2c_mutex);
+            return state;
+        }
+        return 0;
+    }
     return _controllerRead();
 }
 
@@ -336,6 +437,37 @@ void initController(ControllerType controller_type) {
 
         Serial1.write(hw_config.controller_type);
         _controllerRead = UartControllerRead;
+        break;
+    case CT_IO_EXPANDER:
+        if (i2c_mutex == NULL) {
+            i2c_mutex = xSemaphoreCreateMutex();
+        }
+        i2c_sda_hi();
+        i2c_scl_hi();
+        delay(10);
+#if CONTROLLER_IO_EXPANDER_TYPE == 0 // MCP23017
+        i2c_start();
+        if (i2c_write(IO_EXPANDER_ADDRESS << 1)) {
+            i2c_write(0x00); // IODIRA
+            i2c_write(0xFF);
+            i2c_stop();
+            i2c_start();
+            i2c_write(IO_EXPANDER_ADDRESS << 1);
+            i2c_write(0x0C); // GPPUA
+            i2c_write(0xFF);
+            i2c_stop();
+        } else {
+            i2c_stop();
+        }
+#elif CONTROLLER_IO_EXPANDER_TYPE == 1 // PCF8575
+        i2c_start();
+        if (i2c_write(IO_EXPANDER_ADDRESS << 1)) {
+            i2c_write(0xFF);
+            i2c_write(0xFF);
+        }
+        i2c_stop();
+#endif
+        _controllerRead = IOExpanderControllerRead;
         break;
     case CT_NC:
     default:
