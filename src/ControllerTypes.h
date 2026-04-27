@@ -9,6 +9,7 @@ enum ControllerType : uint8_t {
     CT_SNES = 2,  // wired SNES controller
     CT_PSX = 3,   // wired playstation controller using playstation connector
     CT_UART = 4,  // button presses send over serial connection
+    CT_IO_EXPANDER = 5, // I2C GPIO Expander (MCP23017 or PCF8575)
 };
 
 #endif
