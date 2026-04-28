@@ -27,7 +27,7 @@ struct Mapper004_state
 	uint16_t PRG_mask = 0;
 	uint16_t CHR_mask = 0;
 
-	static constexpr Cartridge::MIRROR mirror[2] = 
+	static constexpr Cartridge::MIRROR mirror[2] =
     {
         Cartridge::MIRROR::VERTICAL,
         Cartridge::MIRROR::HORIZONTAL
@@ -40,11 +40,11 @@ IRAM_ATTR bool mapper004_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
 	if (addr < 0x6000) return false;
 
     Mapper004_state* state = (Mapper004_state*)mapper->state;
-    if (addr < 0x8000) 
+    if (addr < 0x8000)
 	{
 		data = state->RAM[addr & 0x1FFF];
 		return true;
-	}   
+	}
 
     uint8_t bank = (addr >> 13) & 0x03;
     data = state->ptr_PRG_bank_8K[bank][addr & 0x1FFF];
@@ -131,7 +131,7 @@ IRAM_ATTR bool mapper004_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
 	case 0xC000:
 		state->IRQ_latch = data;
 		break;
-	
+
 	case 0xC001:
 		state->IRQ_counter = 0;
 		break;
@@ -178,10 +178,10 @@ IRAM_ATTR void mapper004_scanline(Mapper* mapper)
     Mapper004_state* state = (Mapper004_state*)mapper->state;
 	if (state->IRQ_counter == 0)
 		state->IRQ_counter = state->IRQ_latch;
-	else 
+	else
     {
         state->IRQ_counter--;
-        if ((state->IRQ_counter == 0) && state->IRQ_enable) 
+        if ((state->IRQ_counter == 0) && state->IRQ_enable)
 		    state->cart->IRQ();
     }
 }
@@ -264,7 +264,7 @@ void mapper004_loadState(Mapper* mapper, File& state)
 	for (int i = 0; i < 8; i++) s->ptr_CHR_bank_1K[i] = getBank(&s->CHR_cache_1K, CHR_bank_1K[i], Mapper::ROM_TYPE::CHR_ROM);
 
 	state.read(s->RAM, 8*1024);
-}	
+}
 
 Mapper createMapper004(uint8_t PRG_banks, uint8_t CHR_banks, Cartridge* cart)
 {

@@ -5,7 +5,7 @@
 #include "config.h"
 #include "src/debug.h"
 
-struct __attribute__((packed)) HWConfig 
+struct __attribute__((packed)) HWConfig
 {
     uint8_t rotation;
     uint8_t dac_pin;
@@ -14,9 +14,9 @@ struct __attribute__((packed)) HWConfig
     bool backlight;
 };
 
-inline HWConfig loadConfig() 
+inline HWConfig loadConfig()
 {
-    HWConfig cfg = 
+    HWConfig cfg =
     {
         .rotation = SCREEN_ROTATION,
         .dac_pin = DAC_PIN,
@@ -33,23 +33,23 @@ inline HWConfig loadConfig()
     // the alternative is to erase the entire flash before starting development
     //return cfg;
 
-    if (!LittleFS.begin()) 
-    { 
-        LOG("LittleFS mount failed, attempting format..."); 
-        if (!LittleFS.format()) 
+    if (!LittleFS.begin())
+    {
+        LOG("LittleFS mount failed, attempting format...");
+        if (!LittleFS.format())
         {
             LOG("LittleFS.format() failed");
             return cfg;
         }
-        if (!LittleFS.begin()) 
+        if (!LittleFS.begin())
         {
-            LOG("LittleFS mount failed after format, using defines in config.h"); 
+            LOG("LittleFS mount failed after format, using defines in config.h");
             return cfg;
         }
     }
-    LOG("LittleFS mounted"); 
+    LOG("LittleFS mounted");
     File f = LittleFS.open("/hwconfig.bin", "r");
-    if (!f) 
+    if (!f)
     {
         LOG("hwconfig.bin not found, using defines in config.h");
         return cfg;

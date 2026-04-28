@@ -190,7 +190,7 @@
       document.getElementById("backlightOption").style.display = isHidden ? "none" : "";
       document.getElementById("swapOption").style.display      = isHidden ? "none" : "";
       document.getElementById("controllerOption").style.display = (isModule || isDiscrete) ? "none" : "";
-      
+
       const container = document.getElementById("controllerOption");
       const options = container.querySelectorAll("input");
       const cyd_options = new Set(["no_controller", "nes", "uart"]);

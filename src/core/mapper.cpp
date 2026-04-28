@@ -47,7 +47,7 @@ IRAM_ATTR uint8_t* getBank(BankCache* cache, uint8_t bank_id, Mapper::ROM_TYPE r
             min_use = cache->banks[i].last_used;
             bank_index = i;
         }
-    } 
+    }
 
     uint8_t* bank = cache->banks[bank_index].bank_ptr;
     uint32_t size = cache->banks[bank_index].size;

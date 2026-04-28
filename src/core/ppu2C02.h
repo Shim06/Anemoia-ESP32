@@ -73,12 +73,12 @@ private:
     #ifdef ILI9341_DRIVER
         static uint16_t display_buffer_front[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
         static uint16_t display_buffer_back[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
-    #else 
+    #else
         static uint16_t display_buffer[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
     #endif
 
 #ifndef SCREEN_SWAP_BYTES
-    static constexpr uint16_t palette_NTSC565[8][64] = 
+    static constexpr uint16_t palette_NTSC565[8][64] =
     {
         {
             0x630C, 0x00F2, 0x1835, 0x4013, 0x600D, 0x6804, 0x6020, 0x48E0,
@@ -162,7 +162,7 @@ private:
         },
     };
 
-    static constexpr uint16_t palette_NTSC222[8][64] = 
+    static constexpr uint16_t palette_NTSC222[8][64] =
     {
         {
             0x52AA, 0x0015, 0x0015, 0x5015, 0x500A, 0x5000, 0x5000, 0x5000,
@@ -246,7 +246,7 @@ private:
         },
     };
 
-    static constexpr uint16_t palette_PAL565[8][64] = 
+    static constexpr uint16_t palette_PAL565[8][64] =
     {
         {
             0x630C, 0x010C, 0x088F, 0x280F, 0x400C, 0x5006, 0x5020, 0x40A0,
@@ -330,7 +330,7 @@ private:
         },
     };
 
-    static constexpr uint16_t palette_PAL222[8][64] = 
+    static constexpr uint16_t palette_PAL222[8][64] =
     {
         {
             0x52AA, 0x000A, 0x000A, 0x000A, 0x500A, 0x5000, 0x5000, 0x5000,
@@ -415,7 +415,7 @@ private:
     };
 #else
     #define SWAP16(c) (uint16_t)(((uint16_t)(c) << 8) | ((uint16_t)(c) >> 8))
-    static constexpr uint16_t palette_NTSC565[8][64] = 
+    static constexpr uint16_t palette_NTSC565[8][64] =
     {
         {
             SWAP16(0x630C), SWAP16(0x00F2), SWAP16(0x1835), SWAP16(0x4013), SWAP16(0x600D), SWAP16(0x6804), SWAP16(0x6020), SWAP16(0x48E0),
@@ -499,7 +499,7 @@ private:
         },
     };
 
-    static constexpr uint16_t palette_NTSC222[8][64] = 
+    static constexpr uint16_t palette_NTSC222[8][64] =
     {
         {
             SWAP16(0x52AA), SWAP16(0x0015), SWAP16(0x0015), SWAP16(0x5015), SWAP16(0x500A), SWAP16(0x5000), SWAP16(0x5000), SWAP16(0x5000),
@@ -583,7 +583,7 @@ private:
         },
     };
 
-    static constexpr uint16_t palette_PAL565[8][64] = 
+    static constexpr uint16_t palette_PAL565[8][64] =
     {
         {
             SWAP16(0x630C), SWAP16(0x010C), SWAP16(0x088F), SWAP16(0x280F), SWAP16(0x400C), SWAP16(0x5006), SWAP16(0x5020), SWAP16(0x40A0),
@@ -667,7 +667,7 @@ private:
         },
     };
 
-    static constexpr uint16_t palette_PAL222[8][64] = 
+    static constexpr uint16_t palette_PAL222[8][64] =
     {
         {
             SWAP16(0x52AA), SWAP16(0x000A), SWAP16(0x000A), SWAP16(0x000A), SWAP16(0x500A), SWAP16(0x5000), SWAP16(0x5000), SWAP16(0x5000),
@@ -813,7 +813,7 @@ private:
     // OAMDATA
     uint8_t OAMDATA = 0x00;
 
-    // Internal register 
+    // Internal register
     typedef union
     {
         struct

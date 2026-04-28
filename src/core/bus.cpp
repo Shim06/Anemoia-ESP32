@@ -47,7 +47,7 @@ IRAM_ATTR uint8_t Bus::cpuRead(uint16_t addr)
 
     if (cart->cpuRead(addr, data)) {}
     else if ((addr & 0xE000) == 0x0000)
-    {   
+    {
         data = RAM[addr & 0x07FF];
     }
     else if ((addr & 0xE000) == 0x2000)
@@ -78,7 +78,7 @@ IRAM_ATTR void Bus::clock()
 {
     // 1 frame == 341 dots * 261 scanlines
     // Visible scanlines 0-239
-    
+
     // Rendering 3 scanlines at a time because 1 CPU clock == 3 PPU clocks
     // and there's only 341 ppu clocks (dots) in a scanline, which is not divisible by 3.
     // Using a counter/for loop with += 341 & -= 3 is too big of a performance hit.
@@ -113,7 +113,7 @@ IRAM_ATTR void Bus::clock()
     }
 
     // Setup for the next frame
-    // Same reason as scanlines 0-239, 2/3 of scanlines will have an extra CPU clock. 
+    // Same reason as scanlines 0-239, 2/3 of scanlines will have an extra CPU clock.
     // Scanline 240
     cpu.clock(113);
 
@@ -164,7 +164,7 @@ IRAM_ATTR void Bus::renderImage(uint16_t scanline)
     #else
         ptr_screen->pushPixels(ppu.ptr_display, 256 * SCANLINES_PER_BUFFER);
     #endif
-} 
+}
 
 IRAM_ATTR void Bus::IRQ()
 {
@@ -235,7 +235,7 @@ void Bus::loadState()
         state.close();
         return;
     }
-    
+
     // Load state
     state.read(RAM, sizeof(RAM));
     cpu.loadState(state);

@@ -22,7 +22,7 @@
 #define SD_MISO_PIN 19
 #define SD_SCLK_PIN 18
 #define SD_CS_PIN 5
-#define SD_SPI_PORT VSPI 
+#define SD_SPI_PORT VSPI
 
 // NES controller pins (CYD easily accessible GPIO pins)
 #define CONTROLLER_NES_CLK 22

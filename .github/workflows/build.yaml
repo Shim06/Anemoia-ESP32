@@ -136,7 +136,7 @@ jobs:
         run: |
           # Copy platform.txt from Anemoia-ESP32 repo
           cp platform.txt ~/.arduino15/packages/esp32/hardware/esp32/3.2.1/platform.txt
-          
+
           # Copy and configure user_setup.h based on device type and display type
           if [ "${{ matrix.device }}" = "cyd" ]; then
             cp User_Setups/CYD/User_Setup.h ~/Arduino/libraries/TFT_eSPI/User_Setup.h
@@ -147,7 +147,7 @@ jobs:
           else
             cp User_Setups/Default/User_Setup.h ~/Arduino/libraries/TFT_eSPI/User_Setup.h
           fi
-          
+
           if [ "${{ matrix.display }}" = "ST7789" ]; then
             sed -i 's|^// #define ST7789_DRIVER|#define ST7789_DRIVER|' ~/Arduino/libraries/TFT_eSPI/User_Setup.h
             sed -i 's|^#define ILI9341_DRIVER|// #define ILI9341_DRIVER|' ~/Arduino/libraries/TFT_eSPI/User_Setup.h
@@ -247,7 +247,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-      
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -312,18 +312,18 @@ jobs:
                   for DACPIN in $DACPIN_LIST; do
                     for BACKLIGHT in $BACKLIGHT_LIST; do
                       # Map to byte values matching HWConfig struct
-                      case "$ROTATION" in 
+                      case "$ROTATION" in
                         rotation1) ROT_VAL=1 ;;
                         rotation3) ROT_VAL=3 ;;
                       esac
 
-                      case "$DACPIN" in 
+                      case "$DACPIN" in
                         dac_gpio25) DAC_VAL=0 ;;
                         dac_gpio26) DAC_VAL=1 ;;
                         *) DAC_VAL=0 ;;
                       esac
 
-                      case "$CONTROLLER" in 
+                      case "$CONTROLLER" in
                         no_controller) CONTROLLER_VAL=255 ;;
                         gpio) CONTROLLER_VAL=0 ;;
                         nes) CONTROLLER_VAL=1 ;;
@@ -332,7 +332,7 @@ jobs:
                         uart) CONTROLLER_VAL=4 ;;
                       esac
 
-                      case "$SD_FREQ" in 
+                      case "$SD_FREQ" in
                         sd_freq_80MHz) SD_VAL=80 ;;
                         sd_freq_40MHz) SD_VAL=40 ;;
                       esac

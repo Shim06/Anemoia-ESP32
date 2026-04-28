@@ -45,7 +45,7 @@ IRAM_ATTR bool mapper000_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
 IRAM_ATTR uint8_t* mapper000_ppuReadPtr(Mapper* mapper, uint16_t addr)
 {
     if (addr > 0x1FFF) return nullptr;
-    
+
     Mapper000_state* state = (Mapper000_state*)mapper->state;
     return &state->CHR_bank[addr];
 }

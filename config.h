@@ -30,10 +30,10 @@
 #define SD_MISO_PIN 12
 #define SD_SCLK_PIN 14
 #define SD_CS_PIN -1
-#define SD_SPI_PORT HSPI 
+#define SD_SPI_PORT HSPI
 // Use VSPI or HSPI depending on your wiring.
 // SD_SPI_PORT should be the opposite SPI port from the one used by the display (e.g. if using HSPI for display, use VSPI for SD card, and vice versa).
-// VSPI: MOSI=23, MISO=19, SCLK=18, CS=5 
+// VSPI: MOSI=23, MISO=19, SCLK=18, CS=5
 // HSPI: MOSI=13, MISO=12, SCLK=14, CS=15
 
 // Button pins

@@ -27,7 +27,7 @@ struct Mapper069_state
     uint16_t PRG_mask = 0;
 	uint16_t CHR_mask = 0;
 
-	static constexpr Cartridge::MIRROR mirror[4] = 
+	static constexpr Cartridge::MIRROR mirror[4] =
     {
         Cartridge::MIRROR::VERTICAL,
         Cartridge::MIRROR::HORIZONTAL,
@@ -42,7 +42,7 @@ IRAM_ATTR bool mapper069_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
 	if (addr < 0x6000) return false;
 
     Mapper069_state* state = (Mapper069_state*)mapper->state;
-    if (addr < 0x8000) 
+    if (addr < 0x8000)
 	{
         // PRG RAM
         if (state->PRG_RAM_select)
@@ -54,7 +54,7 @@ IRAM_ATTR bool mapper069_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
         // PRG ROM
         data = state->ptr_PRG_bank_8K[0][addr & 0x1FFF];
         return true;
-	}   
+	}
 
     uint8_t bank = (addr >> 13) & 0x03;
     data = state->ptr_PRG_bank_8K[bank + 1][addr & 0x1FFF];
@@ -75,7 +75,7 @@ IRAM_ATTR bool mapper069_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
 
 	// Command Register ($8000-$9FFF) | Parameter Register ($A000-$BFFF)
     uint16_t masked_addr = addr & 0xE000;
-	if (masked_addr == 0x8000) 
+	if (masked_addr == 0x8000)
         state->command_register = data & 0x0F;
     else if (masked_addr == 0xA000)
     {
@@ -148,7 +148,7 @@ IRAM_ATTR void mapper069_cycle(Mapper* mapper, int cycles)
     // IRQ if IRQ counter underflows from 0x0000 -> 0xFFFF;
     uint16_t before = state->IRQ_counter;
     state->IRQ_counter -= cycles;
-    if ((before < cycles) && state->IRQ_enable) 
+    if ((before < cycles) && state->IRQ_enable)
         state->cart->IRQ();
 }
 
@@ -232,7 +232,7 @@ void mapper069_loadState(Mapper* mapper, File& state)
 	for (int i = 0; i < 8; i++) s->ptr_CHR_bank_1K[i] = getBank(&s->CHR_cache_1K, CHR_bank_1K[i], Mapper::ROM_TYPE::CHR_ROM);
 
 	state.read(s->RAM, 8*1024);
-}	
+}
 
 Mapper createMapper069(uint8_t PRG_banks, uint8_t CHR_banks, Cartridge* cart)
 {

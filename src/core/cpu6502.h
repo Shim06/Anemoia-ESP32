@@ -50,7 +50,7 @@ public:
     void connectBus(Bus* n) { bus = n; }
     void connectCartridge(Cartridge* cartridge) { cart = cartridge; }
 
-    // Registers 
+    // Registers
     uint8_t A = 0x00; // Accumulator
     uint8_t X = 0x00; // X Index
     uint8_t Y = 0x00; // Y Index

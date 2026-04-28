@@ -13,7 +13,7 @@
 class Cartridge;
 class Mapper
 {
-public: 
+public:
     enum ROM_TYPE
     {
         PRG_ROM,

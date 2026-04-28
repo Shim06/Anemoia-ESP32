@@ -17,7 +17,7 @@
 #define SD_MISO_PIN 12
 #define SD_SCLK_PIN 14
 #define SD_CS_PIN -1
-#define SD_SPI_PORT HSPI 
+#define SD_SPI_PORT HSPI
 
 // Button pins
 #define A_BUTTON 19

@@ -101,7 +101,7 @@ static uint8_t PSXTransferByte(uint8_t byte)
     uint8_t temp = 0;
     for (int i = 0; i < 8; i++)
     {
-        digitalWrite(CONTROLLER_PSX_COMMAND, (byte >> i) & 1);    
+        digitalWrite(CONTROLLER_PSX_COMMAND, (byte >> i) & 1);
 
         digitalWrite(CONTROLLER_PSX_CLK, LOW);
 
@@ -137,7 +137,7 @@ static uint8_t PSXControllerRead()
     */
 
     // Button Mappings
-    /*     
+    /*
     Digital Mode
     0 - Select
     1 - L3
@@ -178,7 +178,7 @@ static uint8_t PSXControllerRead()
     Byte 17 - R2
     */
     int b1, b2;
-    uint8_t state = 0x00; 
+    uint8_t state = 0x00;
     uint16_t psx_state = 0x0000;
 
     // Initiate transfer
@@ -186,8 +186,8 @@ static uint8_t PSXControllerRead()
     digitalWrite(CONTROLLER_PSX_ATTENTION, LOW);
 
     PSXTransferByte(0x01);
-    PSXTransferByte(0x42); 
-    PSXTransferByte(0xFF); 
+    PSXTransferByte(0x42);
+    PSXTransferByte(0xFF);
     b1 = PSXTransferByte(0xFF);
     b2 = PSXTransferByte(0xFF);
 
@@ -225,7 +225,7 @@ static uint8_t PSXControllerRead()
     if (psx_state & PSX_RIGHT) state |= CONTROLLER::Right;
 
     // End transfer
-    digitalWrite(CONTROLLER_PSX_ATTENTION, HIGH);   
+    digitalWrite(CONTROLLER_PSX_ATTENTION, HIGH);
 
     return state;
 }

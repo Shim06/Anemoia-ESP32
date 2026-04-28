@@ -131,7 +131,7 @@ private:
 		bool silence_flag = false;
 	};
 
-	// Sound Channels 
+	// Sound Channels
 	struct pulseChannel
 	{
 		sequencerUnit seq;
@@ -196,7 +196,7 @@ private:
 	void triangleChannelClock(triangleChannel& triangle, bool enable);
 	void noiseChannelClock(noiseChannel& noise, bool enable);
 	void DMCChannelClock(DMCChannel& DMC, bool enable);
-    
+
 	void soundChannelEnvelopeClock(envelopeUnit& envelope);
 	void soundChannelSweeperClock(pulseChannel& channel);
 	void soundChannelLengthCounterClock(length_counter& len_counter);

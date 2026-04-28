@@ -75,7 +75,7 @@ IRAM_ATTR void Apu2A03::cpuWrite(uint16_t addr, uint8_t data)
 		pulse1.seq.cycle_position = 0;
 		pulse1.seq.reload = (pulse1.seq.reload & 0x00FF) | (uint16_t)((data & 0x07) << 8);
 		pulse1.seq.timer = pulse1.seq.reload;
-		pulse1.env.start_flag = true;	
+		pulse1.env.start_flag = true;
 
 		if (pulse1_enable) pulse1.len_counter.timer = length_counter_lookup[data >> 3] + 1;
 
@@ -241,7 +241,7 @@ IRAM_ATTR void Apu2A03::cpuWrite(uint16_t addr, uint8_t data)
 
 		if (((data >> 6) & 0x01) == 1)
 		{
-			IRQ = false; 
+			IRQ = false;
 			interrupt_inhibit = true;
 		}
 		else interrupt_inhibit = false;
@@ -287,7 +287,7 @@ IRAM_ATTR void Apu2A03::clock()
 		soundChannelEnvelopeClock(pulse2.env);
 		soundChannelEnvelopeClock(noise.env);
 		linearCounterClock(triangle.lin_counter);
-		
+
 		soundChannelSweeperClock(pulse1);
 		soundChannelLengthCounterClock(pulse1.len_counter);
 
@@ -313,7 +313,7 @@ IRAM_ATTR void Apu2A03::clock()
 			soundChannelEnvelopeClock(pulse2.env);
 			soundChannelEnvelopeClock(noise.env);
 			linearCounterClock(triangle.lin_counter);
-			
+
 			soundChannelSweeperClock(pulse1);
 			soundChannelLengthCounterClock(pulse1.len_counter);
 
@@ -333,7 +333,7 @@ IRAM_ATTR void Apu2A03::clock()
 			soundChannelEnvelopeClock(pulse2.env);
 			soundChannelEnvelopeClock(noise.env);
 			linearCounterClock(triangle.lin_counter);
-			
+
 			soundChannelSweeperClock(pulse1);
 			soundChannelLengthCounterClock(pulse1.len_counter);
 
@@ -366,7 +366,7 @@ IRAM_ATTR void Apu2A03::clock()
 		}
 		// Silencing the triangle channel when triangle.seq.reload < 2 is considered less accurate emulation,
 		// but eliminates high frequencies and popping
-		// if (!triangle_enable || triangle.len_counter.timer == 0 || triangle.seq.reload < 2) 
+		// if (!triangle_enable || triangle.len_counter.timer == 0 || triangle.seq.reload < 2)
 		// {
 		// 	triangle.seq.output = 0;
 		// 	triangle.env.output = 0;
@@ -379,7 +379,7 @@ IRAM_ATTR void Apu2A03::clock()
 
 inline void Apu2A03::generateSample()
 {
-	uint16_t index = (buffer_index << 1); 
+	uint16_t index = (buffer_index << 1);
 
 	uint16_t sample = 0;
 	sample += pulse1.seq.output ? pulse1.env.output : 0;
@@ -389,7 +389,7 @@ inline void Apu2A03::generateSample()
 
 	if (!(noise.shift_register & 0x01) && noise.len_counter.timer > 0)
 		sample += noise.env.output;
-		
+
 	// Clip audio and apply a low-pass filter
 	uint32_t temp = sample * volume;
 	sample = (uint16_t)(((temp + 50) / 100));
@@ -397,16 +397,16 @@ inline void Apu2A03::generateSample()
 	sample >>= 1;
 	sample &= 0xFF;
 	prev_sample = sample;
-	
+
 	sample <<= 8;
-    audio_buffer[index] = sample;	
-    audio_buffer[index + 1] = sample;	
+    audio_buffer[index] = sample;
+    audio_buffer[index + 1] = sample;
 
 	// Reset audio buffer index once filled
 	buffer_index++;
-	if (buffer_index >= AUDIO_BUFFER_SIZE) 
-    { 
-        buffer_index = 0; 
+	if (buffer_index >= AUDIO_BUFFER_SIZE)
+    {
+        buffer_index = 0;
 
         static size_t dummy;
         i2s_write(I2S_NUM_0, audio_buffer, sizeof(audio_buffer), &dummy, portMAX_DELAY);
@@ -450,7 +450,7 @@ inline void Apu2A03::triangleChannelClock(triangleChannel& triangle, bool enable
 }
 
 inline void Apu2A03::noiseChannelClock(noiseChannel& noise, bool enable)
-{   
+{
 	if (!enable) return; // Temp
 
 	noise.timer--;

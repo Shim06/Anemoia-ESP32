@@ -31,7 +31,7 @@ struct Mapper001_state
 	uint8_t CHR_bank_1 = 0x00; // CHR Bank 1 Register
 	uint8_t PRG_bank = 0x00; // PRG Bank Register
 
-    static constexpr Cartridge::MIRROR mirror[4] = 
+    static constexpr Cartridge::MIRROR mirror[4] =
     {
         Cartridge::MIRROR::ONESCREEN_LOW,
         Cartridge::MIRROR::ONESCREEN_HIGH,
@@ -58,7 +58,7 @@ IRAM_ATTR bool mapper001_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
         data = state->ptr_16K_PRG_banks[bank][addr & 0x3FFF];
         return true;
     }
-    
+
     data = state->ptr_16K_PRG_banks[(addr >> 14) & 1][addr & 0x3FFF];
     return true;
 }
@@ -73,7 +73,7 @@ IRAM_ATTR bool mapper001_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
 		state->RAM[addr & 0x1FFF] = data;
 		return true;
 	}
-    
+
     // If bit 7 is set clear load shift register
     if (!(data & 0x80))
     {
@@ -122,16 +122,16 @@ IRAM_ATTR bool mapper001_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
                 }
                 break;
 
-            // PRG bank Register 
+            // PRG bank Register
             case 3:
                 state->PRG_bank = state->load & 0x1F;
 
                 switch (state->PRG_ROM_bank_mode)
                 {
-                case 0: 
-                case 1: 
-                    state->ptr_16K_PRG_banks[2] = getBank(&state->PRG_16K_cache, state->PRG_bank & 0x0E, Mapper::ROM_TYPE::PRG_ROM); 
-                    state->ptr_16K_PRG_banks[3] = getBank(&state->PRG_16K_cache, (state->PRG_bank & 0x0E) + 1, Mapper::ROM_TYPE::PRG_ROM); 
+                case 0:
+                case 1:
+                    state->ptr_16K_PRG_banks[2] = getBank(&state->PRG_16K_cache, state->PRG_bank & 0x0E, Mapper::ROM_TYPE::PRG_ROM);
+                    state->ptr_16K_PRG_banks[3] = getBank(&state->PRG_16K_cache, (state->PRG_bank & 0x0E) + 1, Mapper::ROM_TYPE::PRG_ROM);
                     break;
                 case 2:
                     state->ptr_16K_PRG_banks[0] = getBank(&state->PRG_16K_cache, 0, Mapper::ROM_TYPE::PRG_ROM);
@@ -152,7 +152,7 @@ IRAM_ATTR bool mapper001_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
     }
     else
     {
-        state->load = 0x00;	
+        state->load = 0x00;
         state->load_writes = 0;
         state->control |= 0x0C;
     }
@@ -178,7 +178,7 @@ IRAM_ATTR bool mapper001_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
 IRAM_ATTR bool mapper001_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
 {
     if (addr > 0x1FFF) return false;
-	
+
     Mapper001_state* state = (Mapper001_state*)mapper->state;
     if (state->number_CHR_banks == 0)
     {
@@ -210,7 +210,7 @@ void mapper001_reset(Mapper* mapper)
     Mapper001_state* state = (Mapper001_state*)mapper->state;
     memset(state->RAM, 0, 8 * 1024);
 
-    if (state->number_CHR_banks == 0) 
+    if (state->number_CHR_banks == 0)
     {
         // Point 4K banks into the same memory
         state->ptr_8K_CHR_bank = state->CHR_RAM;
@@ -268,7 +268,7 @@ void mapper001_dumpState(Mapper* mapper, File& state)
     {
         CHR_8K = getBankIndex(&s->CHR_8K_cache, s->ptr_8K_CHR_bank);
         for (int i = 0; i < 2; i++) CHR_4K[i] = getBankIndex(&s->CHR_4K_cache, s->ptr_4K_CHR_banks[i]);
-        
+
         state.write((uint8_t*)&CHR_8K, sizeof(CHR_8K));
         state.write(CHR_4K, sizeof(CHR_4K));
     }
@@ -316,7 +316,7 @@ Mapper createMapper001(uint8_t PRG_banks, uint8_t CHR_banks, Cartridge* cart)
 {
     Mapper mapper;
     Mapper001_state* state = new Mapper001_state;
-    
+
     state->number_PRG_banks = PRG_banks;
     state->number_CHR_banks = CHR_banks;
     state->cart = cart;
@@ -324,7 +324,7 @@ Mapper createMapper001(uint8_t PRG_banks, uint8_t CHR_banks, Cartridge* cart)
     bankInit(&state->PRG_16K_cache, state->PRG_banks_16K, MAPPER001_NUM_PRG_BANKS_16K, 16*1024, cart);
     state->RAM = (uint8_t*)malloc(8*1024);
 
-    if (CHR_banks == 0) 
+    if (CHR_banks == 0)
     {
         // Allocate one shared 8 KB RAM
         state->CHR_RAM = (uint8_t*)malloc(8 * 1024);

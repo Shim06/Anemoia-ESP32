@@ -36,7 +36,7 @@ Ppu2C02::~Ppu2C02()
 inline void Ppu2C02::ppuWrite(uint16_t addr, uint8_t data)
 {
     addr &= 0x3FFF;
-    
+
     if (cart->ppuWrite(addr, data)) return;
     else if (addr >= 0x2000 && addr <= 0x3EFF)
     {
@@ -53,7 +53,7 @@ inline uint8_t Ppu2C02::ppuRead(uint16_t addr)
 {
     uint8_t data = 0x00;
     addr &= 0x3FFF;
-    
+
     if (cart->ppuRead(addr, data)) return data;
     else if (addr >= 0x2000 && addr <= 0x3EFF)
     {
@@ -188,7 +188,7 @@ inline void Ppu2C02::incrementY()
         v.fine_y++;
         return;
     }
-    
+
     v.fine_y = 0;
     if (v.coarse_y == 29)
     {
@@ -200,14 +200,14 @@ inline void Ppu2C02::incrementY()
 }
 
 inline void Ppu2C02::renderBackground()
-{   
+{
     // Show transparency pixel if not rendering background
     if (!mask.render_background)
     {
         uint16_t bg_color = nes_palette[mask.emphasize][palette_table[0]];
         uint32_t color32 = ((uint32_t)bg_color << 16) | bg_color;
         uint32_t* buffer = (uint32_t*)scanline_buffer;
-        for (int i = 0, size = (BUFFER_SIZE >> 1); i < size; i++) 
+        for (int i = 0, size = (BUFFER_SIZE >> 1); i < size; i++)
             buffer[i] = color32;
 
         memset(scanline_metadata, 0x80, BUFFER_SIZE);
@@ -238,7 +238,7 @@ inline void Ppu2C02::renderBackground()
     for (int tile = 0; tile < 33; tile++)
     {
         tile_index = *ptr_tile++;
-        ptr_pattern_tile = cart->ppuReadPtr(offset + (tile_index << 4)); 
+        ptr_pattern_tile = cart->ppuReadPtr(offset + (tile_index << 4));
 
         // draw to framebuffer
         uint16_t pattern = ((ptr_pattern_tile[8] & 0xAA) << 8) | ((ptr_pattern_tile[8] & 0x55) << 1)
@@ -247,7 +247,7 @@ inline void Ppu2C02::renderBackground()
         tile_palette[0] = bg_color;
         for (int t = 1; t < 4; t++) tile_palette[t] = nes_palette[mask.emphasize][READ_PALETTE(attribute + t)];
         for (int i = 0; i < 8; i++)
-        {   
+        {
             uint8_t pixel = (pattern >> pixel_shift[i]) & 3;
             *ptr_buffer++ = tile_palette[pixel];
             *ptr_scanline_meta++ = pixel_metadata[pixel]; // Store if pixel is transparent for sprite rendering
@@ -281,7 +281,7 @@ inline void Ppu2C02::renderBackground()
 
 inline void Ppu2C02::renderSprites()
 {
-    if (!mask.render_sprite) 
+    if (!mask.render_sprite)
     {
         return;
     }
@@ -306,7 +306,7 @@ inline void Ppu2C02::renderSprites()
         uint8_t sprite_x, sprite_y;
         sprite_y = ptr_sprite_OAM->y + 1;
         // Check if sprite is in scanline
-        if ((sprite_y > scanline) || (sprite_y <= (scanline - sprite_size)) 
+        if ((sprite_y > scanline) || (sprite_y <= (scanline - sprite_size))
             || (sprite_y == 0) || (sprite_y >= 240))
             continue;
 
@@ -317,7 +317,7 @@ inline void Ppu2C02::renderSprites()
         tile_index = ptr_sprite_OAM->index;
         attribute_byte = ptr_sprite_OAM->attribute;
         attribute = ((attribute_byte & 0x03) << 2);
-    
+
         ptr_buffer = buffer_offset + sprite_x;
         ptr_scanline_meta = metadata_offset + sprite_x;
 
@@ -424,7 +424,7 @@ void Ppu2C02::fakeSpriteHit(uint16_t current_scanline)
     uint8_t sprite_y;
     sprite_y = sprite[0].y + 1;
     // Check if sprite is in scanline
-    if ((sprite_y > scanline) || (sprite_y <= (scanline - sprite_size)) 
+    if ((sprite_y > scanline) || (sprite_y <= (scanline - sprite_size))
         || (sprite_y == 0) || (sprite_y >= 240))
         return;
 
@@ -480,7 +480,7 @@ void Ppu2C02::fakeSpriteHit(uint16_t current_scanline)
 
         // for (int i = 0; i < 8; i++)
         // {
-        //     if (pixel[i]) 
+        //     if (pixel[i])
         //     {
         //         status.sprite_zero_hit = true;
         //         return;
@@ -491,7 +491,7 @@ void Ppu2C02::fakeSpriteHit(uint16_t current_scanline)
 
 inline void Ppu2C02::finishScanline()
 {
-    if (mask.render_background || mask.render_sprite) 
+    if (mask.render_background || mask.render_sprite)
         cart->ppuScanline();
 
     // Transfer internal scanline buffer to display buffer
@@ -501,18 +501,18 @@ inline void Ppu2C02::finishScanline()
         uint32_t* display = (uint32_t*)(ptr_display + (scanline_counter * SCANLINE_SIZE));
     #endif
     uint32_t* buffer = (uint32_t*)ptr_buffer;
-    for (int i = 0, size = (SCANLINE_SIZE >> 1); i < size; i++) 
+    for (int i = 0, size = (SCANLINE_SIZE >> 1); i < size; i++)
         display[i] = buffer[i];
 
     scanline_counter++;
-    if (scanline_counter >= SCANLINES_PER_BUFFER) 
-    { 
+    if (scanline_counter >= SCANLINES_PER_BUFFER)
+    {
         #ifdef ILI9341_DRIVER
             uint16_t* temp = ptr_display;
             ptr_display = ptr_back_buffer;
             ptr_back_buffer = temp;
         #endif
-            
+
         bus->renderImage(scanline - (SCANLINES_PER_BUFFER - 1));
         scanline_counter = 0;
     }
@@ -571,25 +571,25 @@ void Ppu2C02::setMirror(Cartridge::MIRROR mirror)
 
 Cartridge::MIRROR Ppu2C02::getMirror()
 {
-    if (ptr_nametable[0] == &nametable[0x0000] && 
+    if (ptr_nametable[0] == &nametable[0x0000] &&
         ptr_nametable[1] == &nametable[0x0400] &&
         ptr_nametable[2] == &nametable[0x0000] &&
         ptr_nametable[3] == &nametable[0x0400])
         return Cartridge::MIRROR::VERTICAL;
 
-    if (ptr_nametable[0] == &nametable[0x0000] && 
+    if (ptr_nametable[0] == &nametable[0x0000] &&
         ptr_nametable[1] == &nametable[0x0000] &&
         ptr_nametable[2] == &nametable[0x0400] &&
         ptr_nametable[3] == &nametable[0x0400])
         return Cartridge::MIRROR::HORIZONTAL;
 
-    if (ptr_nametable[0] == &nametable[0x0000] && 
+    if (ptr_nametable[0] == &nametable[0x0000] &&
         ptr_nametable[1] == &nametable[0x0000] &&
         ptr_nametable[2] == &nametable[0x0000] &&
         ptr_nametable[3] == &nametable[0x0000])
         return Cartridge::MIRROR::ONESCREEN_LOW;
 
-    if (ptr_nametable[0] == &nametable[0x0400] && 
+    if (ptr_nametable[0] == &nametable[0x0400] &&
         ptr_nametable[1] == &nametable[0x0400] &&
         ptr_nametable[2] == &nametable[0x0400] &&
         ptr_nametable[3] == &nametable[0x0400])
@@ -613,7 +613,7 @@ void Ppu2C02::setPalette(uint8_t palette)
     case NTSC222:
         nes_palette = palette_NTSC222;
         break;
-    
+
     case PAL222:
         nes_palette = palette_PAL222;
         break;
@@ -628,7 +628,7 @@ void Ppu2C02::dumpState(File& state)
     for (int i = 0; i < 4; i++)
     {
         uint8_t map = 0;
-        if (ptr_nametable[i] == &nametable[0x0400]) 
+        if (ptr_nametable[i] == &nametable[0x0400])
             map = 1;
 
         state.write((uint8_t*)&map, sizeof(map));

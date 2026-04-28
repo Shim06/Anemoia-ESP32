@@ -1,7 +1,7 @@
 #include "cpu6502.h"
 #include "bus.h"
 
-constexpr uint8_t Cpu6502::instr_cycles[256] = 
+constexpr uint8_t Cpu6502::instr_cycles[256] =
 {
     7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6,
     2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
@@ -21,7 +21,7 @@ constexpr uint8_t Cpu6502::instr_cycles[256] =
     2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7
 };
 
-constexpr uint8_t Cpu6502::zn_table[256] = 
+constexpr uint8_t Cpu6502::zn_table[256] =
 {
     #define ENTRY(v) (((v) == 0 ? Cpu6502::Z : 0) | ((v) & Cpu6502::N))
     ENTRY(0x00), ENTRY(0x01), ENTRY(0x02), ENTRY(0x03), ENTRY(0x04), ENTRY(0x05), ENTRY(0x06), ENTRY(0x07), ENTRY(0x08), ENTRY(0x09), ENTRY(0x0A), ENTRY(0x0B), ENTRY(0x0C), ENTRY(0x0D), ENTRY(0x0E), ENTRY(0x0F),
@@ -52,8 +52,8 @@ Cpu6502::Cpu6502()
 
 Cpu6502::~Cpu6502()
 {
-    
-}   
+
+}
 
 inline uint8_t Cpu6502::read(uint16_t addr)
 {
@@ -466,7 +466,7 @@ inline void Cpu6502::IND()
 	uint8_t high_byte = read(PC++);
 
 	uint16_t ptr = (high_byte << 8) | low_byte;
-	
+
 	if (low_byte == 0xFF)
 		addr_abs = (read(ptr & 0xFF00) << 8) | read(ptr);
 	else

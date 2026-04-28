@@ -37,7 +37,7 @@ public:
     void ppuScanline();
     void cpuCycle(int cycles);
     void reset();
-    
+
     void loadPRGBank(uint8_t* bank, uint16_t size, uint32_t offset);
     void loadCHRBank(uint8_t* bank, uint16_t size, uint32_t offset);
     void setMirrorMode(MIRROR mirror);
