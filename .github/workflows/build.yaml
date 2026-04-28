@@ -10,9 +10,6 @@ on:
       - "**.ino"
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-
 permissions:
   contents: read
   pages: write
@@ -107,6 +104,34 @@ jobs:
             ~/Arduino/libraries
           key: ${{ runner.os }}-arduino-esp32-3.2.1
 
+      - name: Cache clang tools
+        if: matrix.display == 'ST7789' && matrix.swap == 'swap_bytes' && matrix.screen_freq == 'screen_freq_80MHz'
+        id: cache-clang
+        uses: actions/cache@v5
+        with:
+          path: |
+            /usr/lib/llvm-17
+            /usr/bin/clang-format-17
+            /usr/bin/clang-tidy-17
+          key: clang-17-ubuntu-latest
+
+      - name: Install clang tools
+        if: steps.cache-clang.outputs.cache-hit != 'true' && matrix.display == 'ST7789' && matrix.swap == 'swap_bytes' && matrix.screen_freq == 'screen_freq_80MHz'
+        run: sudo apt-get install -y clang-format-17 clang-tidy-17
+
+      - name: Build defines and platform flags
+        run: |
+          DEFINES=""
+          [ "${{ matrix.swap }}"   = "swap_bytes" ] && DEFINES="$DEFINES -DSCREEN_SWAP_BYTES" || DEFINES="$DEFINES -USCREEN_SWAP_BYTES"
+          [ "${{ matrix.debug }}"  = "debug_on"   ] && DEFINES="$DEFINES -DDEBUG"             || DEFINES="$DEFINES -UDEBUG"
+          [ "${{ matrix.device }}" = "cyd"        ] && DEFINES="$DEFINES -DCHEAP_YELLOW_DISPLAY_CONF"
+          [ "${{ matrix.device }}" = "module"     ] && DEFINES="$DEFINES -DMODULE_BASED_PCB_CONF"
+          [ "${{ matrix.device }}" = "discrete"   ] && DEFINES="$DEFINES -DDISCRETE_PCB_CONF"
+          PLATFORM_FLAGS="-DOPTIMIZATION_FLAGS -Ofast -ffunction-sections -fdata-sections -fno-exceptions -fno-rtti -funroll-loops -fno-tree-vectorize -frename-registers -fno-plt -flto"
+
+          echo "DEFINES=$DEFINES" >> $GITHUB_ENV
+          echo "PLATFORM_FLAGS=$PLATFORM_FLAGS" >> $GITHUB_ENV
+
       - name: Configure platform.txt and User_Setup.h
         run: |
           # Copy platform.txt from Anemoia-ESP32 repo
@@ -147,13 +172,7 @@ jobs:
           echo "Debug:        ${{ matrix.debug }}"
           echo ""
           echo "========== COMPILER DEFINES =========="
-          DEFINES=""
-          [ "${{ matrix.swap }}"   = "swap_bytes" ] && DEFINES="$DEFINES -DSCREEN_SWAP_BYTES" || DEFINES="$DEFINES -USCREEN_SWAP_BYTES"
-          [ "${{ matrix.debug }}"  = "debug_on"   ] && DEFINES="$DEFINES -DDEBUG"             || DEFINES="$DEFINES -UDEBUG"
-          [ "${{ matrix.device }}" = "cyd"        ] && DEFINES="$DEFINES -DCHEAP_YELLOW_DISPLAY_CONF"
-          [ "${{ matrix.device }}" = "module"     ] && DEFINES="$DEFINES -DMODULE_BASED_PCB_CONF"
-          [ "${{ matrix.device }}" = "discrete"   ] && DEFINES="$DEFINES -DDISCRETE_PCB_CONF"
-          echo "Extra defines: $DEFINES"
+          echo "Extra defines: ${{ env.DEFINES }}"
           echo ""
           echo "========== USER_SETUP.H =========="
           cat ~/Arduino/libraries/TFT_eSPI/User_Setup.h
@@ -170,21 +189,36 @@ jobs:
           fi
           echo "=========================================="
 
-      - name: Compile firmware
+      - name: Generate compile_commands.json
+        if: matrix.display == 'ST7789' && matrix.swap == 'swap_bytes' && matrix.screen_freq == 'screen_freq_80MHz'
         run: |
-          DEFINES=""
-          [ "${{ matrix.swap }}"  = "swap_bytes" ] && DEFINES="$DEFINES -DSCREEN_SWAP_BYTES" || DEFINES="$DEFINES -USCREEN_SWAP_BYTES"
-          [ "${{ matrix.debug }}" = "debug_on"   ] && DEFINES="$DEFINES -DDEBUG"             || DEFINES="$DEFINES -UDEBUG"
-          [ "${{ matrix.device }}" = "cyd" ] && DEFINES="$DEFINES -DCHEAP_YELLOW_DISPLAY_CONF"
-          [ "${{ matrix.device }}" = "module"     ] && DEFINES="$DEFINES -DMODULE_BASED_PCB_CONF"
-          [ "${{ matrix.device }}" = "discrete"   ] && DEFINES="$DEFINES -DDISCRETE_PCB_CONF"
-
-          VARIANT="${{ matrix.device }}-${{ matrix.display }}-${{ matrix.swap }}-${{ matrix.screen_freq }}-${{ matrix.debug }}"
-          PLATFORM_FLAGS="-Ofast -ffunction-sections -fdata-sections -fno-exceptions -fno-rtti -funroll-loops -fno-tree-vectorize -frename-registers -fno-plt -flto"
           arduino-cli compile \
             --fqbn "esp32:esp32:esp32" \
-            --build-property "compiler.cpp.extra_flags=$PLATFORM_FLAGS -DOPTIMIZATION_FLAGS $DEFINES" \
-            --build-property "compiler.c.extra_flags=$PLATFORM_FLAGS $DEFINES" \
+            --only-compilation-database \
+            --build-property "compiler.cpp.extra_flags=${{ env.PLATFORM_FLAGS }} ${{ env.DEFINES }}" \
+            --build-property "compiler.c.extra_flags=${{ env.PLATFORM_FLAGS }} ${{ env.DEFINES }}" \
+            --build-path ./build \
+            .
+
+      - name: Run clang-format
+        if: matrix.display == 'ST7789' && matrix.swap == 'swap_bytes' && matrix.screen_freq == 'screen_freq_80MHz' && matrix.device == 'esp32' && matrix.debug == 'debug_on'
+        run: |
+          find . -name "*.cpp" -o -name "*.h" -o -name "*.c" -o -name "*.ino" | \
+          xargs clang-format-17 --dry-run --Werror
+
+      - name: Run clang-tidy
+        if: matrix.display == 'ST7789' && matrix.swap == 'swap_bytes' && matrix.screen_freq == 'screen_freq_80MHz'
+        run: |
+          find . -name "*.cpp" -o -name "*.h" -o -name "*.c" | \
+          xargs clang-tidy-17 -p build/
+
+      - name: Compile firmware
+        run: |
+          VARIANT="${{ matrix.device }}-${{ matrix.display }}-${{ matrix.swap }}-${{ matrix.screen_freq }}-${{ matrix.debug }}"
+          arduino-cli compile \
+            --fqbn "esp32:esp32:esp32" \
+            --build-property "compiler.cpp.extra_flags=${{ env.PLATFORM_FLAGS }} ${{ env.DEFINES }}" \
+            --build-property "compiler.c.extra_flags=${{ env.PLATFORM_FLAGS }} ${{ env.DEFINES }}" \
             --build-property "build.event_core=0" \
             --build-property "build.loop_core=1" \
             --build-property "build.flash_size=4MB" \
