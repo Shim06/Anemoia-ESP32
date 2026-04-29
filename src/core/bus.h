@@ -1,15 +1,15 @@
 #ifndef BUS_H
 #define BUS_H
 
-#include <Arduino.h>
-#include <TFT_eSPI.h>
-#include <stdio.h>
-#include <stdint.h>
-#include "config.h"
-#include "cartridge.h"
 #include "../debug.h"
+#include "cartridge.h"
+#include "config.h"
 #include "cpu6502.h"
 #include "ppu2C02.h"
+#include <Arduino.h>
+#include <TFT_eSPI.h>
+#include <stdint.h>
+#include <stdio.h>
 
 class Bus
 {

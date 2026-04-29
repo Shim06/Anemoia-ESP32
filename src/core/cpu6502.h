@@ -8,9 +8,9 @@
 #include "apu2A03.h"
 #include "cartridge.h"
 
-#define GET_FLAG(f) ((status & (f)) != 0)
+#define GET_FLAG(f)    ((status & (f)) != 0)
 #define SET_FLAG(f, v) (status = (v) ? (status | (f)) : (status & ~(f)))
-#define SET_ZN(v) (status = ((status & ~(Z | N)) | zn_table[(v)]))
+#define SET_ZN(v)      (status = ((status & ~(Z | N)) | zn_table[(v)]))
 
 class Bus;
 class Cpu6502
@@ -47,15 +47,21 @@ public:
     void dumpState(File& state);
     void loadState(File& state);
 
-    void connectBus(Bus* n) { bus = n; }
-    void connectCartridge(Cartridge* cartridge) { cart = cartridge; }
+    void connectBus(Bus* n)
+    {
+        bus = n;
+    }
+    void connectCartridge(Cartridge* cartridge)
+    {
+        cart = cartridge;
+    }
 
     // Registers
-    uint8_t A = 0x00; // Accumulator
-    uint8_t X = 0x00; // X Index
-    uint8_t Y = 0x00; // Y Index
-    uint16_t PC = 0x0000; // Program Counter
-    uint8_t SP = 0x00; // Stack Pointer
+    uint8_t A = 0x00;      // Accumulator
+    uint8_t X = 0x00;      // X Index
+    uint8_t Y = 0x00;      // Y Index
+    uint16_t PC = 0x0000;  // Program Counter
+    uint8_t SP = 0x00;     // Stack Pointer
     uint8_t status = 0x00; // Status register
 
     uint8_t fetched = 0x00;
@@ -77,6 +83,7 @@ private:
     void write(uint16_t addr, uint8_t data);
     void OAM_Write(uint8_t addr, uint8_t data);
 
+    // clang-format off
 	// Addressing Modes
 	void ABS();	void IDX();
 	void ABX();	void IDY();
@@ -101,6 +108,7 @@ private:
 	void Instr_BVS(); void Instr_JMP(); void Instr_RTS(); void Instr_LDA();
 	void Instr_CLC(); void Instr_JSR(); void Instr_SBC(); void Instr_SEC();
 	void Instr_XXX();
+    // clang-format on
 
     // Instruction cycle count
     static const uint8_t instr_cycles[256];

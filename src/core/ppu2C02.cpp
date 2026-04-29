@@ -1,15 +1,14 @@
 #include "ppu2C02.h"
 #include "bus.h"
 
-
 #define READ_PALETTE(x) palette_table[((x) & 0x1F) ^ (((x) & 0x13) == 0x10 ? 0x10 : 0x00)]
 #ifdef ILI9341_DRIVER
-    DMA_ATTR uint16_t Ppu2C02::display_buffer_front[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
-    DMA_ATTR uint16_t Ppu2C02::display_buffer_back[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
-    uint16_t* Ppu2C02::ptr_display = Ppu2C02::display_buffer_front;
-    uint16_t* Ppu2C02::ptr_back_buffer = Ppu2C02::display_buffer_back;
+DMA_ATTR uint16_t Ppu2C02::display_buffer_front[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
+DMA_ATTR uint16_t Ppu2C02::display_buffer_back[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
+uint16_t* Ppu2C02::ptr_display = Ppu2C02::display_buffer_front;
+uint16_t* Ppu2C02::ptr_back_buffer = Ppu2C02::display_buffer_back;
 #else
-    DMA_ATTR uint16_t Ppu2C02::display_buffer[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
+DMA_ATTR uint16_t Ppu2C02::display_buffer[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
 #endif
 constexpr uint8_t Ppu2C02::palette_mirror[32];
 
@@ -19,18 +18,17 @@ Ppu2C02::Ppu2C02()
     memset(palette_table, 0, sizeof(palette_table));
     memset(scanline_buffer, 0, sizeof(scanline_buffer));
     memset(scanline_metadata, 0, sizeof(scanline_metadata));
-    #ifdef ILI9341_DRIVER
-        memset(display_buffer_front, 0, sizeof(display_buffer_front));
-        memset(display_buffer_back, 0, sizeof(display_buffer_back));
-    #else
-        memset(display_buffer, 0, sizeof(display_buffer));
-    #endif
+#ifdef ILI9341_DRIVER
+    memset(display_buffer_front, 0, sizeof(display_buffer_front));
+    memset(display_buffer_back, 0, sizeof(display_buffer_back));
+#else
+    memset(display_buffer, 0, sizeof(display_buffer));
+#endif
     memset(sprite, 0, sizeof(sprite));
 }
 
 Ppu2C02::~Ppu2C02()
 {
-
 }
 
 inline void Ppu2C02::ppuWrite(uint16_t addr, uint8_t data)
@@ -107,10 +105,7 @@ IRAM_ATTR void Ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
         w = ~w;
         break;
     case 0x0006: // PPUADDR
-        if (w == 0)
-        {
-            t.reg = (t.reg & 0x00FF) | (uint16_t)((data & 0x3F) << 8);
-        }
+        if (w == 0) { t.reg = (t.reg & 0x00FF) | (uint16_t)((data & 0x3F) << 8); }
         else
         {
             t.reg = (t.reg & 0xFF00) | data;
@@ -207,8 +202,7 @@ inline void Ppu2C02::renderBackground()
         uint16_t bg_color = nes_palette[mask.emphasize][palette_table[0]];
         uint32_t color32 = ((uint32_t)bg_color << 16) | bg_color;
         uint32_t* buffer = (uint32_t*)scanline_buffer;
-        for (int i = 0, size = (BUFFER_SIZE >> 1); i < size; i++)
-            buffer[i] = color32;
+        for (int i = 0, size = (BUFFER_SIZE >> 1); i < size; i++) buffer[i] = color32;
 
         memset(scanline_metadata, 0x80, BUFFER_SIZE);
         ptr_buffer = scanline_buffer + x;
@@ -233,7 +227,8 @@ inline void Ppu2C02::renderBackground()
     attribute_shift = ((y_tile & 2) << 1) + (x_tile & 2);
     attribute = ((attribute_byte >> attribute_shift) & 3) << 2;
 
-    static constexpr DRAM_ATTR uint8_t pixel_shift[8] = { 14, 6, 12, 4, 10, 2, 8, 0 }; // Shifts to get the bits of a pixel
+    // Shifts to get the bits of a pixel
+    static constexpr DRAM_ATTR uint8_t pixel_shift[8] = { 14, 6, 12, 4, 10, 2, 8, 0 };
     static constexpr DRAM_ATTR uint8_t pixel_metadata[4] = { 0x80, 0x00, 0x00, 0x00 };
     for (int tile = 0; tile < 33; tile++)
     {
@@ -241,16 +236,19 @@ inline void Ppu2C02::renderBackground()
         ptr_pattern_tile = cart->ppuReadPtr(offset + (tile_index << 4));
 
         // draw to framebuffer
-        uint16_t pattern = ((ptr_pattern_tile[8] & 0xAA) << 8) | ((ptr_pattern_tile[8] & 0x55) << 1)
-                    | ((ptr_pattern_tile[0] & 0xAA) << 7) | (ptr_pattern_tile[0] & 0x55);
+        uint16_t pattern = ((ptr_pattern_tile[8] & 0xAA) << 8) |
+                           ((ptr_pattern_tile[8] & 0x55) << 1) |
+                           ((ptr_pattern_tile[0] & 0xAA) << 7) | (ptr_pattern_tile[0] & 0x55);
         uint16_t tile_palette[4];
         tile_palette[0] = bg_color;
-        for (int t = 1; t < 4; t++) tile_palette[t] = nes_palette[mask.emphasize][READ_PALETTE(attribute + t)];
+        for (int t = 1; t < 4; t++)
+            tile_palette[t] = nes_palette[mask.emphasize][READ_PALETTE(attribute + t)];
         for (int i = 0; i < 8; i++)
         {
             uint8_t pixel = (pattern >> pixel_shift[i]) & 3;
             *ptr_buffer++ = tile_palette[pixel];
-            *ptr_scanline_meta++ = pixel_metadata[pixel]; // Store if pixel is transparent for sprite rendering
+            *ptr_scanline_meta++ = pixel_metadata[pixel];
+            // Store if pixel is transparent for sprite rendering
         }
 
         x_tile++;
@@ -281,10 +279,7 @@ inline void Ppu2C02::renderBackground()
 
 inline void Ppu2C02::renderSprites()
 {
-    if (!mask.render_sprite)
-    {
-        return;
-    }
+    if (!mask.render_sprite) { return; }
 
     OAM* ptr_sprite_OAM;
     uint8_t sprite_size;
@@ -306,8 +301,8 @@ inline void Ppu2C02::renderSprites()
         uint8_t sprite_x, sprite_y;
         sprite_y = ptr_sprite_OAM->y + 1;
         // Check if sprite is in scanline
-        if ((sprite_y > scanline) || (sprite_y <= (scanline - sprite_size))
-            || (sprite_y == 0) || (sprite_y >= 240))
+        if ((sprite_y > scanline) || (sprite_y <= (scanline - sprite_size)) || (sprite_y == 0) ||
+            (sprite_y >= 240))
             continue;
 
         int16_t y_offset;
@@ -322,7 +317,8 @@ inline void Ppu2C02::renderSprites()
         ptr_scanline_meta = metadata_offset + sprite_x;
 
         // If 8x16 sprite mode
-        tile_addr = (control.sprite_size) ? ((tile_index & 0x01) << 12) | ((tile_index & 0xFE) << 4) : offset + (tile_index << 4);
+        tile_addr = (control.sprite_size) ? ((tile_index & 0x01) << 12) | ((tile_index & 0xFE) << 4)
+                                          : offset + (tile_index << 4);
         ptr_tile = cart->ppuReadPtr(tile_addr);
 
         y_offset = scanline - sprite_y;
@@ -335,13 +331,14 @@ inline void Ppu2C02::renderSprites()
         else ptr_tile += y_offset;
 
         // Draw to buffer
-        uint16_t pattern = ((ptr_tile[8] & 0xAA) << 8) | ((ptr_tile[8] & 0x55) << 1)
-                    | ((ptr_tile[0] & 0xAA) << 7) | (ptr_tile[0] & 0x55);
+        uint16_t pattern = ((ptr_tile[8] & 0xAA) << 8) | ((ptr_tile[8] & 0x55) << 1) |
+                           ((ptr_tile[0] & 0xAA) << 7) | (ptr_tile[0] & 0x55);
         if (pattern)
         {
             uint8_t pixel[8];
             uint8_t palette_offset = 16 + attribute;
-            for (int t = 1; t < 4; t++) tile_palette[t] = nes_palette[mask.emphasize][READ_PALETTE(palette_offset + t)];
+            for (int t = 1; t < 4; t++)
+                tile_palette[t] = nes_palette[mask.emphasize][READ_PALETTE(palette_offset + t)];
 
             if (attribute_byte & 0x40) // If flip sprite horizontally
             {
@@ -380,7 +377,8 @@ inline void Ppu2C02::renderSprites()
             }
 
             // Render sprite pixels on scanline buffer
-            if (attribute_byte & 0x20) // Sprite Priorty : 1 - behind background | 0 - in front of background
+            // Sprite Priorty : 1 - behind background | 0 - in front of background
+            if (attribute_byte & 0x20)
             {
                 for (int j = 0; j < 8; j++)
                 {
@@ -397,7 +395,7 @@ inline void Ppu2C02::renderSprites()
                 {
                     if (pixel[j] && ((ptr_scanline_meta[j] & 0x40) == 0))
                     {
-                        ptr_buffer[j] = tile_palette[pixel[j]];;
+                        ptr_buffer[j] = tile_palette[pixel[j]];
                         ptr_scanline_meta[j] |= 0x40;
                     }
                 }
@@ -405,7 +403,11 @@ inline void Ppu2C02::renderSprites()
         }
 
         // If sprite overflow, break
-        if (++sprite_count == 8) { status.sprite_overflow = true; break; }
+        if (++sprite_count == 8)
+        {
+            status.sprite_overflow = true;
+            break;
+        }
     }
 
     ptr_buffer = buffer_offset;
@@ -424,8 +426,8 @@ void Ppu2C02::fakeSpriteHit(uint16_t current_scanline)
     uint8_t sprite_y;
     sprite_y = sprite[0].y + 1;
     // Check if sprite is in scanline
-    if ((sprite_y > scanline) || (sprite_y <= (scanline - sprite_size))
-        || (sprite_y == 0) || (sprite_y >= 240))
+    if ((sprite_y > scanline) || (sprite_y <= (scanline - sprite_size)) || (sprite_y == 0) ||
+        (sprite_y >= 240))
         return;
 
     int16_t y_offset;
@@ -434,7 +436,8 @@ void Ppu2C02::fakeSpriteHit(uint16_t current_scanline)
     tile_index = sprite[0].index;
     attribute_byte = sprite[0].attribute;
 
-    tile_addr = (control.sprite_size) ? ((tile_index & 0x01) << 12) | ((tile_index & 0xFE) << 4) : offset + (tile_index << 4);
+    tile_addr = (control.sprite_size) ? ((tile_index & 0x01) << 12) | ((tile_index & 0xFE) << 4)
+                                      : offset + (tile_index << 4);
     ptr_tile = cart->ppuReadPtr(tile_addr);
 
     y_offset = scanline - sprite_y;
@@ -448,8 +451,8 @@ void Ppu2C02::fakeSpriteHit(uint16_t current_scanline)
     else ptr_tile += y_offset;
 
     // Draw to buffer
-    uint16_t pattern = ((ptr_tile[8] & 0xAA) << 8) | ((ptr_tile[8] & 0x55) << 1)
-                    | ((ptr_tile[0] & 0xAA) << 7) | (ptr_tile[0] & 0x55);
+    uint16_t pattern = ((ptr_tile[8] & 0xAA) << 8) | ((ptr_tile[8] & 0x55) << 1) |
+                       ((ptr_tile[0] & 0xAA) << 7) | (ptr_tile[0] & 0x55);
     if (pattern)
     {
         status.sprite_zero_hit = true;
@@ -491,27 +494,25 @@ void Ppu2C02::fakeSpriteHit(uint16_t current_scanline)
 
 inline void Ppu2C02::finishScanline()
 {
-    if (mask.render_background || mask.render_sprite)
-        cart->ppuScanline();
+    if (mask.render_background || mask.render_sprite) cart->ppuScanline();
 
-    // Transfer internal scanline buffer to display buffer
-    #ifdef ILI9341_DRIVER
-        uint32_t* display = (uint32_t*)(ptr_back_buffer + (scanline_counter * SCANLINE_SIZE));
-    #else
-        uint32_t* display = (uint32_t*)(ptr_display + (scanline_counter * SCANLINE_SIZE));
-    #endif
+// Transfer internal scanline buffer to display buffer
+#ifdef ILI9341_DRIVER
+    uint32_t* display = (uint32_t*)(ptr_back_buffer + (scanline_counter * SCANLINE_SIZE));
+#else
+    uint32_t* display = (uint32_t*)(ptr_display + (scanline_counter * SCANLINE_SIZE));
+#endif
     uint32_t* buffer = (uint32_t*)ptr_buffer;
-    for (int i = 0, size = (SCANLINE_SIZE >> 1); i < size; i++)
-        display[i] = buffer[i];
+    for (int i = 0, size = (SCANLINE_SIZE >> 1); i < size; i++) display[i] = buffer[i];
 
     scanline_counter++;
     if (scanline_counter >= SCANLINES_PER_BUFFER)
     {
-        #ifdef ILI9341_DRIVER
-            uint16_t* temp = ptr_display;
-            ptr_display = ptr_back_buffer;
-            ptr_back_buffer = temp;
-        #endif
+#ifdef ILI9341_DRIVER
+        uint16_t* temp = ptr_display;
+        ptr_display = ptr_back_buffer;
+        ptr_back_buffer = temp;
+#endif
 
         bus->renderImage(scanline - (SCANLINES_PER_BUFFER - 1));
         scanline_counter = 0;
@@ -521,15 +522,15 @@ inline void Ppu2C02::finishScanline()
 void Ppu2C02::reset()
 {
     status.reg = 0x00;
-	mask.reg = 0x00;
-	control.reg = 0x00;
-	t.reg = 0x00;
-	v.reg = 0x00;
-	x = 0x00;
+    mask.reg = 0x00;
+    control.reg = 0x00;
+    t.reg = 0x00;
+    v.reg = 0x00;
+    x = 0x00;
     w = 0x00;
     OAMADDR = 0x00;
     OAMDATA = 0x00;
-	PPUDATA_buffer = 0x00;
+    PPUDATA_buffer = 0x00;
     nametable_byte = 0x00;
     attribute_byte = 0x00;
 }
@@ -544,55 +545,49 @@ void Ppu2C02::setMirror(Cartridge::MIRROR mirror)
 {
     switch (mirror)
     {
-        case Cartridge::MIRROR::VERTICAL:
-            ptr_nametable[0] = &nametable[0x0000];
-            ptr_nametable[1] = &nametable[0x0400];
-            ptr_nametable[2] = &nametable[0x0000];
-            ptr_nametable[3] = &nametable[0x0400];
-            break;
+    case Cartridge::MIRROR::VERTICAL:
+        ptr_nametable[0] = &nametable[0x0000];
+        ptr_nametable[1] = &nametable[0x0400];
+        ptr_nametable[2] = &nametable[0x0000];
+        ptr_nametable[3] = &nametable[0x0400];
+        break;
 
-        case Cartridge::MIRROR::HORIZONTAL:
-            ptr_nametable[0] = &nametable[0x0000];
-            ptr_nametable[1] = &nametable[0x0000];
-            ptr_nametable[2] = &nametable[0x0400];
-            ptr_nametable[3] = &nametable[0x0400];
-            break;
+    case Cartridge::MIRROR::HORIZONTAL:
+        ptr_nametable[0] = &nametable[0x0000];
+        ptr_nametable[1] = &nametable[0x0000];
+        ptr_nametable[2] = &nametable[0x0400];
+        ptr_nametable[3] = &nametable[0x0400];
+        break;
 
-        case Cartridge::MIRROR::ONESCREEN_LOW:
-            ptr_nametable[0] = ptr_nametable[1] = ptr_nametable[2] = ptr_nametable[3] = &nametable[0x0000];
-            break;
+    case Cartridge::MIRROR::ONESCREEN_LOW:
+        ptr_nametable[0] = ptr_nametable[1] = ptr_nametable[2] = ptr_nametable[3] =
+            &nametable[0x0000];
+        break;
 
-        case Cartridge::MIRROR::ONESCREEN_HIGH:
-            ptr_nametable[0] = ptr_nametable[1] = ptr_nametable[2] = ptr_nametable[3] = &nametable[0x0400];
-            break;
-        default: break;
+    case Cartridge::MIRROR::ONESCREEN_HIGH:
+        ptr_nametable[0] = ptr_nametable[1] = ptr_nametable[2] = ptr_nametable[3] =
+            &nametable[0x0400];
+        break;
+    default: break;
     }
 }
 
 Cartridge::MIRROR Ppu2C02::getMirror()
 {
-    if (ptr_nametable[0] == &nametable[0x0000] &&
-        ptr_nametable[1] == &nametable[0x0400] &&
-        ptr_nametable[2] == &nametable[0x0000] &&
-        ptr_nametable[3] == &nametable[0x0400])
-        return Cartridge::MIRROR::VERTICAL;
-
-    if (ptr_nametable[0] == &nametable[0x0000] &&
-        ptr_nametable[1] == &nametable[0x0000] &&
-        ptr_nametable[2] == &nametable[0x0400] &&
-        ptr_nametable[3] == &nametable[0x0400])
+    if (ptr_nametable[0] == &nametable[0x0000] && ptr_nametable[1] == &nametable[0x0000] &&
+        ptr_nametable[2] == &nametable[0x0400] && ptr_nametable[3] == &nametable[0x0400])
         return Cartridge::MIRROR::HORIZONTAL;
 
-    if (ptr_nametable[0] == &nametable[0x0000] &&
-        ptr_nametable[1] == &nametable[0x0000] &&
-        ptr_nametable[2] == &nametable[0x0000] &&
-        ptr_nametable[3] == &nametable[0x0000])
+    else if (ptr_nametable[0] == &nametable[0x0000] && ptr_nametable[1] == &nametable[0x0400] &&
+             ptr_nametable[2] == &nametable[0x0000] && ptr_nametable[3] == &nametable[0x0400])
+        return Cartridge::MIRROR::VERTICAL;
+
+    else if (ptr_nametable[0] == &nametable[0x0000] && ptr_nametable[1] == &nametable[0x0000] &&
+             ptr_nametable[2] == &nametable[0x0000] && ptr_nametable[3] == &nametable[0x0000])
         return Cartridge::MIRROR::ONESCREEN_LOW;
 
-    if (ptr_nametable[0] == &nametable[0x0400] &&
-        ptr_nametable[1] == &nametable[0x0400] &&
-        ptr_nametable[2] == &nametable[0x0400] &&
-        ptr_nametable[3] == &nametable[0x0400])
+    else if (ptr_nametable[0] == &nametable[0x0400] && ptr_nametable[1] == &nametable[0x0400] &&
+             ptr_nametable[2] == &nametable[0x0400] && ptr_nametable[3] == &nametable[0x0400])
         return Cartridge::MIRROR::ONESCREEN_HIGH;
 
     return Cartridge::MIRROR::HORIZONTAL;
@@ -602,21 +597,10 @@ void Ppu2C02::setPalette(uint8_t palette)
 {
     switch (palette)
     {
-    case NTSC565:
-        nes_palette = palette_NTSC565;
-        break;
-
-    case PAL565:
-        nes_palette = palette_PAL565;
-        break;
-
-    case NTSC222:
-        nes_palette = palette_NTSC222;
-        break;
-
-    case PAL222:
-        nes_palette = palette_PAL222;
-        break;
+    case NTSC565: nes_palette = palette_NTSC565; break;
+    case PAL565: nes_palette = palette_PAL565; break;
+    case NTSC222: nes_palette = palette_NTSC222; break;
+    case PAL222: nes_palette = palette_PAL222; break;
     }
 }
 
@@ -628,8 +612,7 @@ void Ppu2C02::dumpState(File& state)
     for (int i = 0; i < 4; i++)
     {
         uint8_t map = 0;
-        if (ptr_nametable[i] == &nametable[0x0400])
-            map = 1;
+        if (ptr_nametable[i] == &nametable[0x0400]) map = 1;
 
         state.write((uint8_t*)&map, sizeof(map));
     }

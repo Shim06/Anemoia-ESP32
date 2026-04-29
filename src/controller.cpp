@@ -1,6 +1,6 @@
+#include "controller.h"
 #include "../config.h"
 #include "../hwconfig.h"
-#include "controller.h"
 #include "core/bus.h"
 #include <Arduino.h>
 
@@ -20,14 +20,14 @@ bool isDownPressed(CONTROLLER button)
 static uint8_t gpioRead()
 {
     uint8_t state = 0x00;
-    if (digitalRead(A_BUTTON)      == LOW) state |= CONTROLLER::A;
-    if (digitalRead(B_BUTTON)      == LOW) state |= CONTROLLER::B;
+    if (digitalRead(A_BUTTON) == LOW) state |= CONTROLLER::A;
+    if (digitalRead(B_BUTTON) == LOW) state |= CONTROLLER::B;
     if (digitalRead(SELECT_BUTTON) == LOW) state |= CONTROLLER::Select;
-    if (digitalRead(START_BUTTON)  == LOW) state |= CONTROLLER::Start;
-    if (digitalRead(UP_BUTTON)     == LOW) state |= CONTROLLER::Up;
-    if (digitalRead(DOWN_BUTTON)   == LOW) state |= CONTROLLER::Down;
-    if (digitalRead(LEFT_BUTTON)   == LOW) state |= CONTROLLER::Left;
-    if (digitalRead(RIGHT_BUTTON)  == LOW) state |= CONTROLLER::Right;
+    if (digitalRead(START_BUTTON) == LOW) state |= CONTROLLER::Start;
+    if (digitalRead(UP_BUTTON) == LOW) state |= CONTROLLER::Up;
+    if (digitalRead(DOWN_BUTTON) == LOW) state |= CONTROLLER::Down;
+    if (digitalRead(LEFT_BUTTON) == LOW) state |= CONTROLLER::Left;
+    if (digitalRead(RIGHT_BUTTON) == LOW) state |= CONTROLLER::Right;
 
     return state;
 }
@@ -195,22 +195,20 @@ static uint8_t PSXControllerRead()
 
     // Map PSX bits to NES bits
     constexpr uint16_t PSX_SELECT = (1 << 0);
-    constexpr uint16_t PSX_START  = (1 << 3);
-    constexpr uint16_t PSX_A_MASK =
-        (1 << 11) | // R1
-        (1 << 9)  | // R2
-        (1 << 2)  | // R3
-        (1 << 14) | // X
-        (1 << 13);  // O
-    constexpr uint16_t PSX_B_MASK =
-        (1 << 10) | // L1
-        (1 << 8)  | // L2
-        (1 << 1)  | // L3
-        (1 << 15) | // Square
-        (1 << 12);  // Triangle
-    constexpr uint16_t PSX_UP    = (1 << 4);
-    constexpr uint16_t PSX_DOWN  = (1 << 6);
-    constexpr uint16_t PSX_LEFT  = (1 << 7);
+    constexpr uint16_t PSX_START = (1 << 3);
+    constexpr uint16_t PSX_A_MASK = (1 << 11) | // R1
+                                    (1 << 9) |  // R2
+                                    (1 << 2) |  // R3
+                                    (1 << 14) | // X
+                                    (1 << 13);  // O
+    constexpr uint16_t PSX_B_MASK = (1 << 10) | // L1
+                                    (1 << 8) |  // L2
+                                    (1 << 1) |  // L3
+                                    (1 << 15) | // Square
+                                    (1 << 12);  // Triangle
+    constexpr uint16_t PSX_UP = (1 << 4);
+    constexpr uint16_t PSX_DOWN = (1 << 6);
+    constexpr uint16_t PSX_LEFT = (1 << 7);
     constexpr uint16_t PSX_RIGHT = (1 << 5);
 
     if (psx_state & PSX_SELECT) state |= CONTROLLER::Select;
@@ -265,7 +263,8 @@ static uint8_t dummyControllerRead()
     return 0x00;
 }
 
-void initController(ControllerType controller_type) {
+void initController(ControllerType controller_type)
+{
     switch (controller_type)
     {
     case CT_GPIO:
@@ -338,8 +337,6 @@ void initController(ControllerType controller_type) {
         _controllerRead = UartControllerRead;
         break;
     case CT_NC:
-    default:
-        _controllerRead = dummyControllerRead;
-        break;
+    default: _controllerRead = dummyControllerRead; break;
     }
 }

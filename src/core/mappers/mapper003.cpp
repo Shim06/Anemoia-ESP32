@@ -31,7 +31,7 @@ IRAM_ATTR bool mapper003_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
 
 IRAM_ATTR bool mapper003_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
 {
-	return false;
+    return false;
 }
 
 IRAM_ATTR uint8_t* mapper003_ppuReadPtr(Mapper* mapper, uint16_t addr)
@@ -47,7 +47,7 @@ void mapper003_reset(Mapper* mapper)
     Mapper003_state* state = (Mapper003_state*)mapper->state;
 
     state->ptr_CHR_bank_8K = getBank(&state->CHR_cache_8K, 0, Mapper::ROM_TYPE::CHR_ROM);
-    state->cart->loadPRGBank(state->PRG_bank, 32*1024, 0);
+    state->cart->loadPRGBank(state->PRG_bank, 32 * 1024, 0);
 }
 
 void mapper003_dumpState(Mapper* mapper, File& state)
@@ -72,7 +72,7 @@ Mapper createMapper003(uint8_t PRG_banks, uint8_t CHR_banks, Cartridge* cart)
 {
     Mapper mapper;
     Mapper003_state* state = new Mapper003_state;
-    bankInit(&state->CHR_cache_8K, state->CHR_banks_8K, MAPPER003_NUM_CHR_BANKS_8K, 8*1024, cart);
+    bankInit(&state->CHR_cache_8K, state->CHR_banks_8K, MAPPER003_NUM_CHR_BANKS_8K, 8 * 1024, cart);
 
     state->number_PRG_banks = PRG_banks;
     state->number_CHR_banks = CHR_banks;

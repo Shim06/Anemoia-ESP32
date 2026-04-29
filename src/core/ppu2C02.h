@@ -7,11 +7,11 @@
 #include "../../config.h"
 #include "cartridge.h"
 
-#define BUFFER_SIZE (256 + 8 + 8)
-#define SCANLINE_SIZE 256
+#define BUFFER_SIZE          (256 + 8 + 8)
+#define SCANLINE_SIZE        256
 #define SCANLINES_PER_BUFFER 8
-#define TILES_PER_SCANLINE 32
-#define PIXELS_PER_TILE 8
+#define TILES_PER_SCANLINE   32
+#define PIXELS_PER_TILE      8
 
 #ifdef ILI9341_DRIVER
     #undef SCANLINES_PER_BUFFER
@@ -37,7 +37,10 @@ public:
     void clearVBlank();
     void reset();
 
-    void connectBus(Bus* n) { bus = n; }
+    void connectBus(Bus* n)
+    {
+        bus = n;
+    }
     void connectCartridge(Cartridge* cartridge);
     void setMirror(Cartridge::MIRROR mirror);
     Cartridge::MIRROR getMirror();
@@ -54,6 +57,7 @@ public:
         PaletteCount
     };
     void setPalette(uint8_t palette);
+
 private:
     Cartridge* cart = nullptr;
     Bus* bus = nullptr;
@@ -70,13 +74,14 @@ private:
 
     uint16_t scanline_buffer[BUFFER_SIZE];
     uint8_t scanline_metadata[BUFFER_SIZE];
-    #ifdef ILI9341_DRIVER
-        static uint16_t display_buffer_front[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
-        static uint16_t display_buffer_back[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
-    #else
-        static uint16_t display_buffer[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
-    #endif
+#ifdef ILI9341_DRIVER
+    static uint16_t display_buffer_front[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
+    static uint16_t display_buffer_back[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
+#else
+    static uint16_t display_buffer[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
+#endif
 
+    // clang-format off
 #ifndef SCREEN_SWAP_BYTES
     static constexpr uint16_t palette_NTSC565[8][64] =
     {
@@ -752,14 +757,13 @@ private:
     };
     #undef SWAP16
 #endif
+    // clang-format on
 
     const uint16_t (*nes_palette)[64] = palette_NTSC565;
-    static constexpr uint8_t palette_mirror[32] =
-    {
-        0x00,0x01,0x02,0x03, 0x04,0x05,0x06,0x07,
-        0x08,0x09,0x0A,0x0B, 0x0C,0x0D,0x0E,0x0F,
-        0x00,0x11,0x12,0x13, 0x04,0x15,0x16,0x17,
-        0x08,0x19,0x1A,0x1B, 0x0C,0x1D,0x1E,0x1F
+    static constexpr uint8_t palette_mirror[32] = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A,
+        0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x00, 0x11, 0x12, 0x13, 0x04, 0x15,
+        0x16, 0x17, 0x08, 0x19, 0x1A, 0x1B, 0x0C, 0x1D, 0x1E, 0x1F
     };
 
     // PPU Registers
@@ -822,7 +826,7 @@ private:
             uint16_t coarse_y : 5;
             uint16_t nametable_x : 1;
             uint16_t nametable_y : 1;
-            uint16_t fine_y: 3;
+            uint16_t fine_y : 3;
             uint16_t unused : 1;
         };
         uint16_t reg = 0x00;
@@ -863,15 +867,16 @@ private:
     uint8_t* ptr_scanline_meta = nullptr;
 
     uint8_t sprite_count = 0;
+
 public:
     uint8_t* ptr_sprite = (uint8_t*)sprite;
     uint16_t* ptr_buffer = scanline_buffer;
-    #ifdef ILI9341_DRIVER
-        static uint16_t* ptr_display;
-        static uint16_t* ptr_back_buffer;
-    #else
-        static constexpr uint16_t* ptr_display = display_buffer;
-    #endif
+#ifdef ILI9341_DRIVER
+    static uint16_t* ptr_display;
+    static uint16_t* ptr_back_buffer;
+#else
+    static constexpr uint16_t* ptr_display = display_buffer;
+#endif
 };
 
 #endif

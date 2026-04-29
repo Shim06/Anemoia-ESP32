@@ -1,9 +1,9 @@
 #ifndef HWCONFIG_H
 #define HWCONFIG_H
 
-#include <LittleFS.h>
 #include "config.h"
 #include "src/debug.h"
+#include <LittleFS.h>
 
 struct __attribute__((packed)) HWConfig
 {
@@ -16,22 +16,21 @@ struct __attribute__((packed)) HWConfig
 
 inline HWConfig loadConfig()
 {
-    HWConfig cfg =
-    {
+    HWConfig cfg = {
         .rotation = SCREEN_ROTATION,
         .dac_pin = DAC_PIN,
         .controller_type = CONTROLLER_TYPE,
         .sd_freq = SD_FREQ / 1000000,
-        #ifdef TFT_BACKLIGHT_ENABLE
+#ifdef TFT_BACKLIGHT_ENABLE
         .backlight = true,
-        #else
+#else
         .backlight = false,
-        #endif
+#endif
     };
     // hwconfig.bin can make development difficult because it will override #defines
     // if you return cfg here early you can avoid that issue
     // the alternative is to erase the entire flash before starting development
-    //return cfg;
+    // return cfg;
 
     if (!LittleFS.begin())
     {

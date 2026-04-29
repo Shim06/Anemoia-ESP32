@@ -1,14 +1,14 @@
 #ifndef MAPPER_H
 #define MAPPER_H
 
-#include <cstring>
 #include <SD.h>
+#include <cstring>
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "../debug.h"
 #include "Arduino.h"
 #include "config.h"
-#include "../debug.h"
 
 class Cartridge;
 class Mapper
@@ -23,8 +23,12 @@ public:
     void* state = nullptr;
 };
 
-inline void mapperNoScanline(Mapper*) {}
-inline void mapperNoCycle(Mapper*, int) {}
+inline void mapperNoScanline(Mapper*)
+{
+}
+inline void mapperNoCycle(Mapper*, int)
+{
+}
 
 struct Bank
 {
@@ -42,7 +46,8 @@ struct BankCache
     Cartridge* cart;
 };
 
-void bankInit(BankCache* cache, Bank* banks, uint8_t num_banks, uint32_t bank_size, Cartridge* cart);
+void bankInit(BankCache* cache, Bank* banks, uint8_t num_banks, uint32_t bank_size,
+              Cartridge* cart);
 uint8_t* getBank(BankCache* cache, uint8_t bank_id, Mapper::ROM_TYPE rom);
 uint8_t getBankIndex(BankCache* cache, uint8_t* ptr);
 void invalidateCache(BankCache* cache);

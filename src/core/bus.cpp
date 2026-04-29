@@ -15,29 +15,17 @@ Bus::~Bus()
 IRAM_ATTR void Bus::cpuWrite(uint16_t addr, uint8_t data)
 {
     if (cart->cpuWrite(addr, data)) {}
-    else if ((addr & 0xE000) == 0x0000)
-    {
-        RAM[addr & 0x07FF] = data;
-    }
-    else if ((addr & 0xE000) == 0x2000)
-    {
-        ppu.cpuWrite(addr & 0x0007, data);
-    }
+    else if ((addr & 0xE000) == 0x0000) { RAM[addr & 0x07FF] = data; }
+    else if ((addr & 0xE000) == 0x2000) { ppu.cpuWrite(addr & 0x0007, data); }
     else if ((addr & 0xF000) == 0x4000 && (addr <= 0x4013 || addr == 0x4015 || addr == 0x4017))
     {
         cpu.apuWrite(addr, data);
     }
-    else if (addr == 0x4014)
-    {
-        cpu.OAM_DMA(data);
-    }
+    else if (addr == 0x4014) { cpu.OAM_DMA(data); }
     else if (addr == 0x4016)
     {
         controller_strobe = data & 1;
-        if (controller_strobe)
-        {
-            controller_state = controller;
-        }
+        if (controller_strobe) { controller_state = controller; }
     }
 }
 
@@ -46,19 +34,12 @@ IRAM_ATTR uint8_t Bus::cpuRead(uint16_t addr)
     uint8_t data = 0x00;
 
     if (cart->cpuRead(addr, data)) {}
-    else if ((addr & 0xE000) == 0x0000)
-    {
-        data = RAM[addr & 0x07FF];
-    }
-    else if ((addr & 0xE000) == 0x2000)
-    {
-        data = ppu.cpuRead(addr & 0x0007);
-    }
+    else if ((addr & 0xE000) == 0x0000) { data = RAM[addr & 0x07FF]; }
+    else if ((addr & 0xE000) == 0x2000) { data = ppu.cpuRead(addr & 0x0007); }
     else if (addr == 0x4016)
     {
         uint8_t value = controller_state & 1;
-        if (!controller_strobe)
-            controller_state >>= 1;
+        if (!controller_strobe) controller_state >>= 1;
         data = value | 0x40;
     }
     return data;
@@ -67,11 +48,11 @@ IRAM_ATTR uint8_t Bus::cpuRead(uint16_t addr)
 void Bus::reset()
 {
     ptr_screen->fillScreen(TFT_BLACK);
-	for (auto& i : RAM) i = 0x00;
+    for (auto& i : RAM) i = 0x00;
     cart->reset();
-	cpu.reset();
+    cpu.reset();
     cpu.apu.reset();
-	ppu.reset();
+    ppu.reset();
 }
 
 IRAM_ATTR void Bus::clock()
@@ -82,7 +63,8 @@ IRAM_ATTR void Bus::clock()
     // Rendering 3 scanlines at a time because 1 CPU clock == 3 PPU clocks
     // and there's only 341 ppu clocks (dots) in a scanline, which is not divisible by 3.
     // Using a counter/for loop with += 341 & -= 3 is too big of a performance hit.
-    // 1 scanline == ~113.67 CPU clocks, so for every 3 scanlines, two scanlines will have an extra CPU clock
+    // 1 scanline == ~113.67 CPU clocks, so for every 3 scanlines, two scanlines will have an extra
+    // CPU clock
     if (!frame_latch)
     {
         for (ppu_scanline = 0; ppu_scanline < 240; ppu_scanline += 3)
@@ -159,11 +141,11 @@ void Bus::connectScreen(TFT_eSPI* screen)
 
 IRAM_ATTR void Bus::renderImage(uint16_t scanline)
 {
-    #ifndef DISABLE_DMA
-        ptr_screen->pushPixelsDMA(ppu.ptr_display, 256 * SCANLINES_PER_BUFFER);
-    #else
-        ptr_screen->pushPixels(ppu.ptr_display, 256 * SCANLINES_PER_BUFFER);
-    #endif
+#ifndef DISABLE_DMA
+    ptr_screen->pushPixelsDMA(ppu.ptr_display, 256 * SCANLINES_PER_BUFFER);
+#else
+    ptr_screen->pushPixels(ppu.ptr_display, 256 * SCANLINES_PER_BUFFER);
+#endif
 }
 
 IRAM_ATTR void Bus::IRQ()

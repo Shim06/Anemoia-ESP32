@@ -50,13 +50,13 @@ Cartridge* UI::selectGame()
                     selected = 0;
                     scroll_offset = selected;
                 }
-                else if (selected >= scroll_offset + max_items) scroll_offset = selected - max_items + 1;
+                else if (selected >= scroll_offset + max_items)
+                    scroll_offset = selected - max_items + 1;
                 if (scroll_offset < 0) scroll_offset = 0;
                 if (scroll_offset > size - 1) scroll_offset = size - 1;
                 drawFileList();
                 last_input_time = now;
             }
-
         }
 
         if (isDownPressed(CONTROLLER::A) && (selected >= 0 && selected < size))
@@ -80,8 +80,7 @@ void UI::getNesFiles()
         if (!file.isDirectory())
         {
             std::string filename = file.name();
-            if (filename.rfind(".nes") == filename.size() - 4)
-                files.push_back(filename);
+            if (filename.rfind(".nes") == filename.size() - 4) files.push_back(filename);
         }
 
         file.close();
@@ -103,14 +102,8 @@ void UI::drawFileList()
 
         std::string file = files[item];
         int maxWidth = screen->width() - 28;
-        while (screen->textWidth(file.c_str()) > maxWidth)
-        {
-            file.pop_back();
-        }
-        if (file.size() < files[item].size())
-        {
-            file.replace(file.size()-3, 3, "...");
-        }
+        while (screen->textWidth(file.c_str()) > maxWidth) { file.pop_back(); }
+        if (file.size() < files[item].size()) { file.replace(file.size() - 3, 3, "..."); }
 
         const char* filename = file.c_str();
         int y = i * ITEM_HEIGHT + 32;
@@ -132,10 +125,10 @@ void UI::drawFileList()
 void UI::drawWindowBox(int x, int y, int w, int h)
 {
     screen->drawRect(x, y, w, h, TFT_WHITE);
-    screen->drawRect(x+1, y, w-2, h, TFT_WHITE);
+    screen->drawRect(x + 1, y, w - 2, h, TFT_WHITE);
 
-    screen->drawRect(x+4, y+3, w-8, h-7, TFT_WHITE);
-    screen->drawRect(x+5, y+3, w-10, h-7, TFT_WHITE);
+    screen->drawRect(x + 4, y + 3, w - 8, h - 7, TFT_WHITE);
+    screen->drawRect(x + 5, y + 3, w - 10, h - 7, TFT_WHITE);
 
     const char* text1 = " ANEMOIA.CPP ";
     screen->setTextColor(TEXT_COLOR, BG_COLOR);
@@ -178,8 +171,7 @@ void UI::pauseMenu(Bus* nes)
 {
     // Black magic stuff
     // Padding bytes for code alignment for better performance
-    __attribute__((used, section(".text"), aligned(64)))
-    static const uint8_t padding[128] = {0};
+    __attribute__((used, section(".text"), aligned(64))) static const uint8_t padding[128] = { 0 };
 
     paused = true;
     int prev_select = 0;
@@ -195,12 +187,8 @@ void UI::pauseMenu(Bus* nes)
     drawText(text2, text2_x, 4);
 
     constexpr int section_count[] = { 3, 2, 1 };
-    constexpr const char* items[] =
-    {
-        "Resume", "Settings", "Reset",
-        "Quick Save State", "Quick Load State",
-        "Save and Quit"
-    };
+    constexpr const char* items[] = { "Resume",           "Settings",         "Reset",
+                                      "Quick Save State", "Quick Load State", "Save and Quit" };
     enum ItemSelect
     {
         Resume,
@@ -291,7 +279,8 @@ void UI::pauseMenu(Bus* nes)
 
                         section_y += (h - 1);
                     }
-                    screen->fillRect(window_x + 10, items_y[select], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    screen->fillRect(window_x + 10, items_y[select], window_w - 19, item_height,
+                                     SELECTED_BG_COLOR);
                     for (int i = 0; i < num_items; i++)
                     {
                         int y = items_y[i] + text_padding;
@@ -320,9 +309,7 @@ void UI::pauseMenu(Bus* nes)
                     paused = false;
                     return;
 
-                case SaveAndQuit:
-                    ESP.restart();
-                    return;
+                case SaveAndQuit: ESP.restart(); return;
                 }
             }
         }
@@ -332,12 +319,14 @@ void UI::pauseMenu(Bus* nes)
         {
             int y;
             // Redraw old selection
-            screen->fillRect(window_x + 10, items_y[prev_select], window_w - 19, item_height, BAR_COLOR);
+            screen->fillRect(window_x + 10, items_y[prev_select], window_w - 19, item_height,
+                             BAR_COLOR);
             y = items_y[prev_select] + text_padding;
             drawText(items[prev_select], window_x + 12, y);
 
             // Draw new selection
-            screen->fillRect(window_x + 10, items_y[select], window_w - 19, item_height, SELECTED_BG_COLOR);
+            screen->fillRect(window_x + 10, items_y[select], window_w - 19, item_height,
+                             SELECTED_BG_COLOR);
             y = items_y[select] + text_padding;
             drawText(items[select], window_x + 12, y);
         }
@@ -368,24 +357,12 @@ void UI::settingsMenu(Bus* nes)
     static char palette_text[20];
     static char brightness_text[20];
     static char save_return_text[] = "Save & Return";
-    const char* palette_names[] =
-    {
-        "NTSC 565",
-        "PAL 565",
-        "NTSC 222",
-        "PAL 222"
-    };
+    const char* palette_names[] = { "NTSC 565", "PAL 565", "NTSC 222", "PAL 222" };
 
     snprintf(volume_text, sizeof(volume_text), "Volume: %d%%", settings.volume);
     snprintf(palette_text, sizeof(palette_text), "Palette: %s", palette_names[settings.palette]);
     snprintf(brightness_text, sizeof(brightness_text), "Brightness: %d%%", settings.brightness);
-    char* items[] =
-    {
-        volume_text,
-        brightness_text,
-        palette_text,
-        save_return_text
-    };
+    char* items[] = { volume_text, brightness_text, palette_text, save_return_text };
     enum ItemSelect
     {
         Volume,
@@ -408,10 +385,7 @@ void UI::settingsMenu(Bus* nes)
         int y = items_y[i] + text_padding;
         if (i == Brightness)
         {
-            if (hw_config.backlight)
-            {
-                drawText(items[i], window_x + 12, y);
-            }
+            if (hw_config.backlight) { drawText(items[i], window_x + 12, y); }
             else
             {
                 screen->setCursor(window_x + 12, y);
@@ -419,8 +393,7 @@ void UI::settingsMenu(Bus* nes)
                 screen->print(items[i]);
             }
         }
-        else
-            drawText(items[i], window_x + 12, y);
+        else drawText(items[i], window_x + 12, y);
     }
 
     constexpr int initial_delay = 500;
@@ -462,13 +435,16 @@ void UI::settingsMenu(Bus* nes)
                 case Volume:
                     if (settings.volume >= 5) settings.volume -= 5;
                     snprintf(volume_text, sizeof(volume_text), "Volume: %d%%", settings.volume);
-                    screen->fillRect(window_x + 10, items_y[Volume], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    screen->fillRect(window_x + 10, items_y[Volume], window_w - 19, item_height,
+                                     SELECTED_BG_COLOR);
                     drawText(items[Volume], window_x + 12, items_y[Volume] + text_padding);
                     break;
                 case Brightness:
                     if (settings.brightness >= 10) settings.brightness -= 5;
-                    snprintf(brightness_text, sizeof(brightness_text), "Brightness: %d%%", settings.brightness);
-                    screen->fillRect(window_x + 10, items_y[Brightness], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    snprintf(brightness_text, sizeof(brightness_text), "Brightness: %d%%",
+                             settings.brightness);
+                    screen->fillRect(window_x + 10, items_y[Brightness], window_w - 19, item_height,
+                                     SELECTED_BG_COLOR);
                     drawText(items[Brightness], window_x + 12, items_y[Brightness] + text_padding);
                     setBrightness(settings.brightness);
                     break;
@@ -476,8 +452,10 @@ void UI::settingsMenu(Bus* nes)
                     if (settings.palette == 0)
                         settings.palette = Ppu2C02::Palette::PaletteCount - 1;
                     else settings.palette--;
-                    snprintf(palette_text, sizeof(palette_text), "Palette: %s", palette_names[settings.palette]);
-                    screen->fillRect(window_x + 10, items_y[Palette], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    snprintf(palette_text, sizeof(palette_text), "Palette: %s",
+                             palette_names[settings.palette]);
+                    screen->fillRect(window_x + 10, items_y[Palette], window_w - 19, item_height,
+                                     SELECTED_BG_COLOR);
                     drawText(items[Palette], window_x + 12, items_y[Palette] + text_padding);
                     break;
                 }
@@ -491,20 +469,25 @@ void UI::settingsMenu(Bus* nes)
                 case Volume:
                     if (settings.volume <= 95) settings.volume += 5;
                     snprintf(volume_text, sizeof(volume_text), "Volume: %d%%", settings.volume);
-                    screen->fillRect(window_x + 10, items_y[Volume], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    screen->fillRect(window_x + 10, items_y[Volume], window_w - 19, item_height,
+                                     SELECTED_BG_COLOR);
                     drawText(items[Volume], window_x + 12, items_y[Volume] + text_padding);
                     break;
                 case Brightness:
                     if (settings.brightness <= 95) settings.brightness += 5;
-                    snprintf(brightness_text, sizeof(brightness_text), "Brightness: %d%%", settings.brightness);
-                    screen->fillRect(window_x + 10, items_y[Brightness], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    snprintf(brightness_text, sizeof(brightness_text), "Brightness: %d%%",
+                             settings.brightness);
+                    screen->fillRect(window_x + 10, items_y[Brightness], window_w - 19, item_height,
+                                     SELECTED_BG_COLOR);
                     drawText(items[Brightness], window_x + 12, items_y[Brightness] + text_padding);
                     setBrightness(settings.brightness);
                     break;
                 case Palette:
                     settings.palette = (settings.palette + 1) % Ppu2C02::Palette::PaletteCount;
-                    snprintf(palette_text, sizeof(palette_text), "Palette: %s", palette_names[settings.palette]);
-                    screen->fillRect(window_x + 10, items_y[Palette], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    snprintf(palette_text, sizeof(palette_text), "Palette: %s",
+                             palette_names[settings.palette]);
+                    screen->fillRect(window_x + 10, items_y[Palette], window_w - 19, item_height,
+                                     SELECTED_BG_COLOR);
                     drawText(items[Palette], window_x + 12, items_y[Palette] + text_padding);
                     break;
                 }
@@ -528,13 +511,14 @@ void UI::settingsMenu(Bus* nes)
         {
             int y;
             // Redraw old selection
-            screen->fillRect(window_x + 10, items_y[prev_select], window_w - 19, item_height, BAR_COLOR);
+            screen->fillRect(window_x + 10, items_y[prev_select], window_w - 19, item_height,
+                             BAR_COLOR);
             y = items_y[prev_select] + text_padding;
             drawText(items[prev_select], window_x + 12, y);
 
-
             // Draw new selection
-            screen->fillRect(window_x + 10, items_y[select], window_w - 19, item_height, SELECTED_BG_COLOR);
+            screen->fillRect(window_x + 10, items_y[select], window_w - 19, item_height,
+                             SELECTED_BG_COLOR);
             y = items_y[select] + text_padding;
             drawText(items[select], window_x + 12, y);
         }
@@ -547,13 +531,12 @@ void UI::initializeSettings()
 {
     if (!SD.exists("/settings.bin"))
     {
-        Settings temp = {100, 100, 0};
+        Settings temp = { 100, 100, 0 };
         saveSettings(&temp);
     }
     loadSettings(&settings);
 
-    if (hw_config.backlight)
-        setBrightness(settings.brightness);
+    if (hw_config.backlight) setBrightness(settings.brightness);
 }
 
 void UI::loadEmulatorSettings(Bus* nes)
@@ -585,7 +568,7 @@ void UI::loadSettings(Settings* s)
     if (f.size() != sizeof(Settings))
     {
         f.close();
-        Settings temp = {100, 100, 0};
+        Settings temp = { 100, 100, 0 };
         saveSettings(&temp);
         *s = temp;
         f.close();

@@ -43,7 +43,7 @@ IRAM_ATTR bool mapper002_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
         return true;
     }
 
-	return false;
+    return false;
 }
 
 IRAM_ATTR uint8_t* mapper002_ppuReadPtr(Mapper* mapper, uint16_t addr)
@@ -60,8 +60,9 @@ void mapper002_reset(Mapper* mapper)
     state->ptr_16K_PRG_banks[0] = getBank(&state->prg_cache, 0, Mapper::ROM_TYPE::PRG_ROM);
     state->ptr_16K_PRG_banks[1] = state->PRG_bank;
 
-    state->cart->loadPRGBank(state->ptr_16K_PRG_banks[1], 16*1024, 0x4000 * (state->number_PRG_banks - 1));
-    state->cart->loadCHRBank(state->CHR_bank, 8*1024, 0);
+    state->cart->loadPRGBank(state->ptr_16K_PRG_banks[1], 16 * 1024,
+                             0x4000 * (state->number_PRG_banks - 1));
+    state->cart->loadCHRBank(state->CHR_bank, 8 * 1024, 0);
 }
 
 void mapper002_dumpState(Mapper* mapper, File& state)
@@ -71,10 +72,7 @@ void mapper002_dumpState(Mapper* mapper, File& state)
     uint8_t PRG_16K;
     PRG_16K = getBankIndex(&s->prg_cache, s->ptr_16K_PRG_banks[0]);
     state.write((uint8_t*)&PRG_16K, sizeof(PRG_16K));
-    if (s->number_CHR_banks == 0)
-    {
-        state.write(s->CHR_bank, sizeof(s->CHR_bank));
-    }
+    if (s->number_CHR_banks == 0) { state.write(s->CHR_bank, sizeof(s->CHR_bank)); }
 }
 
 void mapper002_loadState(Mapper* mapper, File& state)
@@ -85,17 +83,14 @@ void mapper002_loadState(Mapper* mapper, File& state)
     state.read((uint8_t*)&PRG_16K, sizeof(PRG_16K));
     invalidateCache(&s->prg_cache);
     s->ptr_16K_PRG_banks[0] = getBank(&s->prg_cache, PRG_16K, Mapper::ROM_TYPE::PRG_ROM);
-    if (s->number_CHR_banks == 0)
-    {
-        state.read(s->CHR_bank, sizeof(s->CHR_bank));
-    }
+    if (s->number_CHR_banks == 0) { state.read(s->CHR_bank, sizeof(s->CHR_bank)); }
 }
 
 Mapper createMapper002(uint8_t PRG_banks, uint8_t CHR_banks, Cartridge* cart)
 {
     Mapper mapper;
     Mapper002_state* state = new Mapper002_state;
-    bankInit(&state->prg_cache, state->prg_banks, MAPPER002_NUM_PRG_BANKS_16K, 16*1024, cart);
+    bankInit(&state->prg_cache, state->prg_banks, MAPPER002_NUM_PRG_BANKS_16K, 16 * 1024, cart);
 
     state->number_PRG_banks = PRG_banks;
     state->number_CHR_banks = CHR_banks;
