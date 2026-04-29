@@ -2,49 +2,62 @@
 #include "bus.h"
 
 constexpr uint8_t Cpu6502::instr_cycles[256] = {
-    7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6,
-    2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
-    6, 6, 2, 8, 3, 3, 5, 5, 4, 2, 2, 2, 4, 4, 6, 6,
-    2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
-    6, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 3, 4, 6, 6,
-    2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
-    6, 6, 2, 8, 3, 3, 5, 5, 4, 2, 2, 2, 5, 4, 6, 6,
-    2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
-    2, 6, 2, 6, 3, 3, 3, 3, 2, 2, 2, 2, 4, 4, 4, 4,
-    2, 6, 2, 6, 4, 4, 4, 4, 2, 5, 2, 5, 5, 5, 5, 5,
-    2, 6, 2, 6, 3, 3, 3, 3, 2, 2, 2, 2, 4, 4, 4, 4,
-    2, 5, 2, 5, 4, 4, 4, 4, 2, 4, 2, 4, 4, 4, 4, 4,
-    2, 6, 2, 8, 3, 3, 5, 5, 2, 2, 2, 2, 4, 4, 6, 6,
-    2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
-    2, 6, 2, 8, 3, 3, 5, 5, 2, 2, 2, 2, 4, 4, 6, 6,
-    2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7
+    7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
+    6, 6, 2, 8, 3, 3, 5, 5, 4, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
+    6, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 3, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
+    6, 6, 2, 8, 3, 3, 5, 5, 4, 2, 2, 2, 5, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
+    2, 6, 2, 6, 3, 3, 3, 3, 2, 2, 2, 2, 4, 4, 4, 4, 2, 6, 2, 6, 4, 4, 4, 4, 2, 5, 2, 5, 5, 5, 5, 5,
+    2, 6, 2, 6, 3, 3, 3, 3, 2, 2, 2, 2, 4, 4, 4, 4, 2, 5, 2, 5, 4, 4, 4, 4, 2, 4, 2, 4, 4, 4, 4, 4,
+    2, 6, 2, 8, 3, 3, 5, 5, 2, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
+    2, 6, 2, 8, 3, 3, 5, 5, 2, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7
 };
 
 constexpr uint8_t Cpu6502::zn_table[256] = {
 #define ENTRY(v) (((v) == 0 ? Cpu6502::Z : 0) | ((v) & Cpu6502::N))
-    ENTRY(0x00), ENTRY(0x01), ENTRY(0x02), ENTRY(0x03), ENTRY(0x04), ENTRY(0x05), ENTRY(0x06), ENTRY(0x07), ENTRY(0x08), ENTRY(0x09), ENTRY(0x0A), ENTRY(0x0B), ENTRY(0x0C), ENTRY(0x0D), ENTRY(0x0E), ENTRY(0x0F),
-    ENTRY(0x10), ENTRY(0x11), ENTRY(0x12), ENTRY(0x13), ENTRY(0x14), ENTRY(0x15), ENTRY(0x16), ENTRY(0x17), ENTRY(0x18), ENTRY(0x19), ENTRY(0x1A), ENTRY(0x1B), ENTRY(0x1C), ENTRY(0x1D), ENTRY(0x1E), ENTRY(0x1F),
-    ENTRY(0x20), ENTRY(0x21), ENTRY(0x22), ENTRY(0x23), ENTRY(0x24), ENTRY(0x25), ENTRY(0x26), ENTRY(0x27), ENTRY(0x28), ENTRY(0x29), ENTRY(0x2A), ENTRY(0x2B), ENTRY(0x2C), ENTRY(0x2D), ENTRY(0x2E), ENTRY(0x2F),
-    ENTRY(0x30), ENTRY(0x31), ENTRY(0x32), ENTRY(0x33), ENTRY(0x34), ENTRY(0x35), ENTRY(0x36), ENTRY(0x37), ENTRY(0x38), ENTRY(0x39), ENTRY(0x3A), ENTRY(0x3B), ENTRY(0x3C), ENTRY(0x3D), ENTRY(0x3E), ENTRY(0x3F),
-    ENTRY(0x40), ENTRY(0x41), ENTRY(0x42), ENTRY(0x43), ENTRY(0x44), ENTRY(0x45), ENTRY(0x46), ENTRY(0x47), ENTRY(0x48), ENTRY(0x49), ENTRY(0x4A), ENTRY(0x4B), ENTRY(0x4C), ENTRY(0x4D), ENTRY(0x4E), ENTRY(0x4F),
-    ENTRY(0x50), ENTRY(0x51), ENTRY(0x52), ENTRY(0x53), ENTRY(0x54), ENTRY(0x55), ENTRY(0x56), ENTRY(0x57), ENTRY(0x58), ENTRY(0x59), ENTRY(0x5A), ENTRY(0x5B), ENTRY(0x5C), ENTRY(0x5D), ENTRY(0x5E), ENTRY(0x5F),
-    ENTRY(0x60), ENTRY(0x61), ENTRY(0x62), ENTRY(0x63), ENTRY(0x64), ENTRY(0x65), ENTRY(0x66), ENTRY(0x67), ENTRY(0x68), ENTRY(0x69), ENTRY(0x6A), ENTRY(0x6B), ENTRY(0x6C), ENTRY(0x6D), ENTRY(0x6E), ENTRY(0x6F),
-    ENTRY(0x70), ENTRY(0x71), ENTRY(0x72), ENTRY(0x73), ENTRY(0x74), ENTRY(0x75), ENTRY(0x76), ENTRY(0x77), ENTRY(0x78), ENTRY(0x79), ENTRY(0x7A), ENTRY(0x7B), ENTRY(0x7C), ENTRY(0x7D), ENTRY(0x7E), ENTRY(0x7F),
-    ENTRY(0x80), ENTRY(0x81), ENTRY(0x82), ENTRY(0x83), ENTRY(0x84), ENTRY(0x85), ENTRY(0x86), ENTRY(0x87), ENTRY(0x88), ENTRY(0x89), ENTRY(0x8A), ENTRY(0x8B), ENTRY(0x8C), ENTRY(0x8D), ENTRY(0x8E), ENTRY(0x8F),
-    ENTRY(0x90), ENTRY(0x91), ENTRY(0x92), ENTRY(0x93), ENTRY(0x94), ENTRY(0x95), ENTRY(0x96), ENTRY(0x97), ENTRY(0x98), ENTRY(0x99), ENTRY(0x9A), ENTRY(0x9B), ENTRY(0x9C), ENTRY(0x9D), ENTRY(0x9E), ENTRY(0x9F),
-    ENTRY(0xA0), ENTRY(0xA1), ENTRY(0xA2), ENTRY(0xA3), ENTRY(0xA4), ENTRY(0xA5), ENTRY(0xA6), ENTRY(0xA7), ENTRY(0xA8), ENTRY(0xA9), ENTRY(0xAA), ENTRY(0xAB), ENTRY(0xAC), ENTRY(0xAD), ENTRY(0xAE), ENTRY(0xAF),
-    ENTRY(0xB0), ENTRY(0xB1), ENTRY(0xB2), ENTRY(0xB3), ENTRY(0xB4), ENTRY(0xB5), ENTRY(0xB6), ENTRY(0xB7), ENTRY(0xB8), ENTRY(0xB9), ENTRY(0xBA), ENTRY(0xBB), ENTRY(0xBC), ENTRY(0xBD), ENTRY(0xBE), ENTRY(0xBF),
-    ENTRY(0xC0), ENTRY(0xC1), ENTRY(0xC2), ENTRY(0xC3), ENTRY(0xC4), ENTRY(0xC5), ENTRY(0xC6), ENTRY(0xC7), ENTRY(0xC8), ENTRY(0xC9), ENTRY(0xCA), ENTRY(0xCB), ENTRY(0xCC), ENTRY(0xCD), ENTRY(0xCE), ENTRY(0xCF),
-    ENTRY(0xD0), ENTRY(0xD1), ENTRY(0xD2), ENTRY(0xD3), ENTRY(0xD4), ENTRY(0xD5), ENTRY(0xD6), ENTRY(0xD7), ENTRY(0xD8), ENTRY(0xD9), ENTRY(0xDA), ENTRY(0xDB), ENTRY(0xDC), ENTRY(0xDD), ENTRY(0xDE), ENTRY(0xDF),
-    ENTRY(0xE0), ENTRY(0xE1), ENTRY(0xE2), ENTRY(0xE3), ENTRY(0xE4), ENTRY(0xE5), ENTRY(0xE6), ENTRY(0xE7), ENTRY(0xE8), ENTRY(0xE9), ENTRY(0xEA), ENTRY(0xEB), ENTRY(0xEC), ENTRY(0xED), ENTRY(0xEE), ENTRY(0xEF),
-    ENTRY(0xF0), ENTRY(0xF1), ENTRY(0xF2), ENTRY(0xF3), ENTRY(0xF4), ENTRY(0xF5), ENTRY(0xF6), ENTRY(0xF7), ENTRY(0xF8), ENTRY(0xF9), ENTRY(0xFA), ENTRY(0xFB), ENTRY(0xFC), ENTRY(0xFD), ENTRY(0xFE), ENTRY(0xFF)
+    ENTRY(0x00), ENTRY(0x01), ENTRY(0x02), ENTRY(0x03), ENTRY(0x04), ENTRY(0x05), ENTRY(0x06),
+    ENTRY(0x07), ENTRY(0x08), ENTRY(0x09), ENTRY(0x0A), ENTRY(0x0B), ENTRY(0x0C), ENTRY(0x0D),
+    ENTRY(0x0E), ENTRY(0x0F), ENTRY(0x10), ENTRY(0x11), ENTRY(0x12), ENTRY(0x13), ENTRY(0x14),
+    ENTRY(0x15), ENTRY(0x16), ENTRY(0x17), ENTRY(0x18), ENTRY(0x19), ENTRY(0x1A), ENTRY(0x1B),
+    ENTRY(0x1C), ENTRY(0x1D), ENTRY(0x1E), ENTRY(0x1F), ENTRY(0x20), ENTRY(0x21), ENTRY(0x22),
+    ENTRY(0x23), ENTRY(0x24), ENTRY(0x25), ENTRY(0x26), ENTRY(0x27), ENTRY(0x28), ENTRY(0x29),
+    ENTRY(0x2A), ENTRY(0x2B), ENTRY(0x2C), ENTRY(0x2D), ENTRY(0x2E), ENTRY(0x2F), ENTRY(0x30),
+    ENTRY(0x31), ENTRY(0x32), ENTRY(0x33), ENTRY(0x34), ENTRY(0x35), ENTRY(0x36), ENTRY(0x37),
+    ENTRY(0x38), ENTRY(0x39), ENTRY(0x3A), ENTRY(0x3B), ENTRY(0x3C), ENTRY(0x3D), ENTRY(0x3E),
+    ENTRY(0x3F), ENTRY(0x40), ENTRY(0x41), ENTRY(0x42), ENTRY(0x43), ENTRY(0x44), ENTRY(0x45),
+    ENTRY(0x46), ENTRY(0x47), ENTRY(0x48), ENTRY(0x49), ENTRY(0x4A), ENTRY(0x4B), ENTRY(0x4C),
+    ENTRY(0x4D), ENTRY(0x4E), ENTRY(0x4F), ENTRY(0x50), ENTRY(0x51), ENTRY(0x52), ENTRY(0x53),
+    ENTRY(0x54), ENTRY(0x55), ENTRY(0x56), ENTRY(0x57), ENTRY(0x58), ENTRY(0x59), ENTRY(0x5A),
+    ENTRY(0x5B), ENTRY(0x5C), ENTRY(0x5D), ENTRY(0x5E), ENTRY(0x5F), ENTRY(0x60), ENTRY(0x61),
+    ENTRY(0x62), ENTRY(0x63), ENTRY(0x64), ENTRY(0x65), ENTRY(0x66), ENTRY(0x67), ENTRY(0x68),
+    ENTRY(0x69), ENTRY(0x6A), ENTRY(0x6B), ENTRY(0x6C), ENTRY(0x6D), ENTRY(0x6E), ENTRY(0x6F),
+    ENTRY(0x70), ENTRY(0x71), ENTRY(0x72), ENTRY(0x73), ENTRY(0x74), ENTRY(0x75), ENTRY(0x76),
+    ENTRY(0x77), ENTRY(0x78), ENTRY(0x79), ENTRY(0x7A), ENTRY(0x7B), ENTRY(0x7C), ENTRY(0x7D),
+    ENTRY(0x7E), ENTRY(0x7F), ENTRY(0x80), ENTRY(0x81), ENTRY(0x82), ENTRY(0x83), ENTRY(0x84),
+    ENTRY(0x85), ENTRY(0x86), ENTRY(0x87), ENTRY(0x88), ENTRY(0x89), ENTRY(0x8A), ENTRY(0x8B),
+    ENTRY(0x8C), ENTRY(0x8D), ENTRY(0x8E), ENTRY(0x8F), ENTRY(0x90), ENTRY(0x91), ENTRY(0x92),
+    ENTRY(0x93), ENTRY(0x94), ENTRY(0x95), ENTRY(0x96), ENTRY(0x97), ENTRY(0x98), ENTRY(0x99),
+    ENTRY(0x9A), ENTRY(0x9B), ENTRY(0x9C), ENTRY(0x9D), ENTRY(0x9E), ENTRY(0x9F), ENTRY(0xA0),
+    ENTRY(0xA1), ENTRY(0xA2), ENTRY(0xA3), ENTRY(0xA4), ENTRY(0xA5), ENTRY(0xA6), ENTRY(0xA7),
+    ENTRY(0xA8), ENTRY(0xA9), ENTRY(0xAA), ENTRY(0xAB), ENTRY(0xAC), ENTRY(0xAD), ENTRY(0xAE),
+    ENTRY(0xAF), ENTRY(0xB0), ENTRY(0xB1), ENTRY(0xB2), ENTRY(0xB3), ENTRY(0xB4), ENTRY(0xB5),
+    ENTRY(0xB6), ENTRY(0xB7), ENTRY(0xB8), ENTRY(0xB9), ENTRY(0xBA), ENTRY(0xBB), ENTRY(0xBC),
+    ENTRY(0xBD), ENTRY(0xBE), ENTRY(0xBF), ENTRY(0xC0), ENTRY(0xC1), ENTRY(0xC2), ENTRY(0xC3),
+    ENTRY(0xC4), ENTRY(0xC5), ENTRY(0xC6), ENTRY(0xC7), ENTRY(0xC8), ENTRY(0xC9), ENTRY(0xCA),
+    ENTRY(0xCB), ENTRY(0xCC), ENTRY(0xCD), ENTRY(0xCE), ENTRY(0xCF), ENTRY(0xD0), ENTRY(0xD1),
+    ENTRY(0xD2), ENTRY(0xD3), ENTRY(0xD4), ENTRY(0xD5), ENTRY(0xD6), ENTRY(0xD7), ENTRY(0xD8),
+    ENTRY(0xD9), ENTRY(0xDA), ENTRY(0xDB), ENTRY(0xDC), ENTRY(0xDD), ENTRY(0xDE), ENTRY(0xDF),
+    ENTRY(0xE0), ENTRY(0xE1), ENTRY(0xE2), ENTRY(0xE3), ENTRY(0xE4), ENTRY(0xE5), ENTRY(0xE6),
+    ENTRY(0xE7), ENTRY(0xE8), ENTRY(0xE9), ENTRY(0xEA), ENTRY(0xEB), ENTRY(0xEC), ENTRY(0xED),
+    ENTRY(0xEE), ENTRY(0xEF), ENTRY(0xF0), ENTRY(0xF1), ENTRY(0xF2), ENTRY(0xF3), ENTRY(0xF4),
+    ENTRY(0xF5), ENTRY(0xF6), ENTRY(0xF7), ENTRY(0xF8), ENTRY(0xF9), ENTRY(0xFA), ENTRY(0xFB),
+    ENTRY(0xFC), ENTRY(0xFD), ENTRY(0xFE), ENTRY(0xFF)
 #undef ENTRY
 };
 
-#define EXECUTE(addrmode, instruction) \
-    {                                  \
-        addrmode();                    \
-        instruction();                 \
+#define EXECUTE(addrmode, instruction)                                                             \
+    {                                                                                              \
+        addrmode();                                                                                \
+        instruction();                                                                             \
     }
 
 Cpu6502::Cpu6502()
@@ -69,10 +82,7 @@ inline void Cpu6502::write(uint16_t addr, uint8_t data)
 IRAM_ATTR void Cpu6502::OAM_DMA(uint8_t page)
 {
     OAM_DMA_page = page << 8;
-    for (int i = 0; i < 256; i++)
-    {
-        OAM_Write(i, read((OAM_DMA_page) | i));
-    }
+    for (int i = 0; i < 256; i++) { OAM_Write(i, read((OAM_DMA_page) | i)); }
 
     cycles += 512;
 }
@@ -99,740 +109,260 @@ IRAM_ATTR void Cpu6502::clock(int i)
         additional_cycle2 = 0;
         switch (opcode)
         {
-        case 0x00:
-            EXECUTE(IMM, Instr_BRK);
-            break;
-        case 0x01:
-            EXECUTE(IDX, Instr_ORA);
-            break;
-        case 0x02:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x03:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x04:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x05:
-            EXECUTE(ZPG, Instr_ORA);
-            break;
-        case 0x06:
-            EXECUTE(ZPG, Instr_ASL);
-            break;
-        case 0x07:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x08:
-            EXECUTE(IMP, Instr_PHP);
-            break;
-        case 0x09:
-            EXECUTE(IMM, Instr_ORA);
-            break;
-        case 0x0A:
-            EXECUTE(IMP, Instr_ASL);
-            break;
-        case 0x0B:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x0C:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x0D:
-            EXECUTE(ABS, Instr_ORA);
-            break;
-        case 0x0E:
-            EXECUTE(ABS, Instr_ASL);
-            break;
-        case 0x0F:
-            EXECUTE(IMP, Instr_XXX);
-            break;
+        case 0x00: EXECUTE(IMM, Instr_BRK); break;
+        case 0x01: EXECUTE(IDX, Instr_ORA); break;
+        case 0x02: EXECUTE(IMP, Instr_XXX); break;
+        case 0x03: EXECUTE(IMP, Instr_XXX); break;
+        case 0x04: EXECUTE(IMP, Instr_NOP); break;
+        case 0x05: EXECUTE(ZPG, Instr_ORA); break;
+        case 0x06: EXECUTE(ZPG, Instr_ASL); break;
+        case 0x07: EXECUTE(IMP, Instr_XXX); break;
+        case 0x08: EXECUTE(IMP, Instr_PHP); break;
+        case 0x09: EXECUTE(IMM, Instr_ORA); break;
+        case 0x0A: EXECUTE(IMP, Instr_ASL); break;
+        case 0x0B: EXECUTE(IMP, Instr_XXX); break;
+        case 0x0C: EXECUTE(IMP, Instr_NOP); break;
+        case 0x0D: EXECUTE(ABS, Instr_ORA); break;
+        case 0x0E: EXECUTE(ABS, Instr_ASL); break;
+        case 0x0F: EXECUTE(IMP, Instr_XXX); break;
 
-        case 0x10:
-            EXECUTE(REL, Instr_BPL);
-            break;
-        case 0x11:
-            EXECUTE(IDY, Instr_ORA);
-            break;
-        case 0x12:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x13:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x14:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x15:
-            EXECUTE(ZPX, Instr_ORA);
-            break;
-        case 0x16:
-            EXECUTE(ZPX, Instr_ASL);
-            break;
-        case 0x17:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x18:
-            EXECUTE(IMP, Instr_CLC);
-            break;
-        case 0x19:
-            EXECUTE(ABY, Instr_ORA);
-            break;
-        case 0x1A:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x1B:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x1C:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x1D:
-            EXECUTE(ABX, Instr_ORA);
-            break;
-        case 0x1E:
-            EXECUTE(ABX, Instr_ASL);
-            break;
-        case 0x1F:
-            EXECUTE(IMP, Instr_XXX);
-            break;
+        case 0x10: EXECUTE(REL, Instr_BPL); break;
+        case 0x11: EXECUTE(IDY, Instr_ORA); break;
+        case 0x12: EXECUTE(IMP, Instr_XXX); break;
+        case 0x13: EXECUTE(IMP, Instr_XXX); break;
+        case 0x14: EXECUTE(IMP, Instr_NOP); break;
+        case 0x15: EXECUTE(ZPX, Instr_ORA); break;
+        case 0x16: EXECUTE(ZPX, Instr_ASL); break;
+        case 0x17: EXECUTE(IMP, Instr_XXX); break;
+        case 0x18: EXECUTE(IMP, Instr_CLC); break;
+        case 0x19: EXECUTE(ABY, Instr_ORA); break;
+        case 0x1A: EXECUTE(IMP, Instr_NOP); break;
+        case 0x1B: EXECUTE(IMP, Instr_XXX); break;
+        case 0x1C: EXECUTE(IMP, Instr_NOP); break;
+        case 0x1D: EXECUTE(ABX, Instr_ORA); break;
+        case 0x1E: EXECUTE(ABX, Instr_ASL); break;
+        case 0x1F: EXECUTE(IMP, Instr_XXX); break;
 
-        case 0x20:
-            EXECUTE(ABS, Instr_JSR);
-            break;
-        case 0x21:
-            EXECUTE(IDX, Instr_AND);
-            break;
-        case 0x22:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x23:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x24:
-            EXECUTE(ZPG, Instr_BIT);
-            break;
-        case 0x25:
-            EXECUTE(ZPG, Instr_AND);
-            break;
-        case 0x26:
-            EXECUTE(ZPG, Instr_ROL);
-            break;
-        case 0x27:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x28:
-            EXECUTE(IMP, Instr_PLP);
-            break;
-        case 0x29:
-            EXECUTE(IMM, Instr_AND);
-            break;
-        case 0x2A:
-            EXECUTE(IMP, Instr_ROL);
-            break;
-        case 0x2B:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x2C:
-            EXECUTE(ABS, Instr_BIT);
-            break;
-        case 0x2D:
-            EXECUTE(ABS, Instr_AND);
-            break;
-        case 0x2E:
-            EXECUTE(ABS, Instr_ROL);
-            break;
-        case 0x2F:
-            EXECUTE(IMP, Instr_XXX);
-            break;
+        case 0x20: EXECUTE(ABS, Instr_JSR); break;
+        case 0x21: EXECUTE(IDX, Instr_AND); break;
+        case 0x22: EXECUTE(IMP, Instr_XXX); break;
+        case 0x23: EXECUTE(IMP, Instr_XXX); break;
+        case 0x24: EXECUTE(ZPG, Instr_BIT); break;
+        case 0x25: EXECUTE(ZPG, Instr_AND); break;
+        case 0x26: EXECUTE(ZPG, Instr_ROL); break;
+        case 0x27: EXECUTE(IMP, Instr_XXX); break;
+        case 0x28: EXECUTE(IMP, Instr_PLP); break;
+        case 0x29: EXECUTE(IMM, Instr_AND); break;
+        case 0x2A: EXECUTE(IMP, Instr_ROL); break;
+        case 0x2B: EXECUTE(IMP, Instr_XXX); break;
+        case 0x2C: EXECUTE(ABS, Instr_BIT); break;
+        case 0x2D: EXECUTE(ABS, Instr_AND); break;
+        case 0x2E: EXECUTE(ABS, Instr_ROL); break;
+        case 0x2F: EXECUTE(IMP, Instr_XXX); break;
 
-        case 0x30:
-            EXECUTE(REL, Instr_BMI);
-            break;
-        case 0x31:
-            EXECUTE(IDY, Instr_AND);
-            break;
-        case 0x32:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x33:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x34:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x35:
-            EXECUTE(ZPX, Instr_AND);
-            break;
-        case 0x36:
-            EXECUTE(ZPX, Instr_ROL);
-            break;
-        case 0x37:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x38:
-            EXECUTE(IMP, Instr_SEC);
-            break;
-        case 0x39:
-            EXECUTE(ABY, Instr_AND);
-            break;
-        case 0x3A:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x3B:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x3C:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x3D:
-            EXECUTE(ABX, Instr_AND);
-            break;
-        case 0x3E:
-            EXECUTE(ABX, Instr_ROL);
-            break;
-        case 0x3F:
-            EXECUTE(IMP, Instr_XXX);
-            break;
+        case 0x30: EXECUTE(REL, Instr_BMI); break;
+        case 0x31: EXECUTE(IDY, Instr_AND); break;
+        case 0x32: EXECUTE(IMP, Instr_XXX); break;
+        case 0x33: EXECUTE(IMP, Instr_XXX); break;
+        case 0x34: EXECUTE(IMP, Instr_NOP); break;
+        case 0x35: EXECUTE(ZPX, Instr_AND); break;
+        case 0x36: EXECUTE(ZPX, Instr_ROL); break;
+        case 0x37: EXECUTE(IMP, Instr_XXX); break;
+        case 0x38: EXECUTE(IMP, Instr_SEC); break;
+        case 0x39: EXECUTE(ABY, Instr_AND); break;
+        case 0x3A: EXECUTE(IMP, Instr_NOP); break;
+        case 0x3B: EXECUTE(IMP, Instr_XXX); break;
+        case 0x3C: EXECUTE(IMP, Instr_NOP); break;
+        case 0x3D: EXECUTE(ABX, Instr_AND); break;
+        case 0x3E: EXECUTE(ABX, Instr_ROL); break;
+        case 0x3F: EXECUTE(IMP, Instr_XXX); break;
 
-        case 0x40:
-            EXECUTE(IMP, Instr_RTI);
-            break;
-        case 0x41:
-            EXECUTE(IDX, Instr_EOR);
-            break;
-        case 0x42:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x43:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x44:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x45:
-            EXECUTE(ZPG, Instr_EOR);
-            break;
-        case 0x46:
-            EXECUTE(ZPG, Instr_LSR);
-            break;
-        case 0x47:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x48:
-            EXECUTE(IMP, Instr_PHA);
-            break;
-        case 0x49:
-            EXECUTE(IMM, Instr_EOR);
-            break;
-        case 0x4A:
-            EXECUTE(IMP, Instr_LSR);
-            break;
-        case 0x4B:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x4C:
-            EXECUTE(ABS, Instr_JMP);
-            break;
-        case 0x4D:
-            EXECUTE(ABS, Instr_EOR);
-            break;
-        case 0x4E:
-            EXECUTE(ABS, Instr_LSR);
-            break;
-        case 0x4F:
-            EXECUTE(IMP, Instr_XXX);
-            break;
+        case 0x40: EXECUTE(IMP, Instr_RTI); break;
+        case 0x41: EXECUTE(IDX, Instr_EOR); break;
+        case 0x42: EXECUTE(IMP, Instr_XXX); break;
+        case 0x43: EXECUTE(IMP, Instr_XXX); break;
+        case 0x44: EXECUTE(IMP, Instr_NOP); break;
+        case 0x45: EXECUTE(ZPG, Instr_EOR); break;
+        case 0x46: EXECUTE(ZPG, Instr_LSR); break;
+        case 0x47: EXECUTE(IMP, Instr_XXX); break;
+        case 0x48: EXECUTE(IMP, Instr_PHA); break;
+        case 0x49: EXECUTE(IMM, Instr_EOR); break;
+        case 0x4A: EXECUTE(IMP, Instr_LSR); break;
+        case 0x4B: EXECUTE(IMP, Instr_XXX); break;
+        case 0x4C: EXECUTE(ABS, Instr_JMP); break;
+        case 0x4D: EXECUTE(ABS, Instr_EOR); break;
+        case 0x4E: EXECUTE(ABS, Instr_LSR); break;
+        case 0x4F: EXECUTE(IMP, Instr_XXX); break;
 
-        case 0x50:
-            EXECUTE(REL, Instr_BVC);
-            break;
-        case 0x51:
-            EXECUTE(IDY, Instr_EOR);
-            break;
-        case 0x52:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x53:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x54:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x55:
-            EXECUTE(ZPX, Instr_EOR);
-            break;
-        case 0x56:
-            EXECUTE(ZPX, Instr_LSR);
-            break;
-        case 0x57:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x58:
-            EXECUTE(IMP, Instr_CLI);
-            break;
-        case 0x59:
-            EXECUTE(ABY, Instr_EOR);
-            break;
-        case 0x5A:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x5B:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x5C:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x5D:
-            EXECUTE(ABX, Instr_EOR);
-            break;
-        case 0x5E:
-            EXECUTE(ABX, Instr_LSR);
-            break;
-        case 0x5F:
-            EXECUTE(IMP, Instr_XXX);
-            break;
+        case 0x50: EXECUTE(REL, Instr_BVC); break;
+        case 0x51: EXECUTE(IDY, Instr_EOR); break;
+        case 0x52: EXECUTE(IMP, Instr_XXX); break;
+        case 0x53: EXECUTE(IMP, Instr_XXX); break;
+        case 0x54: EXECUTE(IMP, Instr_NOP); break;
+        case 0x55: EXECUTE(ZPX, Instr_EOR); break;
+        case 0x56: EXECUTE(ZPX, Instr_LSR); break;
+        case 0x57: EXECUTE(IMP, Instr_XXX); break;
+        case 0x58: EXECUTE(IMP, Instr_CLI); break;
+        case 0x59: EXECUTE(ABY, Instr_EOR); break;
+        case 0x5A: EXECUTE(IMP, Instr_NOP); break;
+        case 0x5B: EXECUTE(IMP, Instr_XXX); break;
+        case 0x5C: EXECUTE(IMP, Instr_NOP); break;
+        case 0x5D: EXECUTE(ABX, Instr_EOR); break;
+        case 0x5E: EXECUTE(ABX, Instr_LSR); break;
+        case 0x5F: EXECUTE(IMP, Instr_XXX); break;
 
-        case 0x60:
-            EXECUTE(IMP, Instr_RTS);
-            break;
-        case 0x61:
-            EXECUTE(IDX, Instr_ADC);
-            break;
-        case 0x62:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x63:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x64:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x65:
-            EXECUTE(ZPG, Instr_ADC);
-            break;
-        case 0x66:
-            EXECUTE(ZPG, Instr_ROR);
-            break;
-        case 0x67:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x68:
-            EXECUTE(IMP, Instr_PLA);
-            break;
-        case 0x69:
-            EXECUTE(IMM, Instr_ADC);
-            break;
-        case 0x6A:
-            EXECUTE(IMP, Instr_ROR);
-            break;
-        case 0x6B:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x6C:
-            EXECUTE(IND, Instr_JMP);
-            break;
-        case 0x6D:
-            EXECUTE(ABS, Instr_ADC);
-            break;
-        case 0x6E:
-            EXECUTE(ABS, Instr_ROR);
-            break;
-        case 0x6F:
-            EXECUTE(IMP, Instr_XXX);
-            break;
+        case 0x60: EXECUTE(IMP, Instr_RTS); break;
+        case 0x61: EXECUTE(IDX, Instr_ADC); break;
+        case 0x62: EXECUTE(IMP, Instr_XXX); break;
+        case 0x63: EXECUTE(IMP, Instr_XXX); break;
+        case 0x64: EXECUTE(IMP, Instr_NOP); break;
+        case 0x65: EXECUTE(ZPG, Instr_ADC); break;
+        case 0x66: EXECUTE(ZPG, Instr_ROR); break;
+        case 0x67: EXECUTE(IMP, Instr_XXX); break;
+        case 0x68: EXECUTE(IMP, Instr_PLA); break;
+        case 0x69: EXECUTE(IMM, Instr_ADC); break;
+        case 0x6A: EXECUTE(IMP, Instr_ROR); break;
+        case 0x6B: EXECUTE(IMP, Instr_XXX); break;
+        case 0x6C: EXECUTE(IND, Instr_JMP); break;
+        case 0x6D: EXECUTE(ABS, Instr_ADC); break;
+        case 0x6E: EXECUTE(ABS, Instr_ROR); break;
+        case 0x6F: EXECUTE(IMP, Instr_XXX); break;
 
-        case 0x70:
-            EXECUTE(REL, Instr_BVS);
-            break;
-        case 0x71:
-            EXECUTE(IDY, Instr_ADC);
-            break;
-        case 0x72:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x73:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x74:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x75:
-            EXECUTE(ZPX, Instr_ADC);
-            break;
-        case 0x76:
-            EXECUTE(ZPX, Instr_ROR);
-            break;
-        case 0x77:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x78:
-            EXECUTE(IMP, Instr_SEI);
-            break;
-        case 0x79:
-            EXECUTE(ABY, Instr_ADC);
-            break;
-        case 0x7A:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x7B:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x7C:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x7D:
-            EXECUTE(ABX, Instr_ADC);
-            break;
-        case 0x7E:
-            EXECUTE(ABX, Instr_ROR);
-            break;
-        case 0x7F:
-            EXECUTE(IMP, Instr_XXX);
-            break;
+        case 0x70: EXECUTE(REL, Instr_BVS); break;
+        case 0x71: EXECUTE(IDY, Instr_ADC); break;
+        case 0x72: EXECUTE(IMP, Instr_XXX); break;
+        case 0x73: EXECUTE(IMP, Instr_XXX); break;
+        case 0x74: EXECUTE(IMP, Instr_NOP); break;
+        case 0x75: EXECUTE(ZPX, Instr_ADC); break;
+        case 0x76: EXECUTE(ZPX, Instr_ROR); break;
+        case 0x77: EXECUTE(IMP, Instr_XXX); break;
+        case 0x78: EXECUTE(IMP, Instr_SEI); break;
+        case 0x79: EXECUTE(ABY, Instr_ADC); break;
+        case 0x7A: EXECUTE(IMP, Instr_NOP); break;
+        case 0x7B: EXECUTE(IMP, Instr_XXX); break;
+        case 0x7C: EXECUTE(IMP, Instr_NOP); break;
+        case 0x7D: EXECUTE(ABX, Instr_ADC); break;
+        case 0x7E: EXECUTE(ABX, Instr_ROR); break;
+        case 0x7F: EXECUTE(IMP, Instr_XXX); break;
 
-        case 0x80:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x81:
-            EXECUTE(IDX, Instr_STA);
-            break;
-        case 0x82:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x83:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x84:
-            EXECUTE(ZPG, Instr_STY);
-            break;
-        case 0x85:
-            EXECUTE(ZPG, Instr_STA);
-            break;
-        case 0x86:
-            EXECUTE(ZPG, Instr_STX);
-            break;
-        case 0x87:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x88:
-            EXECUTE(IMP, Instr_DEY);
-            break;
-        case 0x89:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0x8A:
-            EXECUTE(IMP, Instr_TXA);
-            break;
-        case 0x8B:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x8C:
-            EXECUTE(ABS, Instr_STY);
-            break;
-        case 0x8D:
-            EXECUTE(ABS, Instr_STA);
-            break;
-        case 0x8E:
-            EXECUTE(ABS, Instr_STX);
-            break;
-        case 0x8F:
-            EXECUTE(IMP, Instr_XXX);
-            break;
+        case 0x80: EXECUTE(IMP, Instr_NOP); break;
+        case 0x81: EXECUTE(IDX, Instr_STA); break;
+        case 0x82: EXECUTE(IMP, Instr_NOP); break;
+        case 0x83: EXECUTE(IMP, Instr_XXX); break;
+        case 0x84: EXECUTE(ZPG, Instr_STY); break;
+        case 0x85: EXECUTE(ZPG, Instr_STA); break;
+        case 0x86: EXECUTE(ZPG, Instr_STX); break;
+        case 0x87: EXECUTE(IMP, Instr_XXX); break;
+        case 0x88: EXECUTE(IMP, Instr_DEY); break;
+        case 0x89: EXECUTE(IMP, Instr_NOP); break;
+        case 0x8A: EXECUTE(IMP, Instr_TXA); break;
+        case 0x8B: EXECUTE(IMP, Instr_XXX); break;
+        case 0x8C: EXECUTE(ABS, Instr_STY); break;
+        case 0x8D: EXECUTE(ABS, Instr_STA); break;
+        case 0x8E: EXECUTE(ABS, Instr_STX); break;
+        case 0x8F: EXECUTE(IMP, Instr_XXX); break;
 
-        case 0x90:
-            EXECUTE(REL, Instr_BCC);
-            break;
-        case 0x91:
-            EXECUTE(IDY, Instr_STA);
-            break;
-        case 0x92:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x93:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x94:
-            EXECUTE(ZPX, Instr_STY);
-            break;
-        case 0x95:
-            EXECUTE(ZPX, Instr_STA);
-            break;
-        case 0x96:
-            EXECUTE(ZPY, Instr_STX);
-            break;
-        case 0x97:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x98:
-            EXECUTE(IMP, Instr_TYA);
-            break;
-        case 0x99:
-            EXECUTE(ABY, Instr_STA);
-            break;
-        case 0x9A:
-            EXECUTE(IMP, Instr_TXS);
-            break;
-        case 0x9B:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x9C:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x9D:
-            EXECUTE(ABX, Instr_STA);
-            break;
-        case 0x9E:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0x9F:
-            EXECUTE(IMP, Instr_XXX);
-            break;
+        case 0x90: EXECUTE(REL, Instr_BCC); break;
+        case 0x91: EXECUTE(IDY, Instr_STA); break;
+        case 0x92: EXECUTE(IMP, Instr_XXX); break;
+        case 0x93: EXECUTE(IMP, Instr_XXX); break;
+        case 0x94: EXECUTE(ZPX, Instr_STY); break;
+        case 0x95: EXECUTE(ZPX, Instr_STA); break;
+        case 0x96: EXECUTE(ZPY, Instr_STX); break;
+        case 0x97: EXECUTE(IMP, Instr_XXX); break;
+        case 0x98: EXECUTE(IMP, Instr_TYA); break;
+        case 0x99: EXECUTE(ABY, Instr_STA); break;
+        case 0x9A: EXECUTE(IMP, Instr_TXS); break;
+        case 0x9B: EXECUTE(IMP, Instr_XXX); break;
+        case 0x9C: EXECUTE(IMP, Instr_XXX); break;
+        case 0x9D: EXECUTE(ABX, Instr_STA); break;
+        case 0x9E: EXECUTE(IMP, Instr_XXX); break;
+        case 0x9F: EXECUTE(IMP, Instr_XXX); break;
 
-        case 0xA0:
-            EXECUTE(IMM, Instr_LDY);
-            break;
-        case 0xA1:
-            EXECUTE(IDX, Instr_LDA);
-            break;
-        case 0xA2:
-            EXECUTE(IMM, Instr_LDX);
-            break;
-        case 0xA3:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xA4:
-            EXECUTE(ZPG, Instr_LDY);
-            break;
-        case 0xA5:
-            EXECUTE(ZPG, Instr_LDA);
-            break;
-        case 0xA6:
-            EXECUTE(ZPG, Instr_LDX);
-            break;
-        case 0xA7:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xA8:
-            EXECUTE(IMP, Instr_TAY);
-            break;
-        case 0xA9:
-            EXECUTE(IMM, Instr_LDA);
-            break;
-        case 0xAA:
-            EXECUTE(IMP, Instr_TAX);
-            break;
-        case 0xAB:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xAC:
-            EXECUTE(ABS, Instr_LDY);
-            break;
-        case 0xAD:
-            EXECUTE(ABS, Instr_LDA);
-            break;
-        case 0xAE:
-            EXECUTE(ABS, Instr_LDX);
-            break;
-        case 0xAF:
-            EXECUTE(IMP, Instr_XXX);
-            break;
+        case 0xA0: EXECUTE(IMM, Instr_LDY); break;
+        case 0xA1: EXECUTE(IDX, Instr_LDA); break;
+        case 0xA2: EXECUTE(IMM, Instr_LDX); break;
+        case 0xA3: EXECUTE(IMP, Instr_XXX); break;
+        case 0xA4: EXECUTE(ZPG, Instr_LDY); break;
+        case 0xA5: EXECUTE(ZPG, Instr_LDA); break;
+        case 0xA6: EXECUTE(ZPG, Instr_LDX); break;
+        case 0xA7: EXECUTE(IMP, Instr_XXX); break;
+        case 0xA8: EXECUTE(IMP, Instr_TAY); break;
+        case 0xA9: EXECUTE(IMM, Instr_LDA); break;
+        case 0xAA: EXECUTE(IMP, Instr_TAX); break;
+        case 0xAB: EXECUTE(IMP, Instr_XXX); break;
+        case 0xAC: EXECUTE(ABS, Instr_LDY); break;
+        case 0xAD: EXECUTE(ABS, Instr_LDA); break;
+        case 0xAE: EXECUTE(ABS, Instr_LDX); break;
+        case 0xAF: EXECUTE(IMP, Instr_XXX); break;
 
-        case 0xB0:
-            EXECUTE(REL, Instr_BCS);
-            break;
-        case 0xB1:
-            EXECUTE(IDY, Instr_LDA);
-            break;
-        case 0xB2:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xB3:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xB4:
-            EXECUTE(ZPX, Instr_LDY);
-            break;
-        case 0xB5:
-            EXECUTE(ZPX, Instr_LDA);
-            break;
-        case 0xB6:
-            EXECUTE(ZPY, Instr_LDX);
-            break;
-        case 0xB7:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xB8:
-            EXECUTE(IMP, Instr_CLV);
-            break;
-        case 0xB9:
-            EXECUTE(ABY, Instr_LDA);
-            break;
-        case 0xBA:
-            EXECUTE(IMP, Instr_TSX);
-            break;
-        case 0xBB:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xBC:
-            EXECUTE(ABX, Instr_LDY);
-            break;
-        case 0xBD:
-            EXECUTE(ABX, Instr_LDA);
-            break;
-        case 0xBE:
-            EXECUTE(ABY, Instr_LDX);
-            break;
-        case 0xBF:
-            EXECUTE(IMP, Instr_XXX);
-            break;
+        case 0xB0: EXECUTE(REL, Instr_BCS); break;
+        case 0xB1: EXECUTE(IDY, Instr_LDA); break;
+        case 0xB2: EXECUTE(IMP, Instr_XXX); break;
+        case 0xB3: EXECUTE(IMP, Instr_XXX); break;
+        case 0xB4: EXECUTE(ZPX, Instr_LDY); break;
+        case 0xB5: EXECUTE(ZPX, Instr_LDA); break;
+        case 0xB6: EXECUTE(ZPY, Instr_LDX); break;
+        case 0xB7: EXECUTE(IMP, Instr_XXX); break;
+        case 0xB8: EXECUTE(IMP, Instr_CLV); break;
+        case 0xB9: EXECUTE(ABY, Instr_LDA); break;
+        case 0xBA: EXECUTE(IMP, Instr_TSX); break;
+        case 0xBB: EXECUTE(IMP, Instr_XXX); break;
+        case 0xBC: EXECUTE(ABX, Instr_LDY); break;
+        case 0xBD: EXECUTE(ABX, Instr_LDA); break;
+        case 0xBE: EXECUTE(ABY, Instr_LDX); break;
+        case 0xBF: EXECUTE(IMP, Instr_XXX); break;
 
-        case 0xC0:
-            EXECUTE(IMM, Instr_CPY);
-            break;
-        case 0xC1:
-            EXECUTE(IDX, Instr_CMP);
-            break;
-        case 0xC2:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0xC3:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xC4:
-            EXECUTE(ZPG, Instr_CPY);
-            break;
-        case 0xC5:
-            EXECUTE(ZPG, Instr_CMP);
-            break;
-        case 0xC6:
-            EXECUTE(ZPG, Instr_DEC);
-            break;
-        case 0xC7:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xC8:
-            EXECUTE(IMP, Instr_INY);
-            break;
-        case 0xC9:
-            EXECUTE(IMM, Instr_CMP);
-            break;
-        case 0xCA:
-            EXECUTE(IMP, Instr_DEX);
-            break;
-        case 0xCB:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xCC:
-            EXECUTE(ABS, Instr_CPY);
-            break;
-        case 0xCD:
-            EXECUTE(ABS, Instr_CMP);
-            break;
-        case 0xCE:
-            EXECUTE(ABS, Instr_DEC);
-            break;
-        case 0xCF:
-            EXECUTE(IMP, Instr_XXX);
-            break;
+        case 0xC0: EXECUTE(IMM, Instr_CPY); break;
+        case 0xC1: EXECUTE(IDX, Instr_CMP); break;
+        case 0xC2: EXECUTE(IMP, Instr_NOP); break;
+        case 0xC3: EXECUTE(IMP, Instr_XXX); break;
+        case 0xC4: EXECUTE(ZPG, Instr_CPY); break;
+        case 0xC5: EXECUTE(ZPG, Instr_CMP); break;
+        case 0xC6: EXECUTE(ZPG, Instr_DEC); break;
+        case 0xC7: EXECUTE(IMP, Instr_XXX); break;
+        case 0xC8: EXECUTE(IMP, Instr_INY); break;
+        case 0xC9: EXECUTE(IMM, Instr_CMP); break;
+        case 0xCA: EXECUTE(IMP, Instr_DEX); break;
+        case 0xCB: EXECUTE(IMP, Instr_XXX); break;
+        case 0xCC: EXECUTE(ABS, Instr_CPY); break;
+        case 0xCD: EXECUTE(ABS, Instr_CMP); break;
+        case 0xCE: EXECUTE(ABS, Instr_DEC); break;
+        case 0xCF: EXECUTE(IMP, Instr_XXX); break;
 
-        case 0xD0:
-            EXECUTE(REL, Instr_BNE);
-            break;
-        case 0xD1:
-            EXECUTE(IDY, Instr_CMP);
-            break;
-        case 0xD2:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xD3:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xD4:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0xD5:
-            EXECUTE(ZPX, Instr_CMP);
-            break;
-        case 0xD6:
-            EXECUTE(ZPX, Instr_DEC);
-            break;
-        case 0xD7:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xD8:
-            EXECUTE(IMP, Instr_CLD);
-            break;
-        case 0xD9:
-            EXECUTE(ABY, Instr_CMP);
-            break;
-        case 0xDA:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0xDB:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xDC:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0xDD:
-            EXECUTE(ABX, Instr_CMP);
-            break;
-        case 0xDE:
-            EXECUTE(ABX, Instr_DEC);
-            break;
-        case 0xDF:
-            EXECUTE(IMP, Instr_XXX);
-            break;
+        case 0xD0: EXECUTE(REL, Instr_BNE); break;
+        case 0xD1: EXECUTE(IDY, Instr_CMP); break;
+        case 0xD2: EXECUTE(IMP, Instr_XXX); break;
+        case 0xD3: EXECUTE(IMP, Instr_XXX); break;
+        case 0xD4: EXECUTE(IMP, Instr_NOP); break;
+        case 0xD5: EXECUTE(ZPX, Instr_CMP); break;
+        case 0xD6: EXECUTE(ZPX, Instr_DEC); break;
+        case 0xD7: EXECUTE(IMP, Instr_XXX); break;
+        case 0xD8: EXECUTE(IMP, Instr_CLD); break;
+        case 0xD9: EXECUTE(ABY, Instr_CMP); break;
+        case 0xDA: EXECUTE(IMP, Instr_NOP); break;
+        case 0xDB: EXECUTE(IMP, Instr_XXX); break;
+        case 0xDC: EXECUTE(IMP, Instr_NOP); break;
+        case 0xDD: EXECUTE(ABX, Instr_CMP); break;
+        case 0xDE: EXECUTE(ABX, Instr_DEC); break;
+        case 0xDF: EXECUTE(IMP, Instr_XXX); break;
 
-        case 0xE0:
-            EXECUTE(IMM, Instr_CPX);
-            break;
-        case 0xE1:
-            EXECUTE(IDX, Instr_SBC);
-            break;
-        case 0xE2:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0xE3:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xE4:
-            EXECUTE(ZPG, Instr_CPX);
-            break;
-        case 0xE5:
-            EXECUTE(ZPG, Instr_SBC);
-            break;
-        case 0xE6:
-            EXECUTE(ZPG, Instr_INC);
-            break;
-        case 0xE7:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xE8:
-            EXECUTE(IMP, Instr_INX);
-            break;
-        case 0xE9:
-            EXECUTE(IMM, Instr_SBC);
-            break;
-        case 0xEA:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0xEB:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xEC:
-            EXECUTE(ABS, Instr_CPX);
-            break;
-        case 0xED:
-            EXECUTE(ABS, Instr_SBC);
-            break;
-        case 0xEE:
-            EXECUTE(ABS, Instr_INC);
-            break;
-        case 0xEF:
-            EXECUTE(IMP, Instr_XXX);
-            break;
+        case 0xE0: EXECUTE(IMM, Instr_CPX); break;
+        case 0xE1: EXECUTE(IDX, Instr_SBC); break;
+        case 0xE2: EXECUTE(IMP, Instr_NOP); break;
+        case 0xE3: EXECUTE(IMP, Instr_XXX); break;
+        case 0xE4: EXECUTE(ZPG, Instr_CPX); break;
+        case 0xE5: EXECUTE(ZPG, Instr_SBC); break;
+        case 0xE6: EXECUTE(ZPG, Instr_INC); break;
+        case 0xE7: EXECUTE(IMP, Instr_XXX); break;
+        case 0xE8: EXECUTE(IMP, Instr_INX); break;
+        case 0xE9: EXECUTE(IMM, Instr_SBC); break;
+        case 0xEA: EXECUTE(IMP, Instr_NOP); break;
+        case 0xEB: EXECUTE(IMP, Instr_XXX); break;
+        case 0xEC: EXECUTE(ABS, Instr_CPX); break;
+        case 0xED: EXECUTE(ABS, Instr_SBC); break;
+        case 0xEE: EXECUTE(ABS, Instr_INC); break;
+        case 0xEF: EXECUTE(IMP, Instr_XXX); break;
 
         case 0xF0: EXECUTE(REL, Instr_BEQ); break;
         case 0xF1: EXECUTE(IDY, Instr_SBC); break;
@@ -900,8 +430,7 @@ IRAM_ATTR void Cpu6502::apuWrite(uint16_t addr, uint8_t data)
 
 inline uint8_t Cpu6502::fetch()
 {
-    if (addrmode_implied == false)
-        fetched = read(addr_abs);
+    if (addrmode_implied == false) fetched = read(addr_abs);
     return fetched;
 }
 
@@ -921,8 +450,7 @@ inline void Cpu6502::ABX()
     addr_abs = (high_byte << 8) | low_byte;
     addr_abs += X;
 
-    if ((addr_abs & 0xFF00) != (high_byte << 8))
-        additional_cycle1 = 1;
+    if ((addr_abs & 0xFF00) != (high_byte << 8)) additional_cycle1 = 1;
 }
 
 inline void Cpu6502::ABY()
@@ -933,8 +461,7 @@ inline void Cpu6502::ABY()
     addr_abs = (high_byte << 8) | low_byte;
     addr_abs += Y;
 
-    if ((addr_abs & 0xFF00) != (high_byte << 8))
-        additional_cycle1 = 1;
+    if ((addr_abs & 0xFF00) != (high_byte << 8)) additional_cycle1 = 1;
 }
 
 inline void Cpu6502::IMM()
@@ -955,10 +482,8 @@ inline void Cpu6502::IND()
 
     uint16_t ptr = (high_byte << 8) | low_byte;
 
-    if (low_byte == 0xFF)
-        addr_abs = (read(ptr & 0xFF00) << 8) | read(ptr);
-    else
-        addr_abs = (read(ptr + 1) << 8) | read(ptr);
+    if (low_byte == 0xFF) addr_abs = (read(ptr & 0xFF00) << 8) | read(ptr);
+    else addr_abs = (read(ptr + 1) << 8) | read(ptr);
 }
 
 inline void Cpu6502::IDX()
@@ -981,8 +506,7 @@ inline void Cpu6502::IDY()
     addr_abs = (high_byte << 8) | low_byte;
     addr_abs += Y;
 
-    if ((addr_abs & 0xFF00) != (high_byte << 8))
-        additional_cycle1 = 1;
+    if ((addr_abs & 0xFF00) != (high_byte << 8)) additional_cycle1 = 1;
 }
 
 inline void Cpu6502::REL()
@@ -1297,8 +821,7 @@ inline void Cpu6502::Instr_BCC()
         cycles++;
         addr_abs = PC + addr_rel;
 
-        if ((addr_abs & 0xFF00) != (PC & 0xFF00))
-            cycles++;
+        if ((addr_abs & 0xFF00) != (PC & 0xFF00)) cycles++;
 
         PC = addr_abs;
     }
@@ -1311,8 +834,7 @@ inline void Cpu6502::Instr_BCS()
         cycles++;
         addr_abs = PC + addr_rel;
 
-        if ((addr_abs & 0xFF00) != (PC & 0xFF00))
-            cycles++;
+        if ((addr_abs & 0xFF00) != (PC & 0xFF00)) cycles++;
 
         PC = addr_abs;
     }
@@ -1325,8 +847,7 @@ inline void Cpu6502::Instr_BEQ()
         cycles++;
         addr_abs = PC + addr_rel;
 
-        if ((addr_abs & 0xFF00) != (PC & 0xFF00))
-            cycles++;
+        if ((addr_abs & 0xFF00) != (PC & 0xFF00)) cycles++;
 
         PC = addr_abs;
     }
@@ -1339,8 +860,7 @@ inline void Cpu6502::Instr_BMI()
         cycles++;
         addr_abs = PC + addr_rel;
 
-        if ((addr_abs & 0xFF00) != (PC & 0xFF00))
-            cycles++;
+        if ((addr_abs & 0xFF00) != (PC & 0xFF00)) cycles++;
 
         PC = addr_abs;
     }
@@ -1353,8 +873,7 @@ inline void Cpu6502::Instr_BNE()
         cycles++;
         addr_abs = PC + addr_rel;
 
-        if ((addr_abs & 0xFF00) != (PC & 0xFF00))
-            cycles++;
+        if ((addr_abs & 0xFF00) != (PC & 0xFF00)) cycles++;
 
         PC = addr_abs;
     }
@@ -1367,8 +886,7 @@ inline void Cpu6502::Instr_BPL()
         cycles++;
         addr_abs = PC + addr_rel;
 
-        if ((addr_abs & 0xFF00) != (PC & 0xFF00))
-            cycles++;
+        if ((addr_abs & 0xFF00) != (PC & 0xFF00)) cycles++;
 
         PC = addr_abs;
     }
@@ -1381,8 +899,7 @@ inline void Cpu6502::Instr_BVC()
         cycles++;
         addr_abs = PC + addr_rel;
 
-        if ((addr_abs & 0xFF00) != (PC & 0xFF00))
-            cycles++;
+        if ((addr_abs & 0xFF00) != (PC & 0xFF00)) cycles++;
 
         PC = addr_abs;
     }
@@ -1395,8 +912,7 @@ inline void Cpu6502::Instr_BVS()
         cycles++;
         addr_abs = PC + addr_rel;
 
-        if ((addr_abs & 0xFF00) != (PC & 0xFF00))
-            cycles++;
+        if ((addr_abs & 0xFF00) != (PC & 0xFF00)) cycles++;
 
         PC = addr_abs;
     }
