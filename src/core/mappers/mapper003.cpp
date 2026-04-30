@@ -72,7 +72,8 @@ Mapper createMapper003(uint8_t PRG_banks, uint8_t CHR_banks, Cartridge* cart)
 {
     Mapper mapper;
     Mapper003_state* state = new Mapper003_state;
-    bankInit(&state->CHR_cache_8K, state->CHR_banks_8K, MAPPER003_NUM_CHR_BANKS_8K, 8U * 1024U, cart);
+    bankInit(&state->CHR_cache_8K, state->CHR_banks_8K, MAPPER003_NUM_CHR_BANKS_8K, 8U * 1024U,
+             cart);
 
     state->number_PRG_banks = PRG_banks;
     state->number_CHR_banks = CHR_banks;

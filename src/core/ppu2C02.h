@@ -48,7 +48,7 @@ public:
     void dumpState(File& state);
     void loadState(File& state);
 
-    enum Palette: uint8_t
+    enum Palette : uint8_t
     {
         NTSC565,
         PAL565,

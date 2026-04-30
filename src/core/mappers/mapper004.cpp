@@ -289,7 +289,8 @@ Mapper createMapper004(uint8_t PRG_banks, uint8_t CHR_banks, Cartridge* cart)
     state->number_CHR_banks = CHR_banks;
     state->cart = cart;
 
-    bankInit(&state->PRG_cache_8K, state->PRG_banks_8K, MAPPER004_NUM_PRG_BANKS_8K, 8U * 1024U, cart);
+    bankInit(&state->PRG_cache_8K, state->PRG_banks_8K, MAPPER004_NUM_PRG_BANKS_8K, 8U * 1024U,
+             cart);
     bankInit(&state->CHR_cache_1K, state->CHR_banks_1K, MAPPER004_NUM_CHR_BANKS_1K, 1 * 1024, cart);
     state->RAM = (uint8_t*)malloc(8U * 1024U);
 
