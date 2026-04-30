@@ -14,20 +14,20 @@ uint8_t controllerRead()
 
 bool isDownPressed(CONTROLLER button)
 {
-    return (controllerRead() & button) != 0;
+    return (controllerRead() & (uint8_t)button) != 0;
 }
 
 static uint8_t gpioRead()
 {
     uint8_t state = 0x00;
-    if (digitalRead(A_BUTTON) == LOW) state |= CONTROLLER::A;
-    if (digitalRead(B_BUTTON) == LOW) state |= CONTROLLER::B;
-    if (digitalRead(SELECT_BUTTON) == LOW) state |= CONTROLLER::Select;
-    if (digitalRead(START_BUTTON) == LOW) state |= CONTROLLER::Start;
-    if (digitalRead(UP_BUTTON) == LOW) state |= CONTROLLER::Up;
-    if (digitalRead(DOWN_BUTTON) == LOW) state |= CONTROLLER::Down;
-    if (digitalRead(LEFT_BUTTON) == LOW) state |= CONTROLLER::Left;
-    if (digitalRead(RIGHT_BUTTON) == LOW) state |= CONTROLLER::Right;
+    if (digitalRead(A_BUTTON) == LOW) state |= (uint8_t)CONTROLLER::A;
+    if (digitalRead(B_BUTTON) == LOW) state |= (uint8_t)CONTROLLER::B;
+    if (digitalRead(SELECT_BUTTON) == LOW) state |= (uint8_t)CONTROLLER::Select;
+    if (digitalRead(START_BUTTON) == LOW) state |= (uint8_t)CONTROLLER::Start;
+    if (digitalRead(UP_BUTTON) == LOW) state |= (uint8_t)CONTROLLER::Up;
+    if (digitalRead(DOWN_BUTTON) == LOW) state |= (uint8_t)CONTROLLER::Down;
+    if (digitalRead(LEFT_BUTTON) == LOW) state |= (uint8_t)CONTROLLER::Left;
+    if (digitalRead(RIGHT_BUTTON) == LOW) state |= (uint8_t)CONTROLLER::Right;
 
     return state;
 }
@@ -88,10 +88,10 @@ static uint8_t SNESControllerRead()
     state |= snes_state & 0xFF;
 
     // Map extra bits to A and B buttons
-    if (snes_state & (1 << 8)) state |= CONTROLLER::A;
-    if (snes_state & (1 << 9)) state |= CONTROLLER::B;
-    if (snes_state & (1 << 10)) state |= CONTROLLER::B;
-    if (snes_state & (1 << 11)) state |= CONTROLLER::A;
+    if (snes_state & (1 << 8)) state |= (uint8_t)CONTROLLER::A;
+    if (snes_state & (1 << 9)) state |= (uint8_t)CONTROLLER::B;
+    if (snes_state & (1 << 10)) state |= (uint8_t)CONTROLLER::B;
+    if (snes_state & (1 << 11)) state |= (uint8_t)CONTROLLER::A;
 
     return state;
 }
@@ -211,16 +211,16 @@ static uint8_t PSXControllerRead()
     constexpr uint16_t PSX_LEFT = (1 << 7);
     constexpr uint16_t PSX_RIGHT = (1 << 5);
 
-    if (psx_state & PSX_SELECT) state |= CONTROLLER::Select;
-    if (psx_state & PSX_START) state |= CONTROLLER::Start;
+    if (psx_state & PSX_SELECT) state |= (uint8_t)CONTROLLER::Select;
+    if (psx_state & PSX_START) state |= (uint8_t)CONTROLLER::Start;
 
-    if (psx_state & PSX_A_MASK) state |= CONTROLLER::A;
-    if (psx_state & PSX_B_MASK) state |= CONTROLLER::B;
+    if (psx_state & PSX_A_MASK) state |= (uint8_t)CONTROLLER::A;
+    if (psx_state & PSX_B_MASK) state |= (uint8_t)CONTROLLER::B;
 
-    if (psx_state & PSX_UP) state |= CONTROLLER::Up;
-    if (psx_state & PSX_DOWN) state |= CONTROLLER::Down;
-    if (psx_state & PSX_LEFT) state |= CONTROLLER::Left;
-    if (psx_state & PSX_RIGHT) state |= CONTROLLER::Right;
+    if (psx_state & PSX_UP) state |= (uint8_t)CONTROLLER::Up;
+    if (psx_state & PSX_DOWN) state |= (uint8_t)CONTROLLER::Down;
+    if (psx_state & PSX_LEFT) state |= (uint8_t)CONTROLLER::Left;
+    if (psx_state & PSX_RIGHT) state |= (uint8_t)CONTROLLER::Right;
 
     // End transfer
     digitalWrite(CONTROLLER_PSX_ATTENTION, HIGH);
