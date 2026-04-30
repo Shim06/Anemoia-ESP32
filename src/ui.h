@@ -38,7 +38,7 @@ public:
 
 private:
     void setBrightness(int value);
-    void drawText(const char* text, const int x, const int y);
+    void drawText(const char* text, const int16_t x, const int16_t y);
     TFT_eSPI* screen = nullptr;
     int selected = 0;
     int prev_selected = 0;
