@@ -66,6 +66,7 @@ inline uint8_t Ppu2C02::ppuRead(uint16_t addr)
         case 0x0014: addr = 0x0004; break;
         case 0x0018: addr = 0x0008; break;
         case 0x001C: addr = 0x000C; break;
+        default: break;
         }
         data = palette_table[addr] & (mask.grayscale ? 0x30 : 0x3F);
     }
@@ -117,6 +118,7 @@ IRAM_ATTR void Ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
         ppuWrite(v.reg, data);
         v.reg += (control.VRAM_addr_increment ? 32 : 1);
         break;
+    default: break;
     }
 }
 
@@ -321,7 +323,7 @@ inline void Ppu2C02::renderSprites()
                                           : offset + (tile_index << 4);
         ptr_tile = cart->ppuReadPtr(tile_addr);
 
-        y_offset = scanline - sprite_y;
+        y_offset = (int16_t)(scanline - sprite_y);
         if (y_offset > 7) y_offset += 8;
         if (attribute_byte & 0x80) // If flip sprite vertically
         {
@@ -440,7 +442,7 @@ void Ppu2C02::fakeSpriteHit(uint16_t current_scanline)
                                       : offset + (tile_index << 4);
     ptr_tile = cart->ppuReadPtr(tile_addr);
 
-    y_offset = scanline - sprite_y;
+    y_offset = (int16_t)(scanline - sprite_y);
     if (y_offset > 7) y_offset += 8;
 
     if (attribute_byte & 0x80) // If flip sprite vertically
@@ -498,9 +500,9 @@ inline void Ppu2C02::finishScanline()
 
 // Transfer internal scanline buffer to display buffer
 #ifdef ILI9341_DRIVER
-    uint32_t* display = (uint32_t*)(ptr_back_buffer + (scanline_counter * SCANLINE_SIZE));
+    uint32_t* display = (uint32_t*)(ptr_back_buffer + ((uint32_t)scanline_counter * SCANLINE_SIZE));
 #else
-    uint32_t* display = (uint32_t*)(ptr_display + (scanline_counter * SCANLINE_SIZE));
+    uint32_t* display = (uint32_t*)(ptr_display + ((uint32_t)scanline_counter * SCANLINE_SIZE));
 #endif
     uint32_t* buffer = (uint32_t*)ptr_buffer;
     for (int i = 0, size = (SCANLINE_SIZE >> 1); i < size; i++) display[i] = buffer[i];
@@ -601,6 +603,7 @@ void Ppu2C02::setPalette(uint8_t palette)
     case PAL565: nes_palette = palette_PAL565; break;
     case NTSC222: nes_palette = palette_NTSC222; break;
     case PAL222: nes_palette = palette_PAL222; break;
+    default: break;
     }
 }
 

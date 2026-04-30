@@ -20,7 +20,7 @@ public:
     Cartridge(const char* filename);
     ~Cartridge();
 
-    enum MIRROR
+    enum MIRROR : uint8_t
     {
         HORIZONTAL,
         VERTICAL,

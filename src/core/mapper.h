@@ -14,7 +14,7 @@ class Cartridge;
 class Mapper
 {
 public:
-    enum ROM_TYPE
+    enum ROM_TYPE : uint8_t
     {
         PRG_ROM,
         CHR_ROM

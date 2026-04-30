@@ -60,9 +60,9 @@ void mapper002_reset(Mapper* mapper)
     state->ptr_16K_PRG_banks[0] = getBank(&state->prg_cache, 0, Mapper::ROM_TYPE::PRG_ROM);
     state->ptr_16K_PRG_banks[1] = state->PRG_bank;
 
-    state->cart->loadPRGBank(state->ptr_16K_PRG_banks[1], 16 * 1024,
+    state->cart->loadPRGBank(state->ptr_16K_PRG_banks[1], 16U * 1024U,
                              0x4000 * (state->number_PRG_banks - 1));
-    state->cart->loadCHRBank(state->CHR_bank, 8 * 1024, 0);
+    state->cart->loadCHRBank(state->CHR_bank, 8U * 1024U, 0);
 }
 
 void mapper002_dumpState(Mapper* mapper, File& state)
@@ -90,7 +90,7 @@ Mapper createMapper002(uint8_t PRG_banks, uint8_t CHR_banks, Cartridge* cart)
 {
     Mapper mapper;
     Mapper002_state* state = new Mapper002_state;
-    bankInit(&state->prg_cache, state->prg_banks, MAPPER002_NUM_PRG_BANKS_16K, 16 * 1024, cart);
+    bankInit(&state->prg_cache, state->prg_banks, MAPPER002_NUM_PRG_BANKS_16K, 16U * 1024U, cart);
 
     state->number_PRG_banks = PRG_banks;
     state->number_CHR_banks = CHR_banks;

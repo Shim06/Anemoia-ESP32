@@ -129,7 +129,7 @@ private:
     struct memoryReader
     {
         uint16_t address = 0x0000;
-        int16_t remaining_bytes = 0;
+        uint16_t remaining_bytes = 0;
     };
     struct outputUnit
     {

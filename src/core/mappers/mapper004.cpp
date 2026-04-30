@@ -196,7 +196,7 @@ IRAM_ATTR void mapper004_scanline(Mapper* mapper)
 void mapper004_reset(Mapper* mapper)
 {
     Mapper004_state* state = (Mapper004_state*)mapper->state;
-    memset(state->RAM, 0, 8 * 1024);
+    memset(state->RAM, 0, 8U * 1024U);
     state->ptr_PRG_bank_8K[0] = getBank(&state->PRG_cache_8K, 0, Mapper::ROM_TYPE::PRG_ROM);
     state->ptr_PRG_bank_8K[1] = getBank(&state->PRG_cache_8K, 0, Mapper::ROM_TYPE::PRG_ROM);
     state->ptr_PRG_bank_8K[2] =
@@ -246,7 +246,7 @@ void mapper004_dumpState(Mapper* mapper, File& state)
         CHR_bank_1K[i] = getBankIndex(&s->CHR_cache_1K, s->ptr_CHR_bank_1K[i]);
     state.write(PRG_bank_8K, sizeof(PRG_bank_8K));
     state.write(CHR_bank_1K, sizeof(CHR_bank_1K));
-    state.write(s->RAM, 8 * 1024);
+    state.write(s->RAM, 8U * 1024U);
 }
 
 void mapper004_loadState(Mapper* mapper, File& state)
@@ -278,7 +278,7 @@ void mapper004_loadState(Mapper* mapper, File& state)
         s->ptr_CHR_bank_1K[i] =
             getBank(&s->CHR_cache_1K, CHR_bank_1K[i], Mapper::ROM_TYPE::CHR_ROM);
 
-    state.read(s->RAM, 8 * 1024);
+    state.read(s->RAM, 8U * 1024U);
 }
 
 Mapper createMapper004(uint8_t PRG_banks, uint8_t CHR_banks, Cartridge* cart)
@@ -289,9 +289,9 @@ Mapper createMapper004(uint8_t PRG_banks, uint8_t CHR_banks, Cartridge* cart)
     state->number_CHR_banks = CHR_banks;
     state->cart = cart;
 
-    bankInit(&state->PRG_cache_8K, state->PRG_banks_8K, MAPPER004_NUM_PRG_BANKS_8K, 8 * 1024, cart);
+    bankInit(&state->PRG_cache_8K, state->PRG_banks_8K, MAPPER004_NUM_PRG_BANKS_8K, 8U * 1024U, cart);
     bankInit(&state->CHR_cache_1K, state->CHR_banks_1K, MAPPER004_NUM_CHR_BANKS_1K, 1 * 1024, cart);
-    state->RAM = (uint8_t*)malloc(8 * 1024);
+    state->RAM = (uint8_t*)malloc(8U * 1024U);
 
     mapper.state = state;
     return mapper;

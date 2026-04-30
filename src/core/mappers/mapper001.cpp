@@ -99,8 +99,8 @@ IRAM_ATTR bool mapper001_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
                 if (state->CHR_ROM_bank_mode == 0)
                 {
                     if (state->number_CHR_banks == 0)
-                        state->cart->loadCHRBank(state->ptr_8K_CHR_bank, 8 * 1024,
-                                                 (state->CHR_bank_0 & 0x1E) * 8 * 1024);
+                        state->cart->loadCHRBank(state->ptr_8K_CHR_bank, 8U * 1024U,
+                                                 (state->CHR_bank_0 & 0x1E) * 8U * 1024U);
                     else
                         state->ptr_8K_CHR_bank =
                             getBank(&state->CHR_8K_cache, state->CHR_bank_0 & 0x1E,
@@ -158,8 +158,10 @@ IRAM_ATTR bool mapper001_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
                         getBank(&state->PRG_16K_cache, state->number_PRG_banks - 1,
                                 Mapper::ROM_TYPE::PRG_ROM);
                     break;
+                default: break;
                 }
                 break;
+            default: break;
             }
 
             // Reset Load Register and counter
@@ -213,7 +215,7 @@ IRAM_ATTR uint8_t* mapper001_ppuReadPtr(Mapper* mapper, uint16_t addr)
 void mapper001_reset(Mapper* mapper)
 {
     Mapper001_state* state = (Mapper001_state*)mapper->state;
-    memset(state->RAM, 0, 8 * 1024);
+    memset(state->RAM, 0, 8U * 1024U);
 
     if (state->number_CHR_banks == 0)
     {
@@ -259,7 +261,7 @@ void mapper001_dumpState(Mapper* mapper, File& state)
     state.write((uint8_t*)&s->CHR_bank_1, sizeof(s->CHR_bank_1));
     state.write((uint8_t*)&s->PRG_bank, sizeof(s->PRG_bank));
     state.write((uint8_t*)&mirror, sizeof(mirror));
-    state.write(s->RAM, 8 * 1024);
+    state.write(s->RAM, 8U * 1024U);
 
     uint8_t PRG_16K[4];
     uint8_t CHR_8K;
@@ -267,7 +269,7 @@ void mapper001_dumpState(Mapper* mapper, File& state)
     for (int i = 0; i < 4; i++)
         PRG_16K[i] = getBankIndex(&s->PRG_16K_cache, s->ptr_16K_PRG_banks[i]);
     state.write(PRG_16K, sizeof(PRG_16K));
-    if (s->number_CHR_banks == 0) { state.write(s->CHR_RAM, 8 * 1024); }
+    if (s->number_CHR_banks == 0) { state.write(s->CHR_RAM, 8U * 1024U); }
     else
     {
         CHR_8K = getBankIndex(&s->CHR_8K_cache, s->ptr_8K_CHR_bank);
@@ -292,7 +294,7 @@ void mapper001_loadState(Mapper* mapper, File& state)
     state.read((uint8_t*)&s->CHR_bank_1, sizeof(s->CHR_bank_1));
     state.read((uint8_t*)&s->PRG_bank, sizeof(s->PRG_bank));
     state.read((uint8_t*)&mirror, sizeof(mirror));
-    state.read(s->RAM, 8 * 1024);
+    state.read(s->RAM, 8U * 1024U);
     s->cart->setMirrorMode(mirror);
 
     uint8_t PRG_16K[4];
@@ -302,7 +304,7 @@ void mapper001_loadState(Mapper* mapper, File& state)
     invalidateCache(&s->PRG_16K_cache);
     for (int i = 0; i < 4; i++)
         s->ptr_16K_PRG_banks[i] = getBank(&s->PRG_16K_cache, PRG_16K[i], Mapper::ROM_TYPE::PRG_ROM);
-    if (s->number_CHR_banks == 0) { state.read(s->CHR_RAM, 8 * 1024); }
+    if (s->number_CHR_banks == 0) { state.read(s->CHR_RAM, 8U * 1024U); }
     else
     {
         state.read((uint8_t*)&CHR_8K, sizeof(CHR_8K));
@@ -326,19 +328,19 @@ Mapper createMapper001(uint8_t PRG_banks, uint8_t CHR_banks, Cartridge* cart)
     state->number_CHR_banks = CHR_banks;
     state->cart = cart;
 
-    bankInit(&state->PRG_16K_cache, state->PRG_banks_16K, MAPPER001_NUM_PRG_BANKS_16K, 16 * 1024,
+    bankInit(&state->PRG_16K_cache, state->PRG_banks_16K, MAPPER001_NUM_PRG_BANKS_16K, 16U * 1024U,
              cart);
-    state->RAM = (uint8_t*)malloc(8 * 1024);
+    state->RAM = (uint8_t*)malloc(8U * 1024U);
 
     if (CHR_banks == 0)
     {
         // Allocate one shared 8 KB RAM
-        state->CHR_RAM = (uint8_t*)malloc(8 * 1024);
-        memset(state->CHR_RAM, 0, 8 * 1024);
+        state->CHR_RAM = (uint8_t*)malloc(8U * 1024U);
+        memset(state->CHR_RAM, 0, 8U * 1024U);
     }
     else
     {
-        bankInit(&state->CHR_8K_cache, state->CHR_banks_8K, MAPPER001_NUM_CHR_BANKS_8K, 8 * 1024,
+        bankInit(&state->CHR_8K_cache, state->CHR_banks_8K, MAPPER001_NUM_CHR_BANKS_8K, 8U * 1024U,
                  cart);
         bankInit(&state->CHR_4K_cache, state->CHR_banks_4K, MAPPER001_NUM_CHR_BANKS_4K, 4 * 1024,
                  cart);

@@ -221,6 +221,8 @@ IRAM_ATTR void Apu2A03::cpuWrite(uint16_t addr, uint8_t data)
         }
         else interrupt_inhibit = false;
         break;
+
+    default: return;
     }
 }
 
@@ -317,6 +319,8 @@ IRAM_ATTR void Apu2A03::clock()
             clock_counter = 0;
         }
         break;
+
+    default: break;
     }
 
     // Put sound channels output into audio buffers
@@ -502,16 +506,16 @@ inline void Apu2A03::soundChannelEnvelopeClock(envelopeUnit& envelope)
 inline void Apu2A03::soundChannelSweeperClock(pulseChannel& channel)
 {
     // Calculate the target period
-    channel.sweep.change = (channel.seq.reload >> channel.sweep.shift_count);
+    channel.sweep.change = (int16_t)(channel.seq.reload >> channel.sweep.shift_count);
     // Negate change if negate flag is true
     // Pulse 1 adds one's complement = -c - 1
     // Pulse 2 adds two's complement = -c
     if (channel.sweep.negate && channel.sweep.pulse_channel_number == 1)
-        channel.sweep.change = -channel.sweep.change - 1;
+        channel.sweep.change = (int16_t)(-channel.sweep.change - 1);
     else if (channel.sweep.negate && channel.sweep.pulse_channel_number == 2)
-        channel.sweep.change = -channel.sweep.change;
+        channel.sweep.change = (int16_t)(-channel.sweep.change);
 
-    channel.sweep.target_period = channel.seq.reload + channel.sweep.change;
+    channel.sweep.target_period = (int16_t)(channel.seq.reload + channel.sweep.change);
     if (channel.sweep.target_period < 0) channel.sweep.target_period = 0;
 
     // Check if channel should be muted
@@ -547,7 +551,7 @@ inline void Apu2A03::linearCounterClock(linear_counter& lin_counter)
 inline void Apu2A03::setDMCBuffer()
 {
     uint8_t value = bus->cpuRead(DMC.memory_reader.address);
-    if (DMC.memory_reader.remaining_bytes <= 0) return;
+    if (DMC.memory_reader.remaining_bytes == 0) return;
 
     DMC.sample_buffer = value;
     DMC.sample_buffer_empty = false;

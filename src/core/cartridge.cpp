@@ -39,6 +39,8 @@ Cartridge::Cartridge(const char* filename)
         number_PRG_banks = ((header.PRG_RAM_size & 0x07) << 8) | header.PRG_ROM_chunks;
         number_CHR_banks = ((header.PRG_RAM_size & 0x38) << 8) | header.CHR_ROM_chunks;
         break;
+
+    default: break;
     }
 
     prg_base = sizeof(cartridge_header) + (header.mapper1 & 0x04 ? 512 : 0);

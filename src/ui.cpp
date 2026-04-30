@@ -62,10 +62,8 @@ Cartridge* UI::selectGame()
         if (isDownPressed(CONTROLLER::A) && (selected >= 0 && selected < size))
         {
             std::string game = "/" + files[selected];
-            const char* path = game.c_str();
-
             std::vector<std::string>().swap(files);
-            return new Cartridge(path);
+            return new Cartridge(game.c_str());
         }
     }
 }
@@ -132,7 +130,7 @@ void UI::drawWindowBox(int x, int y, int w, int h)
 
     const char* text1 = " ANEMOIA.CPP ";
     screen->setTextColor(TEXT_COLOR, BG_COLOR);
-    screen->setCursor((screen->width() - screen->textWidth(text1)) / 2, 20);
+    screen->setCursor((int16_t)((screen->width() - screen->textWidth(text1)) / 2), 20);
     screen->print(text1);
 }
 
@@ -143,15 +141,15 @@ void UI::drawBars()
     screen->setTextColor(TFT_BLACK, BAR_COLOR);
 
     const char* text1 = "ANEMOIA-ESP32";
-    screen->setCursor((screen->width() - screen->textWidth(text1)) / 2, 4);
+    screen->setCursor((int16_t)((screen->width() - screen->textWidth(text1)) / 2), 4);
     screen->print(text1);
 
     // Bottom bar
     screen->fillRect(0, screen->height() - 16, screen->width(), 16, BAR_COLOR);
     screen->setTextColor(TFT_BLACK, BAR_COLOR);
 
-    int y = screen->height() - 12;
-    int x = 4;
+    int16_t y = screen->height() - 12;
+    int16_t x = 4;
 
     screen->setTextColor(TEXT2_COLOR, BAR_COLOR);
     screen->setCursor(x, y);
@@ -189,7 +187,7 @@ void UI::pauseMenu(Bus* nes)
     constexpr int section_count[] = { 3, 2, 1 };
     constexpr const char* items[] = { "Resume",           "Settings",         "Reset",
                                       "Quick Save State", "Quick Load State", "Save and Quit" };
-    enum ItemSelect
+    enum ItemSelect : uint8_t
     {
         Resume,
         Settings,
@@ -310,6 +308,7 @@ void UI::pauseMenu(Bus* nes)
                     return;
 
                 case SaveAndQuit: ESP.restart(); return;
+                default: break;
                 }
             }
         }
@@ -370,7 +369,7 @@ void UI::settingsMenu(Bus* nes)
         Palette,
         Back
     };
-    constexpr int items_y[] = { 30, 42, 54, 66 };
+    constexpr int16_t items_y[] = { 30, 42, 54, 66 };
     constexpr int num_items = sizeof(items) / sizeof(items[0]);
     constexpr int item_height = 12;
     constexpr int text_height = 8;
@@ -382,7 +381,7 @@ void UI::settingsMenu(Bus* nes)
     screen->fillRect(window_x + 10, items_y[0], window_w - 19, item_height, SELECTED_BG_COLOR);
     for (int i = 0; i < num_items; i++)
     {
-        int y = items_y[i] + text_padding;
+        int16_t y = items_y[i] + text_padding;
         if (i == Brightness)
         {
             if (hw_config.backlight) { drawText(items[i], window_x + 12, y); }
@@ -397,11 +396,11 @@ void UI::settingsMenu(Bus* nes)
     }
 
     constexpr int initial_delay = 500;
-    int last_input_time = millis() + initial_delay;
+    unsigned long last_input_time = millis() + initial_delay;
     while (true)
     {
         constexpr int delay = 250;
-        int now = millis();
+        unsigned long now = millis();
         if (now - last_input_time > delay)
         {
             if (isDownPressed(CONTROLLER::Up))
@@ -458,6 +457,7 @@ void UI::settingsMenu(Bus* nes)
                                      SELECTED_BG_COLOR);
                     drawText(items[Palette], window_x + 12, items_y[Palette] + text_padding);
                     break;
+                default: break;
                 }
                 last_input_time = now;
             }
@@ -490,6 +490,7 @@ void UI::settingsMenu(Bus* nes)
                                      SELECTED_BG_COLOR);
                     drawText(items[Palette], window_x + 12, items_y[Palette] + text_padding);
                     break;
+                default: break;
                 }
                 last_input_time = now;
             }
@@ -502,6 +503,7 @@ void UI::settingsMenu(Bus* nes)
                     loadEmulatorSettings(nes);
                     saveSettings(&settings);
                     return;
+                default: break;
                 }
             }
         }
@@ -579,7 +581,7 @@ void UI::loadSettings(Settings* s)
     f.close();
 }
 
-void UI::drawText(const char* text, const int x, const int y)
+void UI::drawText(const char* text, const int16_t x, const int16_t y)
 {
     screen->setTextColor(TFT_BLACK);
     screen->setCursor(x, y);

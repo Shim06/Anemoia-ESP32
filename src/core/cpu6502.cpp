@@ -834,54 +834,24 @@ IRAM_ATTR void Cpu6502::clock(int i)
             EXECUTE(IMP, Instr_XXX);
             break;
 
-        case 0xF0:
-            EXECUTE(REL, Instr_BEQ);
-            break;
-        case 0xF1:
-            EXECUTE(IDY, Instr_SBC);
-            break;
-        case 0xF2:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xF3:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xF4:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0xF5:
-            EXECUTE(ZPX, Instr_SBC);
-            break;
-        case 0xF6:
-            EXECUTE(ZPX, Instr_INC);
-            break;
-        case 0xF7:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xF8:
-            EXECUTE(IMP, Instr_SED);
-            break;
-        case 0xF9:
-            EXECUTE(ABY, Instr_SBC);
-            break;
-        case 0xFA:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0xFB:
-            EXECUTE(IMP, Instr_XXX);
-            break;
-        case 0xFC:
-            EXECUTE(IMP, Instr_NOP);
-            break;
-        case 0xFD:
-            EXECUTE(ABX, Instr_SBC);
-            break;
-        case 0xFE:
-            EXECUTE(ABX, Instr_INC);
-            break;
-        case 0xFF:
-            EXECUTE(IMP, Instr_XXX);
-            break;
+        case 0xF0: EXECUTE(REL, Instr_BEQ); break;
+        case 0xF1: EXECUTE(IDY, Instr_SBC); break;
+        case 0xF2: EXECUTE(IMP, Instr_XXX); break;
+        case 0xF3: EXECUTE(IMP, Instr_XXX); break;
+        case 0xF4: EXECUTE(IMP, Instr_NOP); break;
+        case 0xF5: EXECUTE(ZPX, Instr_SBC); break;
+        case 0xF6: EXECUTE(ZPX, Instr_INC); break;
+        case 0xF7: EXECUTE(IMP, Instr_XXX); break;
+        case 0xF8: EXECUTE(IMP, Instr_SED); break;
+        case 0xF9: EXECUTE(ABY, Instr_SBC); break;
+        case 0xFA: EXECUTE(IMP, Instr_NOP); break;
+        case 0xFB: EXECUTE(IMP, Instr_XXX); break;
+        case 0xFC: EXECUTE(IMP, Instr_NOP); break;
+        case 0xFD: EXECUTE(ABX, Instr_SBC); break;
+        case 0xFE: EXECUTE(ABX, Instr_INC); break;
+        case 0xFF: EXECUTE(IMP, Instr_XXX); break;
+
+        default: break;
         }
 
         cycles += (additional_cycle1 & additional_cycle2);

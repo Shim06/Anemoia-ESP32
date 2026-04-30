@@ -23,7 +23,7 @@ public:
     Apu2A03 apu;
 
     // Status Register Flags
-    enum FLAGS
+    enum FLAGS : uint8_t
     {
         C = (1 << 0), // Carry Bit
         Z = (1 << 1), // Zero Bit

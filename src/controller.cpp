@@ -5,7 +5,7 @@
 #include <Arduino.h>
 
 extern HWConfig hw_config;
-uint8_t (*_controllerRead)() = nullptr;
+static uint8_t (*_controllerRead)() = nullptr;
 
 uint8_t controllerRead()
 {

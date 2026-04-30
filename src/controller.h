@@ -3,7 +3,7 @@
 #include "ControllerTypes.h"
 #include <stdint.h>
 
-enum CONTROLLER
+enum class CONTROLLER : uint8_t
 {
     A = (1 << 0),      // A Button
     B = (1 << 1),      // B Button
@@ -14,8 +14,6 @@ enum CONTROLLER
     Left = (1 << 6),   // Left Button
     Right = (1 << 7)   // Right Button
 };
-
-extern uint8_t (*_controllerRead)();
 
 void initController(ControllerType controller_type);
 uint8_t controllerRead();
