@@ -35,6 +35,12 @@ assignees: Shim06
 ## Actual Behavior
 <!-- What actually happened -->
 
+## Serial Log
+<!-- Open Serial Monitor at 115200 baud, reproduce the issue, then paste the output here -->
+```
+paste serial output here
+```
+
 ## Screenshots / Videos
 <!-- Drag and drop screenshots or videos here if applicable -->
 
