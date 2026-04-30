@@ -111,7 +111,7 @@ IRAM_ATTR void emulate()
     while (true)
     {
         // Start + Select opens the pause menu
-        if ((nes.controller & CONTROLLER::Start) && (nes.controller & CONTROLLER::Select))
+        if ((nes.controller & (uint8_t)CONTROLLER::Start) && (nes.controller & (uint8_t)CONTROLLER::Select))
         {
             if (!ui.paused)
             {
