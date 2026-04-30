@@ -14,6 +14,14 @@ constexpr uint8_t Ppu2C02::palette_mirror[32];
 
 Ppu2C02::Ppu2C02()
 {
+    control.reg = 0x00;
+    mask.reg = 0x00;
+    status.reg = 0x00;
+    v.reg = 0x00;
+    t.reg = 0x00;
+    x = 0x00;
+    w = 0x00;
+    memset(ptr_nametable, 0, sizeof(ptr_nametable));
     memset(nametable, 0, sizeof(nametable));
     memset(palette_table, 0, sizeof(palette_table));
     memset(scanline_buffer, 0, sizeof(scanline_buffer));
