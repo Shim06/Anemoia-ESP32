@@ -43,6 +43,16 @@ Cartridge::Cartridge(const char* filename)
     default: break;
     }
 
+    // Calculate ROM CRC32
+    {
+        uint8_t buf[4096];
+        size_t len;
+        rom.seek(prg_base);
+        while ((len = rom.read(buf, sizeof(buf))) > 0) { CRC32 = crc32(buf, len, CRC32); }
+        CRC32 ^= ~0U;
+        LOGF("CRC32: %08lX\n", (unsigned int)CRC32);
+    }
+
     prg_base = sizeof(cartridge_header) + (header.mapper1 & 0x04 ? 512 : 0);
     chr_base = prg_base + (number_PRG_banks * 16384);
     switch (mapper_ID)
@@ -55,14 +65,6 @@ Cartridge::Cartridge(const char* filename)
     case 69: mapper = createMapper069(number_PRG_banks, number_CHR_banks, this); break;
     default: is_valid = false; break;
     }
-
-    // Calculate ROM CRC32
-    uint8_t buf[2048];
-    size_t len;
-    rom.seek(prg_base);
-    while ((len = rom.read(buf, sizeof(buf))) > 0) { CRC32 = crc32(buf, len, CRC32); }
-    CRC32 ^= ~0U;
-    LOGF("CRC32: %08lX\n", (unsigned int)CRC32);
 }
 
 Cartridge::~Cartridge()
