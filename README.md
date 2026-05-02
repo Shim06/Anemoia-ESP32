@@ -199,10 +199,10 @@ Most controllers should work fine from 3.3V power supply.
 
 ### Cheap Yellow Display
 
-[Cheap Yellow Displays](https://github.com/witnessmenow/ESP32-Cheap-Yellow-Display) (CYD) are an all-in-one ESP32 board that comes with most of the hardware needed in this project already integrated, making it ideal for Anemoia-ESP32. Currently only CYDs with an ST7789 display, such as the CYD2USB, are supported.
+[Cheap Yellow Displays](https://github.com/witnessmenow/ESP32-Cheap-Yellow-Display) (CYD) are an all-in-one ESP32 board that comes with most of the hardware needed in this project already integrated, making it ideal for Anemoia-ESP32. Because of the limited pins brought out by the CYD, it is only practical to use a NES controller.
 
 **Hardware Needed:**
-- Cheap Yellow Display with a 240x320 ST7789 display
+- Cheap Yellow Display
 - NES/SNES controller
 - Speaker (optional) - Can be attached with a 1.25mm JST connector to "SPEAK" or soldered directly
 

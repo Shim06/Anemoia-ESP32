@@ -1,11 +1,11 @@
 #ifndef HWCONFIG_H
 #define HWCONFIG_H
 
-#include <LittleFS.h>
 #include "config.h"
 #include "src/debug.h"
+#include <LittleFS.h>
 
-struct __attribute__((packed)) HWConfig 
+struct __attribute__((packed)) HWConfig
 {
     uint8_t rotation;
     uint8_t dac_pin;
@@ -14,42 +14,41 @@ struct __attribute__((packed)) HWConfig
     bool backlight;
 };
 
-inline HWConfig loadConfig() 
+inline HWConfig loadConfig()
 {
-    HWConfig cfg = 
-    {
+    HWConfig cfg = {
         .rotation = SCREEN_ROTATION,
         .dac_pin = DAC_PIN,
         .controller_type = CONTROLLER_TYPE,
         .sd_freq = SD_FREQ / 1000000,
-        #ifdef TFT_BACKLIGHT_ENABLE
+#ifdef TFT_BACKLIGHT_ENABLE
         .backlight = true,
-        #else
+#else
         .backlight = false,
-        #endif
+#endif
     };
     // hwconfig.bin can make development difficult because it will override #defines
     // if you return cfg here early you can avoid that issue
     // the alternative is to erase the entire flash before starting development
-    //return cfg;
+    // return cfg;
 
-    if (!LittleFS.begin()) 
-    { 
-        LOG("LittleFS mount failed, attempting format..."); 
-        if (!LittleFS.format()) 
+    if (!LittleFS.begin())
+    {
+        LOG("LittleFS mount failed, attempting format...");
+        if (!LittleFS.format())
         {
             LOG("LittleFS.format() failed");
             return cfg;
         }
-        if (!LittleFS.begin()) 
+        if (!LittleFS.begin())
         {
-            LOG("LittleFS mount failed after format, using defines in config.h"); 
+            LOG("LittleFS mount failed after format, using defines in config.h");
             return cfg;
         }
     }
-    LOG("LittleFS mounted"); 
+    LOG("LittleFS mounted");
     File f = LittleFS.open("/hwconfig.bin", "r");
-    if (!f) 
+    if (!f)
     {
         LOG("hwconfig.bin not found, using defines in config.h");
         return cfg;

@@ -1,0 +1,20 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+BreakBeforeBraces: Allman
+ColumnLimit: 100
+PointerAlignment: Left
+SpaceAroundPointerQualifiers: Default
+SpaceBeforeParens: ControlStatements
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortFunctionsOnASingleLine: None
+AllowShortLoopsOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortBlocksOnASingleLine: true
+Cpp11BracedListStyle: false
+IndentPPDirectives: BeforeHash
+AccessModifierOffset: -4
+SpaceBeforeAssignmentOperators: true
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: true

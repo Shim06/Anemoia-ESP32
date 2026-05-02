@@ -13,7 +13,7 @@ struct Mapper003_state
     uint8_t* ptr_CHR_bank_8K;
     Bank CHR_banks_8K[MAPPER003_NUM_CHR_BANKS_8K];
     BankCache CHR_cache_8K;
-    uint8_t PRG_bank[32*1024];
+    uint8_t PRG_bank[32 * 1024];
 };
 
 Mapper createMapper003(uint8_t PRG_banks, uint8_t CHR_banks, Cartridge* cart);

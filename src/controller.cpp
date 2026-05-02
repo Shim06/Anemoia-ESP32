@@ -1,11 +1,11 @@
+#include "controller.h"
 #include "../config.h"
 #include "../hwconfig.h"
-#include "controller.h"
 #include "core/bus.h"
 #include <Arduino.h>
 
 extern HWConfig hw_config;
-uint8_t (*_controllerRead)() = nullptr;
+static uint8_t (*_controllerRead)() = nullptr;
 
 uint8_t controllerRead()
 {
@@ -14,20 +14,20 @@ uint8_t controllerRead()
 
 bool isDownPressed(CONTROLLER button)
 {
-    return (controllerRead() & button) != 0;
+    return (controllerRead() & (uint8_t)button) != 0;
 }
 
 static uint8_t gpioRead()
 {
     uint8_t state = 0x00;
-    if (digitalRead(A_BUTTON)      == LOW) state |= CONTROLLER::A;
-    if (digitalRead(B_BUTTON)      == LOW) state |= CONTROLLER::B;
-    if (digitalRead(SELECT_BUTTON) == LOW) state |= CONTROLLER::Select;
-    if (digitalRead(START_BUTTON)  == LOW) state |= CONTROLLER::Start;
-    if (digitalRead(UP_BUTTON)     == LOW) state |= CONTROLLER::Up;
-    if (digitalRead(DOWN_BUTTON)   == LOW) state |= CONTROLLER::Down;
-    if (digitalRead(LEFT_BUTTON)   == LOW) state |= CONTROLLER::Left;
-    if (digitalRead(RIGHT_BUTTON)  == LOW) state |= CONTROLLER::Right;
+    if (digitalRead(A_BUTTON) == LOW) state |= (uint8_t)CONTROLLER::A;
+    if (digitalRead(B_BUTTON) == LOW) state |= (uint8_t)CONTROLLER::B;
+    if (digitalRead(SELECT_BUTTON) == LOW) state |= (uint8_t)CONTROLLER::Select;
+    if (digitalRead(START_BUTTON) == LOW) state |= (uint8_t)CONTROLLER::Start;
+    if (digitalRead(UP_BUTTON) == LOW) state |= (uint8_t)CONTROLLER::Up;
+    if (digitalRead(DOWN_BUTTON) == LOW) state |= (uint8_t)CONTROLLER::Down;
+    if (digitalRead(LEFT_BUTTON) == LOW) state |= (uint8_t)CONTROLLER::Left;
+    if (digitalRead(RIGHT_BUTTON) == LOW) state |= (uint8_t)CONTROLLER::Right;
 
     return state;
 }
@@ -88,10 +88,10 @@ static uint8_t SNESControllerRead()
     state |= snes_state & 0xFF;
 
     // Map extra bits to A and B buttons
-    if (snes_state & (1 << 8)) state |= CONTROLLER::A;
-    if (snes_state & (1 << 9)) state |= CONTROLLER::B;
-    if (snes_state & (1 << 10)) state |= CONTROLLER::B;
-    if (snes_state & (1 << 11)) state |= CONTROLLER::A;
+    if (snes_state & (1 << 8)) state |= (uint8_t)CONTROLLER::A;
+    if (snes_state & (1 << 9)) state |= (uint8_t)CONTROLLER::B;
+    if (snes_state & (1 << 10)) state |= (uint8_t)CONTROLLER::B;
+    if (snes_state & (1 << 11)) state |= (uint8_t)CONTROLLER::A;
 
     return state;
 }
@@ -101,7 +101,7 @@ static uint8_t PSXTransferByte(uint8_t byte)
     uint8_t temp = 0;
     for (int i = 0; i < 8; i++)
     {
-        digitalWrite(CONTROLLER_PSX_COMMAND, (byte >> i) & 1);    
+        digitalWrite(CONTROLLER_PSX_COMMAND, (byte >> i) & 1);
 
         digitalWrite(CONTROLLER_PSX_CLK, LOW);
 
@@ -137,7 +137,7 @@ static uint8_t PSXControllerRead()
     */
 
     // Button Mappings
-    /*     
+    /*
     Digital Mode
     0 - Select
     1 - L3
@@ -178,7 +178,7 @@ static uint8_t PSXControllerRead()
     Byte 17 - R2
     */
     int b1, b2;
-    uint8_t state = 0x00; 
+    uint8_t state = 0x00;
     uint16_t psx_state = 0x0000;
 
     // Initiate transfer
@@ -186,8 +186,8 @@ static uint8_t PSXControllerRead()
     digitalWrite(CONTROLLER_PSX_ATTENTION, LOW);
 
     PSXTransferByte(0x01);
-    PSXTransferByte(0x42); 
-    PSXTransferByte(0xFF); 
+    PSXTransferByte(0x42);
+    PSXTransferByte(0xFF);
     b1 = PSXTransferByte(0xFF);
     b2 = PSXTransferByte(0xFF);
 
@@ -195,37 +195,65 @@ static uint8_t PSXControllerRead()
 
     // Map PSX bits to NES bits
     constexpr uint16_t PSX_SELECT = (1 << 0);
-    constexpr uint16_t PSX_START  = (1 << 3);
-    constexpr uint16_t PSX_A_MASK =
-        (1 << 11) | // R1
-        (1 << 9)  | // R2
-        (1 << 2)  | // R3
-        (1 << 14) | // X
-        (1 << 13);  // O
-    constexpr uint16_t PSX_B_MASK =
-        (1 << 10) | // L1
-        (1 << 8)  | // L2
-        (1 << 1)  | // L3
-        (1 << 15) | // Square
-        (1 << 12);  // Triangle
-    constexpr uint16_t PSX_UP    = (1 << 4);
-    constexpr uint16_t PSX_DOWN  = (1 << 6);
-    constexpr uint16_t PSX_LEFT  = (1 << 7);
+    constexpr uint16_t PSX_START = (1 << 3);
+    constexpr uint16_t PSX_A_MASK = (1 << 11) | // R1
+                                    (1 << 9) |  // R2
+                                    (1 << 2) |  // R3
+                                    (1 << 14) | // X
+                                    (1 << 13);  // O
+    constexpr uint16_t PSX_B_MASK = (1 << 10) | // L1
+                                    (1 << 8) |  // L2
+                                    (1 << 1) |  // L3
+                                    (1 << 15) | // Square
+                                    (1 << 12);  // Triangle
+    constexpr uint16_t PSX_UP = (1 << 4);
+    constexpr uint16_t PSX_DOWN = (1 << 6);
+    constexpr uint16_t PSX_LEFT = (1 << 7);
     constexpr uint16_t PSX_RIGHT = (1 << 5);
 
-    if (psx_state & PSX_SELECT) state |= CONTROLLER::Select;
-    if (psx_state & PSX_START) state |= CONTROLLER::Start;
+    if (psx_state & PSX_SELECT) state |= (uint8_t)CONTROLLER::Select;
+    if (psx_state & PSX_START) state |= (uint8_t)CONTROLLER::Start;
 
-    if (psx_state & PSX_A_MASK) state |= CONTROLLER::A;
-    if (psx_state & PSX_B_MASK) state |= CONTROLLER::B;
+    if (psx_state & PSX_A_MASK) state |= (uint8_t)CONTROLLER::A;
+    if (psx_state & PSX_B_MASK) state |= (uint8_t)CONTROLLER::B;
 
-    if (psx_state & PSX_UP) state |= CONTROLLER::Up;
-    if (psx_state & PSX_DOWN) state |= CONTROLLER::Down;
-    if (psx_state & PSX_LEFT) state |= CONTROLLER::Left;
-    if (psx_state & PSX_RIGHT) state |= CONTROLLER::Right;
+    if (psx_state & PSX_UP) state |= (uint8_t)CONTROLLER::Up;
+    if (psx_state & PSX_DOWN) state |= (uint8_t)CONTROLLER::Down;
+    if (psx_state & PSX_LEFT) state |= (uint8_t)CONTROLLER::Left;
+    if (psx_state & PSX_RIGHT) state |= (uint8_t)CONTROLLER::Right;
 
     // End transfer
-    digitalWrite(CONTROLLER_PSX_ATTENTION, HIGH);   
+    digitalWrite(CONTROLLER_PSX_ATTENTION, HIGH);
+
+    return state;
+}
+
+static uint8_t UartControllerRead()
+{
+    static uint8_t state = 0x00;
+    static uint8_t no_data_count = 0;
+
+    int b0 = Serial.read();
+    int b1 = Serial1.read();
+    if (b0 >= 0 || b1 >= 0)
+    {
+        // if received button presses from both Serial and Serial1 combine them
+        state = 0x00;
+        if (b0 >= 0) state = (uint8_t)b0;
+        if (b1 >= 0) state |= (uint8_t)b1;
+
+        no_data_count = 0;
+        return state;
+    }
+
+    // if there is no data, then  reuse previous state 10 times before
+    // setting state to 0x00 (no buttons pressed)
+    no_data_count++;
+    if (no_data_count >= 10)
+    {
+        state = 0x00;
+        no_data_count = 10; // pin at 10 to prevent overflow
+    }
 
     return state;
 }
@@ -265,7 +293,8 @@ static uint8_t dummyControllerRead()
     return 0x00;
 }
 
-void initController(ControllerType controller_type) {
+void initController(ControllerType controller_type)
+{
     switch (controller_type)
     {
     case CT_GPIO:
@@ -338,8 +367,6 @@ void initController(ControllerType controller_type) {
         _controllerRead = UartControllerRead;
         break;
     case CT_NC:
-    default:
-        _controllerRead = dummyControllerRead;
-        break;
+    default: _controllerRead = dummyControllerRead; break;
     }
 }

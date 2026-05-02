@@ -1,7 +1,7 @@
 #include "ui.h"
 
 UI::UI(TFT_eSPI* screen)
-{    
+{
     this->screen = screen;
 }
 
@@ -12,7 +12,7 @@ UI::~UI()
 Cartridge* UI::selectGame()
 {
     unsigned int last_input_time = 0;
-    constexpr unsigned int delay = 250; 
+    constexpr unsigned int delay = 250;
     max_items = (screen->height() - 56) / ITEM_HEIGHT;
 
     drawWindowBox(2, 20, screen->width() - 4, screen->height() - 40);
@@ -27,7 +27,7 @@ Cartridge* UI::selectGame()
 
         if (now - last_input_time > delay)
         {
-            if (isDownPressed(CONTROLLER::Up)) 
+            if (isDownPressed(CONTROLLER::Up))
             {
                 selected--;
                 if (selected < 0)
@@ -35,37 +35,35 @@ Cartridge* UI::selectGame()
                     selected = (size - 1);
                     scroll_offset = selected - max_items + 1;
                 }
-                else if (selected < scroll_offset) scroll_offset = selected; 
+                else if (selected < scroll_offset) scroll_offset = selected;
                 if (scroll_offset < 0) scroll_offset = 0;
                 if (scroll_offset > size - 1) scroll_offset = size - 1;
                 drawFileList();
                 last_input_time = now;
             }
 
-            if (isDownPressed(CONTROLLER::Down)) 
+            if (isDownPressed(CONTROLLER::Down))
             {
-                selected++; 
+                selected++;
                 if (selected > (size - 1))
                 {
                     selected = 0;
                     scroll_offset = selected;
                 }
-                else if (selected >= scroll_offset + max_items) scroll_offset = selected - max_items + 1;
+                else if (selected >= scroll_offset + max_items)
+                    scroll_offset = selected - max_items + 1;
                 if (scroll_offset < 0) scroll_offset = 0;
                 if (scroll_offset > size - 1) scroll_offset = size - 1;
                 drawFileList();
                 last_input_time = now;
             }
-            
         }
-        
+
         if (isDownPressed(CONTROLLER::A) && (selected >= 0 && selected < size))
         {
             std::string game = "/" + files[selected];
-            const char* path = game.c_str();
-
             std::vector<std::string>().swap(files);
-            return new Cartridge(path);
+            return new Cartridge(game.c_str());
         }
     }
 }
@@ -80,8 +78,7 @@ void UI::getNesFiles()
         if (!file.isDirectory())
         {
             std::string filename = file.name();
-            if (filename.rfind(".nes") == filename.size() - 4)
-                files.push_back(filename);
+            if (filename.rfind(".nes") == filename.size() - 4) files.push_back(filename);
         }
 
         file.close();
@@ -92,7 +89,7 @@ void UI::getNesFiles()
 
 void UI::drawFileList()
 {
-    if (prev_selected != selected) 
+    if (prev_selected != selected)
         screen->fillRect(10, 32, screen->width() - 20, screen->height() - 64, BG_COLOR);
 
     const int size = files.size();
@@ -103,14 +100,8 @@ void UI::drawFileList()
 
         std::string file = files[item];
         int maxWidth = screen->width() - 28;
-        while (screen->textWidth(file.c_str()) > maxWidth)
-        {
-            file.pop_back();
-        }
-        if (file.size() < files[item].size())
-        {
-            file.replace(file.size()-3, 3, "...");
-        }
+        while (screen->textWidth(file.c_str()) > maxWidth) { file.pop_back(); }
+        if (file.size() < files[item].size()) { file.replace(file.size() - 3, 3, "..."); }
 
         const char* filename = file.c_str();
         int y = i * ITEM_HEIGHT + 32;
@@ -121,7 +112,7 @@ void UI::drawFileList()
         }
         else
         {
-            screen->setTextColor(TEXT_COLOR); 
+            screen->setTextColor(TEXT_COLOR);
             screen->drawString(filename, 14, y, 1);
         }
     }
@@ -129,36 +120,36 @@ void UI::drawFileList()
     prev_selected = selected;
 }
 
-void UI::drawWindowBox(int x, int y, int w, int h) 
+void UI::drawWindowBox(int x, int y, int w, int h)
 {
     screen->drawRect(x, y, w, h, TFT_WHITE);
-    screen->drawRect(x+1, y, w-2, h, TFT_WHITE);
+    screen->drawRect(x + 1, y, w - 2, h, TFT_WHITE);
 
-    screen->drawRect(x+4, y+3, w-8, h-7, TFT_WHITE);
-    screen->drawRect(x+5, y+3, w-10, h-7, TFT_WHITE);
+    screen->drawRect(x + 4, y + 3, w - 8, h - 7, TFT_WHITE);
+    screen->drawRect(x + 5, y + 3, w - 10, h - 7, TFT_WHITE);
 
     const char* text1 = " ANEMOIA.CPP ";
     screen->setTextColor(TEXT_COLOR, BG_COLOR);
-    screen->setCursor((screen->width() - screen->textWidth(text1)) / 2, 20);
+    screen->setCursor((int16_t)((screen->width() - screen->textWidth(text1)) / 2), 20);
     screen->print(text1);
 }
 
-void UI::drawBars() 
+void UI::drawBars()
 {
     // Top bar
     screen->fillRect(0, 0, screen->width(), 16, BAR_COLOR);
     screen->setTextColor(TFT_BLACK, BAR_COLOR);
 
     const char* text1 = "ANEMOIA-ESP32";
-    screen->setCursor((screen->width() - screen->textWidth(text1)) / 2, 4);
+    screen->setCursor((int16_t)((screen->width() - screen->textWidth(text1)) / 2), 4);
     screen->print(text1);
 
     // Bottom bar
     screen->fillRect(0, screen->height() - 16, screen->width(), 16, BAR_COLOR);
     screen->setTextColor(TFT_BLACK, BAR_COLOR);
 
-    int y = screen->height() - 12;
-    int x = 4;
+    int16_t y = screen->height() - 12;
+    int16_t x = 4;
 
     screen->setTextColor(TEXT2_COLOR, BAR_COLOR);
     screen->setCursor(x, y);
@@ -178,8 +169,7 @@ void UI::pauseMenu(Bus* nes)
 {
     // Black magic stuff
     // Padding bytes for code alignment for better performance
-    __attribute__((used, section(".text"), aligned(64)))
-    static const uint8_t padding[128] = {0};
+    __attribute__((used, section(".text"), aligned(64))) static const uint8_t padding[128] = { 0 };
 
     paused = true;
     int prev_select = 0;
@@ -195,13 +185,9 @@ void UI::pauseMenu(Bus* nes)
     drawText(text2, text2_x, 4);
 
     constexpr int section_count[] = { 3, 2, 1 };
-    constexpr const char* items[] = 
-    { 
-        "Resume", "Settings", "Reset", 
-        "Quick Save State", "Quick Load State", 
-        "Save and Quit" 
-    };
-    enum ItemSelect
+    constexpr const char* items[] = { "Resume",           "Settings",         "Reset",
+                                      "Quick Save State", "Quick Load State", "Save and Quit" };
+    enum ItemSelect : uint8_t
     {
         Resume,
         Settings,
@@ -217,7 +203,7 @@ void UI::pauseMenu(Bus* nes)
     constexpr int text_height = 8;
     constexpr int text_padding = (item_height - text_height) / 2;
 
-    // Draw pause window 
+    // Draw pause window
     constexpr int window_w = 124;
     constexpr int window_h = 104;
     int window_x = screen->width() - window_w;
@@ -248,25 +234,25 @@ void UI::pauseMenu(Bus* nes)
     int last_input_time = millis() + initial_delay;
     while (true)
     {
-        constexpr int delay = 250; 
+        constexpr int delay = 250;
         int now = millis();
         if (now - last_input_time > delay)
         {
-            if (isDownPressed(CONTROLLER::Up)) 
+            if (isDownPressed(CONTROLLER::Up))
             {
                 select--;
                 if (select < 0) select = (num_items - 1);
                 last_input_time = now;
             }
 
-            if (isDownPressed(CONTROLLER::Down)) 
+            if (isDownPressed(CONTROLLER::Down))
             {
-                select++; 
+                select++;
                 if (select > (num_items - 1)) select = 0;
                 last_input_time = now;
             }
 
-            if (isDownPressed(CONTROLLER::A)) 
+            if (isDownPressed(CONTROLLER::A))
             {
                 switch (select)
                 {
@@ -291,7 +277,8 @@ void UI::pauseMenu(Bus* nes)
 
                         section_y += (h - 1);
                     }
-                    screen->fillRect(window_x + 10, items_y[select], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    screen->fillRect(window_x + 10, items_y[select], window_w - 19, item_height,
+                                     SELECTED_BG_COLOR);
                     for (int i = 0; i < num_items; i++)
                     {
                         int y = items_y[i] + text_padding;
@@ -299,7 +286,7 @@ void UI::pauseMenu(Bus* nes)
                     }
                     last_input_time = millis() + 500;
                     break;
-            
+
                 case Reset:
                     nes->reset();
                     screen->startWrite();
@@ -320,9 +307,8 @@ void UI::pauseMenu(Bus* nes)
                     paused = false;
                     return;
 
-                case SaveAndQuit:
-                    ESP.restart();
-                    return;
+                case SaveAndQuit: ESP.restart(); return;
+                default: break;
                 }
             }
         }
@@ -332,12 +318,14 @@ void UI::pauseMenu(Bus* nes)
         {
             int y;
             // Redraw old selection
-            screen->fillRect(window_x + 10, items_y[prev_select], window_w - 19, item_height, BAR_COLOR);
+            screen->fillRect(window_x + 10, items_y[prev_select], window_w - 19, item_height,
+                             BAR_COLOR);
             y = items_y[prev_select] + text_padding;
             drawText(items[prev_select], window_x + 12, y);
 
             // Draw new selection
-            screen->fillRect(window_x + 10, items_y[select], window_w - 19, item_height, SELECTED_BG_COLOR);
+            screen->fillRect(window_x + 10, items_y[select], window_w - 19, item_height,
+                             SELECTED_BG_COLOR);
             y = items_y[select] + text_padding;
             drawText(items[select], window_x + 12, y);
         }
@@ -348,7 +336,7 @@ void UI::pauseMenu(Bus* nes)
 
 void UI::settingsMenu(Bus* nes)
 {
-    // Draw settings window 
+    // Draw settings window
 
     int prev_select = 0;
     int select = 0;
@@ -368,24 +356,12 @@ void UI::settingsMenu(Bus* nes)
     static char palette_text[20];
     static char brightness_text[20];
     static char save_return_text[] = "Save & Return";
-    const char* palette_names[] =
-    {
-        "NTSC 565",
-        "PAL 565",
-        "NTSC 222",
-        "PAL 222"
-    };
+    const char* palette_names[] = { "NTSC 565", "PAL 565", "NTSC 222", "PAL 222" };
 
     snprintf(volume_text, sizeof(volume_text), "Volume: %d%%", settings.volume);
     snprintf(palette_text, sizeof(palette_text), "Palette: %s", palette_names[settings.palette]);
     snprintf(brightness_text, sizeof(brightness_text), "Brightness: %d%%", settings.brightness);
-    char* items[] = 
-    { 
-        volume_text,
-        brightness_text,
-        palette_text,
-        save_return_text
-    };
+    char* items[] = { volume_text, brightness_text, palette_text, save_return_text };
     enum ItemSelect
     {
         Volume,
@@ -393,7 +369,7 @@ void UI::settingsMenu(Bus* nes)
         Palette,
         Back
     };
-    constexpr int items_y[] = { 30, 42, 54, 66 };
+    constexpr int16_t items_y[] = { 30, 42, 54, 66 };
     constexpr int num_items = sizeof(items) / sizeof(items[0]);
     constexpr int item_height = 12;
     constexpr int text_height = 8;
@@ -401,17 +377,14 @@ void UI::settingsMenu(Bus* nes)
 
     screen->drawRect(window_x + 8, window_y + 8, window_w - 16, window_h - 16, TFT_BLACK);
     screen->drawRect(window_x + 9, window_y + 8, window_w - 16, window_h - 16, TFT_BLACK);
-    
+
     screen->fillRect(window_x + 10, items_y[0], window_w - 19, item_height, SELECTED_BG_COLOR);
     for (int i = 0; i < num_items; i++)
     {
-        int y = items_y[i] + text_padding;
+        int16_t y = items_y[i] + text_padding;
         if (i == Brightness)
         {
-            if (hw_config.backlight)
-            {
-                drawText(items[i], window_x + 12, y);
-            }
+            if (hw_config.backlight) { drawText(items[i], window_x + 12, y); }
             else
             {
                 screen->setCursor(window_x + 12, y);
@@ -419,19 +392,18 @@ void UI::settingsMenu(Bus* nes)
                 screen->print(items[i]);
             }
         }
-        else
-            drawText(items[i], window_x + 12, y);
+        else drawText(items[i], window_x + 12, y);
     }
 
     constexpr int initial_delay = 500;
-    int last_input_time = millis() + initial_delay;
+    unsigned long last_input_time = millis() + initial_delay;
     while (true)
     {
-        constexpr int delay = 250; 
-        int now = millis();
+        constexpr int delay = 250;
+        unsigned long now = millis();
         if (now - last_input_time > delay)
         {
-            if (isDownPressed(CONTROLLER::Up)) 
+            if (isDownPressed(CONTROLLER::Up))
             {
                 select--;
                 if (select < 0) select = (num_items - 1);
@@ -443,9 +415,9 @@ void UI::settingsMenu(Bus* nes)
                 last_input_time = now;
             }
 
-            if (isDownPressed(CONTROLLER::Down)) 
+            if (isDownPressed(CONTROLLER::Down))
             {
-                select++; 
+                select++;
                 if (select > (num_items - 1)) select = 0;
                 if (!hw_config.backlight && select == Brightness)
                 {
@@ -455,20 +427,23 @@ void UI::settingsMenu(Bus* nes)
                 last_input_time = now;
             }
 
-            if (isDownPressed(CONTROLLER::Left)) 
+            if (isDownPressed(CONTROLLER::Left))
             {
                 switch (select)
                 {
                 case Volume:
                     if (settings.volume >= 5) settings.volume -= 5;
                     snprintf(volume_text, sizeof(volume_text), "Volume: %d%%", settings.volume);
-                    screen->fillRect(window_x + 10, items_y[Volume], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    screen->fillRect(window_x + 10, items_y[Volume], window_w - 19, item_height,
+                                     SELECTED_BG_COLOR);
                     drawText(items[Volume], window_x + 12, items_y[Volume] + text_padding);
                     break;
                 case Brightness:
                     if (settings.brightness >= 10) settings.brightness -= 5;
-                    snprintf(brightness_text, sizeof(brightness_text), "Brightness: %d%%", settings.brightness);
-                    screen->fillRect(window_x + 10, items_y[Brightness], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    snprintf(brightness_text, sizeof(brightness_text), "Brightness: %d%%",
+                             settings.brightness);
+                    screen->fillRect(window_x + 10, items_y[Brightness], window_w - 19, item_height,
+                                     SELECTED_BG_COLOR);
                     drawText(items[Brightness], window_x + 12, items_y[Brightness] + text_padding);
                     setBrightness(settings.brightness);
                     break;
@@ -476,42 +451,51 @@ void UI::settingsMenu(Bus* nes)
                     if (settings.palette == 0)
                         settings.palette = Ppu2C02::Palette::PaletteCount - 1;
                     else settings.palette--;
-                    snprintf(palette_text, sizeof(palette_text), "Palette: %s", palette_names[settings.palette]);
-                    screen->fillRect(window_x + 10, items_y[Palette], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    snprintf(palette_text, sizeof(palette_text), "Palette: %s",
+                             palette_names[settings.palette]);
+                    screen->fillRect(window_x + 10, items_y[Palette], window_w - 19, item_height,
+                                     SELECTED_BG_COLOR);
                     drawText(items[Palette], window_x + 12, items_y[Palette] + text_padding);
                     break;
+                default: break;
                 }
                 last_input_time = now;
             }
 
-            if (isDownPressed(CONTROLLER::Right)) 
+            if (isDownPressed(CONTROLLER::Right))
             {
                 switch (select)
                 {
                 case Volume:
                     if (settings.volume <= 95) settings.volume += 5;
                     snprintf(volume_text, sizeof(volume_text), "Volume: %d%%", settings.volume);
-                    screen->fillRect(window_x + 10, items_y[Volume], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    screen->fillRect(window_x + 10, items_y[Volume], window_w - 19, item_height,
+                                     SELECTED_BG_COLOR);
                     drawText(items[Volume], window_x + 12, items_y[Volume] + text_padding);
                     break;
                 case Brightness:
                     if (settings.brightness <= 95) settings.brightness += 5;
-                    snprintf(brightness_text, sizeof(brightness_text), "Brightness: %d%%", settings.brightness);
-                    screen->fillRect(window_x + 10, items_y[Brightness], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    snprintf(brightness_text, sizeof(brightness_text), "Brightness: %d%%",
+                             settings.brightness);
+                    screen->fillRect(window_x + 10, items_y[Brightness], window_w - 19, item_height,
+                                     SELECTED_BG_COLOR);
                     drawText(items[Brightness], window_x + 12, items_y[Brightness] + text_padding);
                     setBrightness(settings.brightness);
                     break;
                 case Palette:
                     settings.palette = (settings.palette + 1) % Ppu2C02::Palette::PaletteCount;
-                    snprintf(palette_text, sizeof(palette_text), "Palette: %s", palette_names[settings.palette]);
-                    screen->fillRect(window_x + 10, items_y[Palette], window_w - 19, item_height, SELECTED_BG_COLOR);
+                    snprintf(palette_text, sizeof(palette_text), "Palette: %s",
+                             palette_names[settings.palette]);
+                    screen->fillRect(window_x + 10, items_y[Palette], window_w - 19, item_height,
+                                     SELECTED_BG_COLOR);
                     drawText(items[Palette], window_x + 12, items_y[Palette] + text_padding);
                     break;
+                default: break;
                 }
                 last_input_time = now;
             }
 
-            if (isDownPressed(CONTROLLER::A)) 
+            if (isDownPressed(CONTROLLER::A))
             {
                 switch (select)
                 {
@@ -519,6 +503,7 @@ void UI::settingsMenu(Bus* nes)
                     loadEmulatorSettings(nes);
                     saveSettings(&settings);
                     return;
+                default: break;
                 }
             }
         }
@@ -528,13 +513,14 @@ void UI::settingsMenu(Bus* nes)
         {
             int y;
             // Redraw old selection
-            screen->fillRect(window_x + 10, items_y[prev_select], window_w - 19, item_height, BAR_COLOR);
+            screen->fillRect(window_x + 10, items_y[prev_select], window_w - 19, item_height,
+                             BAR_COLOR);
             y = items_y[prev_select] + text_padding;
             drawText(items[prev_select], window_x + 12, y);
-    
 
             // Draw new selection
-            screen->fillRect(window_x + 10, items_y[select], window_w - 19, item_height, SELECTED_BG_COLOR);
+            screen->fillRect(window_x + 10, items_y[select], window_w - 19, item_height,
+                             SELECTED_BG_COLOR);
             y = items_y[select] + text_padding;
             drawText(items[select], window_x + 12, y);
         }
@@ -547,13 +533,12 @@ void UI::initializeSettings()
 {
     if (!SD.exists("/settings.bin"))
     {
-        Settings temp = {100, 100, 0};
+        Settings temp = { 100, 100, 0 };
         saveSettings(&temp);
     }
     loadSettings(&settings);
 
-    if (hw_config.backlight)
-        setBrightness(settings.brightness);
+    if (hw_config.backlight) setBrightness(settings.brightness);
 }
 
 void UI::loadEmulatorSettings(Bus* nes)
@@ -572,7 +557,7 @@ void UI::saveSettings(const Settings* s)
 {
     File f = SD.open("/settings.bin", FILE_WRITE);
     if (!f) return;
-        
+
     f.seek(0);
     f.write((uint8_t*)s, sizeof(*s));
     f.close();
@@ -582,10 +567,10 @@ void UI::loadSettings(Settings* s)
 {
     File f = SD.open("/settings.bin", FILE_READ);
     if (!f) return;
-    if (f.size() != sizeof(Settings)) 
+    if (f.size() != sizeof(Settings))
     {
         f.close();
-        Settings temp = {100, 100, 0};
+        Settings temp = { 100, 100, 0 };
         saveSettings(&temp);
         *s = temp;
         f.close();
@@ -596,7 +581,7 @@ void UI::loadSettings(Settings* s)
     f.close();
 }
 
-void UI::drawText(const char* text, const int x, const int y)
+void UI::drawText(const char* text, const int16_t x, const int16_t y)
 {
     screen->setTextColor(TFT_BLACK);
     screen->setCursor(x, y);
