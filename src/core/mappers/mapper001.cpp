@@ -126,8 +126,9 @@ IRAM_ATTR bool mapper001_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
                     if (state->number_CHR_banks == 0)
                         state->cart->loadCHRBank(state->ptr_4K_CHR_banks[1], 4 * 1024,
                                                  state->CHR_bank_1 * 4 * 1024);
-                    state->ptr_4K_CHR_banks[1] =
-                        getBank(&state->CHR_4K_cache, state->CHR_bank_1, Mapper::ROM_TYPE::CHR_ROM);
+                    else
+                        state->ptr_4K_CHR_banks[1] = getBank(
+                            &state->CHR_4K_cache, state->CHR_bank_1, Mapper::ROM_TYPE::CHR_ROM);
                 }
                 break;
 
