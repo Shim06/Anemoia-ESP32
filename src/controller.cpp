@@ -258,36 +258,6 @@ static uint8_t UartControllerRead()
     return state;
 }
 
-static uint8_t UartControllerRead()
-{
-    static uint8_t state = 0x00;
-    static uint8_t no_data_count = 0;
-
-    int b0 = Serial.read();
-    int b1 = Serial1.read();
-    if (b0 >= 0 || b1 >= 0)
-    {
-        // if received button presses from both Serial and Serial1 combine them
-        state = 0x00;
-        if (b0 >= 0) state = (uint8_t)b0;
-        if (b1 >= 0) state |= (uint8_t)b1;
-
-        no_data_count = 0;
-        return state;
-    }
-
-    // if there is no data, then  reuse previous state 10 times before
-    // setting state to 0x00 (no buttons pressed)
-    no_data_count++;
-    if (no_data_count >= 10)
-    {
-        state = 0x00;
-        no_data_count = 10; // pin at 10 to prevent overflow
-    }
-
-    return state;
-}
-
 static uint8_t dummyControllerRead()
 {
     return 0x00;
