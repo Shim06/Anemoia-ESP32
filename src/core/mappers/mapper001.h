@@ -7,7 +7,7 @@
 #define MAPPER001_NUM_CHR_BANKS_8K  1
 #define MAPPER001_NUM_CHR_BANKS_4K  2
 
-Mapper createMapper001(uint8_t PRG_banks, uint8_t CHR_banks, Cartridge* cart);
+Mapper createMapper001(uint8_t PRG_banks, uint8_t CHR_banks, ROMBackend backend, Cartridge* cart);
 
 bool mapper001_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data);
 bool mapper001_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data);
