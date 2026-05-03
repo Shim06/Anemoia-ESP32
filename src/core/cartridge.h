@@ -19,7 +19,7 @@ class Bus;
 class Cartridge
 {
 public:
-    Cartridge(const char* filename, ROMBackend backend = ROMBackend::LRU);
+    Cartridge(const char* filename, ROMBackend backend = ROMBackend::FLASH);
     ~Cartridge();
 
     enum MIRROR : uint8_t
