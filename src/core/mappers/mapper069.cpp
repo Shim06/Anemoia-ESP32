@@ -238,7 +238,7 @@ void mapper069_loadState(Mapper* mapper, File& state)
     state.read(s->RAM, 8U * 1024U);
 }
 
-Mapper createMapper069(uint8_t PRG_banks, uint8_t CHR_banks, Cartridge* cart)
+Mapper createMapper069(uint8_t PRG_banks, uint8_t CHR_banks, ROMBackend backend, Cartridge* cart)
 {
     Mapper mapper;
     Mapper069_state* state = new Mapper069_state;
