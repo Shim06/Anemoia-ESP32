@@ -1,7 +1,7 @@
 #include "cartridge.h"
 #include "bus.h"
 
-Cartridge::Cartridge(const char* filename)
+Cartridge::Cartridge(const char* filename, ROMBackend backend)
 {
     struct cartridge_header
     {
@@ -26,6 +26,8 @@ Cartridge::Cartridge(const char* filename)
     mapper_ID = (header.mapper2 & 0xF0) | header.mapper1 >> 4;
     hardware_mirror = (header.mapper1 & 0x01) ? VERTICAL : HORIZONTAL;
 
+    uint8_t number_PRG_banks = 0;
+    uint8_t number_CHR_banks = 0;
     // Check file format
     uint8_t file_type = 1;
     // if ((header.mapper2 & 0x0C) == 0x08);
@@ -43,6 +45,9 @@ Cartridge::Cartridge(const char* filename)
     default: break;
     }
 
+    prg_base = sizeof(cartridge_header) + (header.mapper1 & 0x04 ? 512 : 0);
+    chr_base = prg_base + (number_PRG_banks * 16384);
+
     // Calculate ROM CRC32
     {
         uint8_t buf[4096];
@@ -53,18 +58,12 @@ Cartridge::Cartridge(const char* filename)
         LOGF("CRC32: %08lX\n", (unsigned int)CRC32);
     }
 
-    prg_base = sizeof(cartridge_header) + (header.mapper1 & 0x04 ? 512 : 0);
-    chr_base = prg_base + (number_PRG_banks * 16384);
-    switch (mapper_ID)
+    if (backend == ROMBackend::FLASH)
     {
-    case 0: mapper = createMapper000(number_PRG_banks, number_CHR_banks, this); break;
-    case 1: mapper = createMapper001(number_PRG_banks, number_CHR_banks, this); break;
-    case 2: mapper = createMapper002(number_PRG_banks, number_CHR_banks, this); break;
-    case 3: mapper = createMapper003(number_PRG_banks, number_CHR_banks, this); break;
-    case 4: mapper = createMapper004(number_PRG_banks, number_CHR_banks, this); break;
-    case 69: mapper = createMapper069(number_PRG_banks, number_CHR_banks, this); break;
-    default: is_valid = false; break;
+        mappedROM_init(&mROM, this, CRC32, number_PRG_banks, number_CHR_banks);
     }
+    createMapper(number_PRG_banks, number_CHR_banks, backend);
+    LOG("Cartridge Initialized");
 }
 
 Cartridge::~Cartridge()
@@ -233,6 +232,30 @@ void Cartridge::loadState(File& state)
 bool Cartridge::isValid()
 {
     return is_valid;
+}
+
+void Cartridge::seek(uint32_t offset)
+{
+    rom.seek(offset);
+}
+
+void Cartridge::read(uint8_t* buf, size_t size)
+{
+    rom.read(buf, size);
+}
+
+void Cartridge::createMapper(uint8_t number_PRG_banks, uint8_t number_CHR_banks, ROMBackend backend)
+{
+    switch (mapper_ID)
+    {
+    case 0: mapper = createMapper000(number_PRG_banks, number_CHR_banks, backend, this); break;
+    case 1: mapper = createMapper001(number_PRG_banks, number_CHR_banks, backend, this); break;
+    case 2: mapper = createMapper002(number_PRG_banks, number_CHR_banks, backend, this); break;
+    case 3: mapper = createMapper003(number_PRG_banks, number_CHR_banks, backend, this); break;
+    case 4: mapper = createMapper004(number_PRG_banks, number_CHR_banks, backend, this); break;
+    case 69: mapper = createMapper069(number_PRG_banks, number_CHR_banks, backend, this); break;
+    default: is_valid = false; break;
+    }
 }
 
 uint32_t Cartridge::crc32(const void* buf, size_t size, uint32_t seed)
