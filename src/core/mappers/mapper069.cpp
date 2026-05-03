@@ -86,12 +86,12 @@ IRAM_ATTR bool mapper069_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
         case 0x06:
         case 0x07:
             state->ptr_CHR_bank_1K[command] =
-                getBank(&state->CHR_cache_1K, data & state->CHR_mask, Mapper::ROM_TYPE::CHR_ROM);
+                getBank(&state->CHR_cache_1K, data & state->CHR_mask, RomType::CHR);
             break;
 
         case 0x08:
-            state->ptr_PRG_bank_8K[command & 0x03] = getBank(
-                &state->PRG_cache_8K, (data & 0x3F) & state->PRG_mask, Mapper::ROM_TYPE::PRG_ROM);
+            state->ptr_PRG_bank_8K[command & 0x03] =
+                getBank(&state->PRG_cache_8K, (data & 0x3F) & state->PRG_mask, RomType::PRG);
             state->PRG_RAM_select = (data & 0x40) != 0;
             state->PRG_RAM_enable = (data & 0x80) != 0;
             break;
@@ -99,8 +99,8 @@ IRAM_ATTR bool mapper069_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
         case 0x09:
         case 0x0A:
         case 0x0B:
-            state->ptr_PRG_bank_8K[command & 0x03] = getBank(
-                &state->PRG_cache_8K, (data & 0x3F) & state->PRG_mask, Mapper::ROM_TYPE::PRG_ROM);
+            state->ptr_PRG_bank_8K[command & 0x03] =
+                getBank(&state->PRG_cache_8K, (data & 0x3F) & state->PRG_mask, RomType::PRG);
             break;
 
         case 0x0C: state->cart->setMirrorMode(state->mirror[data & 0x03]); break;
@@ -155,21 +155,21 @@ void mapper069_reset(Mapper* mapper)
 {
     Mapper069_state* state = (Mapper069_state*)mapper->state;
     memset(state->RAM, 0, 8U * 1024U);
-    state->ptr_PRG_bank_8K[0] = getBank(&state->PRG_cache_8K, 0, Mapper::ROM_TYPE::PRG_ROM);
-    state->ptr_PRG_bank_8K[1] = getBank(&state->PRG_cache_8K, 0, Mapper::ROM_TYPE::PRG_ROM);
-    state->ptr_PRG_bank_8K[2] = getBank(&state->PRG_cache_8K, 0, Mapper::ROM_TYPE::PRG_ROM);
-    state->ptr_PRG_bank_8K[3] = getBank(&state->PRG_cache_8K, 0, Mapper::ROM_TYPE::PRG_ROM);
+    state->ptr_PRG_bank_8K[0] = getBank(&state->PRG_cache_8K, 0, RomType::PRG);
+    state->ptr_PRG_bank_8K[1] = getBank(&state->PRG_cache_8K, 0, RomType::PRG);
+    state->ptr_PRG_bank_8K[2] = getBank(&state->PRG_cache_8K, 0, RomType::PRG);
+    state->ptr_PRG_bank_8K[3] = getBank(&state->PRG_cache_8K, 0, RomType::PRG);
     state->cart->loadPRGBank(state->ptr_PRG_bank_8K[4], 8U * 1024U,
                              ((state->number_PRG_banks * 2) - 1) * 8U * 1024U);
 
-    state->ptr_CHR_bank_1K[0] = getBank(&state->CHR_cache_1K, 0, Mapper::ROM_TYPE::CHR_ROM);
-    state->ptr_CHR_bank_1K[1] = getBank(&state->CHR_cache_1K, 0, Mapper::ROM_TYPE::CHR_ROM);
-    state->ptr_CHR_bank_1K[2] = getBank(&state->CHR_cache_1K, 0, Mapper::ROM_TYPE::CHR_ROM);
-    state->ptr_CHR_bank_1K[3] = getBank(&state->CHR_cache_1K, 0, Mapper::ROM_TYPE::CHR_ROM);
-    state->ptr_CHR_bank_1K[4] = getBank(&state->CHR_cache_1K, 0, Mapper::ROM_TYPE::CHR_ROM);
-    state->ptr_CHR_bank_1K[5] = getBank(&state->CHR_cache_1K, 0, Mapper::ROM_TYPE::CHR_ROM);
-    state->ptr_CHR_bank_1K[6] = getBank(&state->CHR_cache_1K, 0, Mapper::ROM_TYPE::CHR_ROM);
-    state->ptr_CHR_bank_1K[7] = getBank(&state->CHR_cache_1K, 0, Mapper::ROM_TYPE::CHR_ROM);
+    state->ptr_CHR_bank_1K[0] = getBank(&state->CHR_cache_1K, 0, RomType::CHR);
+    state->ptr_CHR_bank_1K[1] = getBank(&state->CHR_cache_1K, 0, RomType::CHR);
+    state->ptr_CHR_bank_1K[2] = getBank(&state->CHR_cache_1K, 0, RomType::CHR);
+    state->ptr_CHR_bank_1K[3] = getBank(&state->CHR_cache_1K, 0, RomType::CHR);
+    state->ptr_CHR_bank_1K[4] = getBank(&state->CHR_cache_1K, 0, RomType::CHR);
+    state->ptr_CHR_bank_1K[5] = getBank(&state->CHR_cache_1K, 0, RomType::CHR);
+    state->ptr_CHR_bank_1K[6] = getBank(&state->CHR_cache_1K, 0, RomType::CHR);
+    state->ptr_CHR_bank_1K[7] = getBank(&state->CHR_cache_1K, 0, RomType::CHR);
 
     state->command_register = 0x00;
     state->parameter_register = 0x00;
@@ -231,11 +231,9 @@ void mapper069_loadState(Mapper* mapper, File& state)
     invalidateCache(&s->PRG_cache_8K);
     invalidateCache(&s->CHR_cache_1K);
     for (int i = 0; i < 4; i++)
-        s->ptr_PRG_bank_8K[i] =
-            getBank(&s->PRG_cache_8K, PRG_bank_8K[i], Mapper::ROM_TYPE::PRG_ROM);
+        s->ptr_PRG_bank_8K[i] = getBank(&s->PRG_cache_8K, PRG_bank_8K[i], RomType::PRG);
     for (int i = 0; i < 8; i++)
-        s->ptr_CHR_bank_1K[i] =
-            getBank(&s->CHR_cache_1K, CHR_bank_1K[i], Mapper::ROM_TYPE::CHR_ROM);
+        s->ptr_CHR_bank_1K[i] = getBank(&s->CHR_cache_1K, CHR_bank_1K[i], RomType::CHR);
 
     state.read(s->RAM, 8U * 1024U);
 }
