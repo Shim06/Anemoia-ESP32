@@ -5,6 +5,7 @@
 #include <SPI.h>
 #include <vector>
 
+#include "../flash_mmap.h"
 #include "mapper.h"
 #include "mappers/mapper000.h"
 #include "mappers/mapper001.h"
@@ -12,12 +13,13 @@
 #include "mappers/mapper003.h"
 #include "mappers/mapper004.h"
 #include "mappers/mapper069.h"
+#include "rom_backends.h"
 
 class Bus;
 class Cartridge
 {
 public:
-    Cartridge(const char* filename);
+    Cartridge(const char* filename, ROMBackend backend = ROMBackend::LRU);
     ~Cartridge();
 
     enum MIRROR : uint8_t
@@ -52,9 +54,13 @@ public:
     void loadState(File& state);
     bool isValid();
 
+    void seek(uint32_t offset);
+    void read(uint8_t* buf, size_t size);
+
     uint8_t hardware_mirror;
     uint8_t mirror = HORIZONTAL;
     uint32_t CRC32 = ~0U;
+    MappedROM mROM;
 
 private:
     Bus* bus = nullptr;
@@ -65,9 +71,7 @@ private:
     File rom;
     Mapper mapper;
     uint8_t mapper_ID = 0;
-    uint8_t number_PRG_banks = 0;
-    uint8_t number_CHR_banks = 0;
-
+    void createMapper(uint8_t number_PRG_banks, uint8_t number_CHR_banks, ROMBackend backend);
     uint32_t crc32(const void* buf, size_t size, uint32_t seed = ~0U);
 };
 
