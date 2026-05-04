@@ -23,10 +23,7 @@ Cartridge* UI::selectGame()
 
     bool show_roms_menu = true;
 #ifdef DEMO_MODE_UNLOCKED
-    if (demo_mode_timeout == 0)
-    {
-        show_roms_menu = false;
-    }
+    if (demo_mode_timeout == 0) { show_roms_menu = false; }
 #endif
     if (show_roms_menu)
     {

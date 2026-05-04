@@ -29,7 +29,8 @@ Cartridge* cart;
 
 #ifdef DEMO_MODE_UNLOCKED
 bool demo_mode_active = true; // if any user input is detected this is set to false
-// uses same type selectGame() stores millis() output in. cannot have a timeout longer than 65.535 [seconds]
+// uses same type selectGame() stores millis() output in. cannot have a timeout longer than
+// 65.535 [seconds]
 unsigned int demo_mode_timeout = 5000; // 5 [seconds]
 // how long the game demo (aka attract mode) runs for
 const uint64_t demo_mode_runtime = 120 * 1000000ULL; // 120 [seconds]
@@ -82,10 +83,7 @@ void setup()
     }
     // it is possible demo_mode_timeout has a default value of 0, so do an independent check
     // instead of setting bg_color to black in the reset_reason if block above
-    if (demo_mode_timeout == 0)
-    {
-        bg_color = TFT_BLACK;
-    }
+    if (demo_mode_timeout == 0) { bg_color = TFT_BLACK; }
 #endif
     screen.fillScreen(bg_color);
 
@@ -158,10 +156,7 @@ IRAM_ATTR void emulate()
         if (demo_mode_active)
         {
             uint64_t time_elapsed_since_start = esp_timer_get_time() - emulator_start_time;
-            if (time_elapsed_since_start >= demo_mode_runtime)
-            {
-                ESP.restart();
-            }
+            if (time_elapsed_since_start >= demo_mode_runtime) { ESP.restart(); }
         }
 #endif
 
