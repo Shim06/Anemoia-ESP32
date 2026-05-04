@@ -66,4 +66,15 @@
 #define FRAMESKIP
 // #define DEBUG // Uncomment this line if you want debug prints from serial
 
+// When DEMO_MODE_UNLOCKED is defined, if no user input is detected on the ROMs menu within five
+// seconds, then a random game is selected and shown for two minutes. Next the ESP32 is restarted,
+// the ROMs menu is skipped, and a new random game is shown for two minutes. Repeat.
+// Skipping the ROMs menu results in a cleaner demo mode since the transition from showing one game
+// demo to the next is not interrupted.
+// *** To see the ROMs menu again press the hardware reset button. ***
+// If user input is detected during the game demo, then the game can be played normally and the two
+// minute demo time limit is turned off.
+// #ifndef guard is required so this default does not interfere when building variants on github
+// #define DEMO_MODE_UNLOCKED
+
 #endif

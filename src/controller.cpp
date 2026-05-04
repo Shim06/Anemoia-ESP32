@@ -324,6 +324,12 @@ void initController(ControllerType controller_type)
         // states sent from a WebSerial game controller webpage over USB to serial.
         // debug messages will remain off
         Serial.begin(115200);
+
+        // Discard garbage from serial buffer that can be read as false button presses 
+        delay(10);
+        while (Serial.available() > 0) {
+            Serial.read();
+        }
 #endif
 
         // Serial1 is used by an adapter board that supports multiple controller types and
