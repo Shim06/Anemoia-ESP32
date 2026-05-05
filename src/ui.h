@@ -6,6 +6,7 @@
 
 #include "controller.h"
 #include "core/bus.h"
+#include "core/rom_backends.h"
 #include "hwconfig.h"
 
 #define BL_CHANNEL          0
@@ -52,6 +53,7 @@ private:
         uint8_t volume = 100;
         uint8_t brightness = 100;
         uint8_t palette = 0;
+        uint8_t rom_backend = 0;
     };
     Settings settings;
     void saveSettings(const Settings* s);

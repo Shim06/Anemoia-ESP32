@@ -57,13 +57,21 @@ Cartridge* UI::selectGame()
                 drawFileList();
                 last_input_time = now;
             }
+
+            if (isDownPressed(CONTROLLER::Select))
+            {
+                settings.rom_backend = (settings.rom_backend + 1) % 2;
+                saveSettings(&settings);
+                drawBars();
+            }
         }
 
         if (isDownPressed(CONTROLLER::A) && (selected >= 0 && selected < size))
         {
             std::string game = "/" + files[selected];
             std::vector<std::string>().swap(files);
-            return new Cartridge(game.c_str());
+            ROMBackend backend = (ROMBackend)settings.rom_backend;
+            return new Cartridge(game.c_str(), backend);
         }
     }
 }
@@ -148,8 +156,8 @@ void UI::drawBars()
     screen->fillRect(0, screen->height() - 16, screen->width(), 16, BAR_COLOR);
     screen->setTextColor(TFT_BLACK, BAR_COLOR);
 
-    int16_t y = screen->height() - 12;
-    int16_t x = 4;
+    const int16_t y = screen->height() - 12;
+    const int16_t x = 4;
 
     screen->setTextColor(TEXT2_COLOR, BAR_COLOR);
     screen->setCursor(x, y);
@@ -163,6 +171,29 @@ void UI::drawBars()
 
     screen->setTextColor(TFT_BLACK, BAR_COLOR);
     screen->print(" Select");
+
+    const char* selectText = "Select";
+    const char* mode1 = " RAM mode";
+    const char* mode2 = " Flash mode";
+    const char* currentMode;
+    switch (settings.rom_backend)
+    {
+    case 0: currentMode = mode1; break;
+    case 1: currentMode = mode2; break;
+    default: currentMode = mode1; break;
+    }
+
+    const int16_t select_w = screen->textWidth(selectText);
+    const int16_t mode_w = screen->textWidth(currentMode);
+    const int16_t total_w = mode_w + select_w;
+    const int16_t mode_x = screen->width() - total_w - 8;
+    screen->setCursor(mode_x, y);
+
+    screen->setTextColor(TEXT2_COLOR, BAR_COLOR);
+    screen->print(selectText);
+
+    screen->setTextColor(TEXT2_COLOR, BAR_COLOR);
+    screen->print(currentMode);
 }
 
 void UI::pauseMenu(Bus* nes)
