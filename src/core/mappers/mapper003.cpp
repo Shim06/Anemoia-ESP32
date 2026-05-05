@@ -54,7 +54,10 @@ void mapper003_reset(Mapper* mapper)
         state->cart->loadPRGBank(state->PRG_bank, 32 * 1024, 0);
         return;
 
-    case ROMBackend::FLASH: return;
+    case ROMBackend::FLASH:
+        state->ptr_CHR_bank_8K = (uint8_t*)state->mROM->chr_base;
+        state->PRG_bank = (uint8_t*)state->mROM->prg_base;
+        return;
     }
 }
 
