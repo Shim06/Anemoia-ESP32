@@ -393,8 +393,6 @@ Mapper createMapper001(uint8_t PRG_banks, uint8_t CHR_banks, ROMBackend backend,
 {
     Mapper mapper;
     Mapper001_state* state = new Mapper001_state;
-    state->RAM = (uint8_t*)malloc(8U * 1024U);
-
     switch (backend)
     {
     case ROMBackend::LRU:
@@ -426,6 +424,7 @@ Mapper createMapper001(uint8_t PRG_banks, uint8_t CHR_banks, ROMBackend backend,
         break;
     }
 
+    state->RAM = (uint8_t*)malloc(8U * 1024U);
     state->backend = backend;
     state->number_PRG_banks = PRG_banks;
     state->number_CHR_banks = CHR_banks;
