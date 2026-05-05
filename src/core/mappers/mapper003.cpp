@@ -68,11 +68,11 @@ void mapper003_dumpState(Mapper* mapper, File& state)
     switch (s->backend)
     {
     case ROMBackend::LRU:
-        uint8_t CHR_bank = getBankIndex(&s->CHR_cache_8K, s->ptr_CHR_bank_8K);
+        CHR_bank = getBankIndex(&s->CHR_cache_8K, s->ptr_CHR_bank_8K);
         state.write((uint8_t*)&CHR_bank, sizeof(CHR_bank));
         return;
     case ROMBackend::FLASH:
-        uint8_t CHR_bank = (s->ptr_CHR_bank_8K - (uint8_t*)s->mROM->chr_base) / (8U * 1024U);
+        CHR_bank = (s->ptr_CHR_bank_8K - (uint8_t*)s->mROM->chr_base) / (8U * 1024U);
         state.write((uint8_t*)&CHR_bank, sizeof(CHR_bank));
         return;
     }
