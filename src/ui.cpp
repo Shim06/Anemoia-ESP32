@@ -63,6 +63,7 @@ Cartridge* UI::selectGame()
                 settings.rom_backend = (settings.rom_backend + 1) % 2;
                 saveSettings(&settings);
                 drawBars();
+                last_input_time = now;
             }
         }
 
