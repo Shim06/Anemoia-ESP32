@@ -193,7 +193,7 @@ void UI::drawBars()
     screen->setTextColor(TEXT2_COLOR, BAR_COLOR);
     screen->print(selectText);
 
-    screen->setTextColor(TEXT2_COLOR, BAR_COLOR);
+    screen->setTextColor(TFT_BLACK, BAR_COLOR);
     screen->print(currentMode);
 }
 
