@@ -272,25 +272,24 @@ void mapper001_reset(Mapper* mapper)
 void mapper001_dumpState(Mapper* mapper, File& state)
 {
     Mapper001_state* s = (Mapper001_state*)mapper->state;
+    Cartridge::MIRROR mirror = s->cart->getMirrorMode();
+    state.write((uint8_t*)&s->load, sizeof(s->load));
+    state.write((uint8_t*)&s->control, sizeof(s->control));
+    state.write((uint8_t*)&s->load_writes, sizeof(s->load_writes));
+    state.write((uint8_t*)&s->PRG_ROM_bank_mode, sizeof(s->PRG_ROM_bank_mode));
+    state.write((uint8_t*)&s->CHR_ROM_bank_mode, sizeof(s->CHR_ROM_bank_mode));
+    state.write((uint8_t*)&s->CHR_bank_0, sizeof(s->CHR_bank_0));
+    state.write((uint8_t*)&s->CHR_bank_1, sizeof(s->CHR_bank_1));
+    state.write((uint8_t*)&s->PRG_bank, sizeof(s->PRG_bank));
+    state.write((uint8_t*)&mirror, sizeof(mirror));
+    state.write(s->RAM, 8U * 1024U);
+
+    uint8_t PRG_16K[4];
+    uint8_t CHR_8K;
+    uint8_t CHR_4K[2];
     switch (s->backend)
     {
     case ROMBackend::LRU:
-    {
-        Cartridge::MIRROR mirror = s->cart->getMirrorMode();
-        state.write((uint8_t*)&s->load, sizeof(s->load));
-        state.write((uint8_t*)&s->control, sizeof(s->control));
-        state.write((uint8_t*)&s->load_writes, sizeof(s->load_writes));
-        state.write((uint8_t*)&s->PRG_ROM_bank_mode, sizeof(s->PRG_ROM_bank_mode));
-        state.write((uint8_t*)&s->CHR_ROM_bank_mode, sizeof(s->CHR_ROM_bank_mode));
-        state.write((uint8_t*)&s->CHR_bank_0, sizeof(s->CHR_bank_0));
-        state.write((uint8_t*)&s->CHR_bank_1, sizeof(s->CHR_bank_1));
-        state.write((uint8_t*)&s->PRG_bank, sizeof(s->PRG_bank));
-        state.write((uint8_t*)&mirror, sizeof(mirror));
-        state.write(s->RAM, 8U * 1024U);
-
-        uint8_t PRG_16K[4];
-        uint8_t CHR_8K;
-        uint8_t CHR_4K[2];
         for (int i = 0; i < 4; i++)
             PRG_16K[i] = getBankIndex(&s->PRG_16K_cache, s->ptr_16K_PRG_banks[i]);
         state.write(PRG_16K, sizeof(PRG_16K));
@@ -305,34 +304,50 @@ void mapper001_dumpState(Mapper* mapper, File& state)
             state.write(CHR_4K, sizeof(CHR_4K));
         }
         return;
-    }
 
-    case ROMBackend::FLASH: return;
+    case ROMBackend::FLASH:
+        for (int i = 0; i < 4; i++)
+        {
+            PRG_16K[i] = (s->ptr_16K_PRG_banks[i] - (uint8_t*)s->mROM->prg_base) / (16U * 1024U);
+        }
+        state.write(PRG_16K, sizeof(PRG_16K));
+
+        if (s->number_CHR_banks == 0) { state.write(s->CHR_RAM, 8U * 1024U); }
+        else
+        {
+            CHR_8K = (s->ptr_8K_CHR_bank - (uint8_t*)s->mROM->chr_base) / (8U * 1024U);
+            for (int i = 0; i < 2; i++)
+                CHR_4K[i] = (s->ptr_4K_CHR_banks[i] - (uint8_t*)s->mROM->chr_base) / (4U * 1024U);
+
+            state.write((uint8_t*)&CHR_8K, sizeof(CHR_8K));
+            state.write(CHR_4K, sizeof(CHR_4K));
+        }
+        return;
     }
 }
 
 void mapper001_loadState(Mapper* mapper, File& state)
 {
     Mapper001_state* s = (Mapper001_state*)mapper->state;
+    Cartridge::MIRROR mirror;
+    state.read((uint8_t*)&s->load, sizeof(s->load));
+    state.read((uint8_t*)&s->control, sizeof(s->control));
+    state.read((uint8_t*)&s->load_writes, sizeof(s->load_writes));
+    state.read((uint8_t*)&s->PRG_ROM_bank_mode, sizeof(s->PRG_ROM_bank_mode));
+    state.read((uint8_t*)&s->CHR_ROM_bank_mode, sizeof(s->CHR_ROM_bank_mode));
+    state.read((uint8_t*)&s->CHR_bank_0, sizeof(s->CHR_bank_0));
+    state.read((uint8_t*)&s->CHR_bank_1, sizeof(s->CHR_bank_1));
+    state.read((uint8_t*)&s->PRG_bank, sizeof(s->PRG_bank));
+    state.read((uint8_t*)&mirror, sizeof(mirror));
+    state.read(s->RAM, 8U * 1024U);
+    s->cart->setMirrorMode(mirror);
+
+    uint8_t PRG_16K[4];
+    uint8_t CHR_8K;
+    uint8_t CHR_4K[2];
     switch (s->backend)
     {
     case ROMBackend::LRU:
-        Cartridge::MIRROR mirror;
-        state.read((uint8_t*)&s->load, sizeof(s->load));
-        state.read((uint8_t*)&s->control, sizeof(s->control));
-        state.read((uint8_t*)&s->load_writes, sizeof(s->load_writes));
-        state.read((uint8_t*)&s->PRG_ROM_bank_mode, sizeof(s->PRG_ROM_bank_mode));
-        state.read((uint8_t*)&s->CHR_ROM_bank_mode, sizeof(s->CHR_ROM_bank_mode));
-        state.read((uint8_t*)&s->CHR_bank_0, sizeof(s->CHR_bank_0));
-        state.read((uint8_t*)&s->CHR_bank_1, sizeof(s->CHR_bank_1));
-        state.read((uint8_t*)&s->PRG_bank, sizeof(s->PRG_bank));
-        state.read((uint8_t*)&mirror, sizeof(mirror));
-        state.read(s->RAM, 8U * 1024U);
-        s->cart->setMirrorMode(mirror);
-
-        uint8_t PRG_16K[4];
-        uint8_t CHR_8K;
-        uint8_t CHR_4K[2];
         state.read(PRG_16K, sizeof(PRG_16K));
         invalidateCache(&s->PRG_16K_cache);
         for (int i = 0; i < 4; i++)
@@ -351,7 +366,26 @@ void mapper001_loadState(Mapper* mapper, File& state)
         }
         return;
 
-    case ROMBackend::FLASH: return;
+    case ROMBackend::FLASH:
+        state.read(PRG_16K, sizeof(PRG_16K));
+        for (int i = 0; i < 4; i++)
+        {
+            s->ptr_16K_PRG_banks[i] =
+                (uint8_t*)(s->mROM->prg_base + (uint32_t)PRG_16K[i] * (16U * 1024U));
+        }
+
+        if (s->number_CHR_banks == 0) { state.read(s->CHR_RAM, (8U * 1024U)); }
+        else
+        {
+            state.read((uint8_t*)&CHR_8K, sizeof(CHR_8K));
+            state.read(CHR_4K, sizeof(CHR_4K));
+
+            s->ptr_8K_CHR_bank = (uint8_t*)(s->mROM->chr_base + (uint32_t)CHR_8K * (8U * 1024U));
+            for (int i = 0; i < 2; i++)
+                s->ptr_4K_CHR_banks[i] =
+                    (uint8_t*)(s->mROM->chr_base + (uint32_t)CHR_4K[i] * (4U * 1024U));
+        }
+        return;
     }
 }
 

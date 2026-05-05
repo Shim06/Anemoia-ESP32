@@ -64,32 +64,35 @@ void mapper003_reset(Mapper* mapper)
 void mapper003_dumpState(Mapper* mapper, File& state)
 {
     Mapper003_state* s = (Mapper003_state*)mapper->state;
+    uint8_t CHR_bank;
     switch (s->backend)
     {
     case ROMBackend::LRU:
-    {
         uint8_t CHR_bank = getBankIndex(&s->CHR_cache_8K, s->ptr_CHR_bank_8K);
         state.write((uint8_t*)&CHR_bank, sizeof(CHR_bank));
         return;
-    }
-    case ROMBackend::FLASH: return;
+    case ROMBackend::FLASH:
+        uint8_t CHR_bank = (s->ptr_CHR_bank_8K - (uint8_t*)s->mROM->chr_base) / (8U * 1024U);
+        state.write((uint8_t*)&CHR_bank, sizeof(CHR_bank));
+        return;
     }
 }
 
 void mapper003_loadState(Mapper* mapper, File& state)
 {
     Mapper003_state* s = (Mapper003_state*)mapper->state;
+    uint8_t CHR_bank;
     switch (s->backend)
     {
     case ROMBackend::LRU:
-    {
-        uint8_t CHR_bank;
         state.read((uint8_t*)&CHR_bank, sizeof(CHR_bank));
         invalidateCache(&s->CHR_cache_8K);
         s->ptr_CHR_bank_8K = getBank(&s->CHR_cache_8K, CHR_bank, RomType::CHR);
-    }
 
-    case ROMBackend::FLASH: return;
+    case ROMBackend::FLASH:
+        state.read((uint8_t*)&CHR_bank, sizeof(CHR_bank));
+        s->ptr_CHR_bank_8K = (uint8_t*)(s->mROM->chr_base + CHR_bank * (8U * 1024U));
+        return;
     }
 }
 

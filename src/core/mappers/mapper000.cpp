@@ -79,27 +79,15 @@ void mapper000_reset(Mapper* mapper)
 void mapper000_dumpState(Mapper* mapper, File& state)
 {
     Mapper000_state* s = (Mapper000_state*)mapper->state;
-    switch (s->backend)
-    {
-    case ROMBackend::LRU:
-        if (s->number_CHR_banks == 0 && s->CHR_bank) { state.write(s->CHR_bank, 8U * 1024U); }
-        return;
-
-    case ROMBackend::FLASH: return;
-    }
+    if (s->number_CHR_banks == 0 && s->CHR_bank) state.write(s->CHR_bank, 8U * 1024U);
+    return;
 }
 
 void mapper000_loadState(Mapper* mapper, File& state)
 {
     Mapper000_state* s = (Mapper000_state*)mapper->state;
-    switch (s->backend)
-    {
-    case ROMBackend::LRU:
-        if (s->number_CHR_banks == 0 && s->CHR_bank) { state.read(s->CHR_bank, 8U * 1024U); }
-        return;
-
-    case ROMBackend::FLASH: return;
-    }
+    if (s->number_CHR_banks == 0 && s->CHR_bank) state.read(s->CHR_bank, 8U * 1024U);
+    return;
 }
 
 Mapper createMapper000(uint8_t PRG_banks, uint8_t CHR_banks, ROMBackend backend, Cartridge* cart)

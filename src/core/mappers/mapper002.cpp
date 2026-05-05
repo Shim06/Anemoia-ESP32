@@ -92,7 +92,11 @@ void mapper002_dumpState(Mapper* mapper, File& state)
         if (s->number_CHR_banks == 0) { state.write(s->CHR_bank, sizeof(s->CHR_bank)); }
         return;
 
-    case ROMBackend::FLASH: return;
+    case ROMBackend::FLASH:
+        PRG_16K = (s->ptr_16K_PRG_banks[0] - (uint8_t*)s->mROM->prg_base) / (16U * 1024U);
+        state.write((uint8_t*)&PRG_16K, sizeof(PRG_16K));
+        if (s->number_CHR_banks == 0) { state.write(s->CHR_bank, sizeof(s->CHR_bank)); }
+        return;
     }
 }
 
@@ -109,7 +113,11 @@ void mapper002_loadState(Mapper* mapper, File& state)
         if (s->number_CHR_banks == 0) { state.read(s->CHR_bank, sizeof(s->CHR_bank)); }
         return;
 
-    case ROMBackend::FLASH: return;
+    case ROMBackend::FLASH:
+        state.read((uint8_t*)&PRG_16K, sizeof(PRG_16K));
+        s->ptr_16K_PRG_banks[0] = (uint8_t*)(s->mROM->prg_base + (PRG_16K * (16U * 1024U)));
+        if (s->number_CHR_banks == 0) { state.read(s->CHR_bank, sizeof(s->CHR_bank)); }
+        return;
     }
 }
 
