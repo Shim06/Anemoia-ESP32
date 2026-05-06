@@ -106,8 +106,8 @@ IRAM_ATTR bool mapper001_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
                 if (state->CHR_ROM_bank_mode == 0)
                 {
                     if (state->number_CHR_banks == 0)
-                        loadCHRRAM(state, state->ptr_8K_CHR_bank, 16U * 1024U,
-                                   (state->CHR_bank_0 & 0x1E) * 16U * 1024U);
+                        loadCHRRAM(state, state->ptr_8K_CHR_bank, 8U * 1024U,
+                                   (state->CHR_bank_0 & 0x1E) * 8U * 1024U);
                     else state->ptr_8K_CHR_bank = getCHRBank8K(state, state->CHR_bank_0 & 0x1E);
                 }
                 else
