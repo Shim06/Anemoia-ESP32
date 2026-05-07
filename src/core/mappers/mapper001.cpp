@@ -229,7 +229,7 @@ void mapper001_reset(Mapper* mapper)
     {
         state->ptr_8K_CHR_bank = getBank(&state->CHR_8K_cache, 0, Mapper::ROM_TYPE::CHR_ROM);
         state->ptr_4K_CHR_banks[0] = getBank(&state->CHR_4K_cache, 0, Mapper::ROM_TYPE::CHR_ROM);
-        state->ptr_4K_CHR_banks[1] = getBank(&state->CHR_4K_cache, 0, Mapper::ROM_TYPE::CHR_ROM);
+        state->ptr_4K_CHR_banks[1] = getBank(&state->CHR_4K_cache, 1, Mapper::ROM_TYPE::CHR_ROM);
     }
 
     state->ptr_16K_PRG_banks[0] = getBank(&state->PRG_16K_cache, 0, Mapper::ROM_TYPE::PRG_ROM);
