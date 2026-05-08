@@ -134,7 +134,7 @@ bool mapper069_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
     return false;
 }
 
-IRAM_ATTR uint8_t* mapper069_ppuReadPtr(Mapper* mapper, uint16_t addr)
+uint8_t* mapper069_ppuReadPtr(Mapper* mapper, uint16_t addr)
 {
     if (addr > 0x1FFF) return nullptr;
 
@@ -143,7 +143,7 @@ IRAM_ATTR uint8_t* mapper069_ppuReadPtr(Mapper* mapper, uint16_t addr)
     return &state->ptr_CHR_bank_1K[bank][addr & 0x03FF];
 }
 
-IRAM_ATTR void mapper069_cycle(Mapper* mapper, int cycles)
+void mapper069_cycle(Mapper* mapper, int cycles)
 {
     Mapper069_state* state = (Mapper069_state*)mapper->state;
     if (!state->IRQ_counter_enable) return;
@@ -312,7 +312,9 @@ Mapper createMapper069(uint8_t PRG_banks, uint8_t CHR_banks, ROMBackend backend,
                  cart);
         break;
 
-    case ROMBackend::FLASH: break;
+    case ROMBackend::FLASH:
+        state->mROM = &cart->mROM;
+        break;
     }
 
     state->number_PRG_banks = PRG_banks;
