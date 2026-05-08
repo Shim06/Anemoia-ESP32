@@ -109,9 +109,7 @@ Mapper createMapper003(uint8_t PRG_banks, uint8_t CHR_banks, ROMBackend backend,
                  cart);
         break;
 
-    case ROMBackend::FLASH:
-        state->mROM = &cart->mROM;
-        break;
+    case ROMBackend::FLASH: state->mROM = &cart->mROM; break;
     }
 
     state->backend = backend;
