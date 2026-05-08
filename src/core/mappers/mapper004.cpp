@@ -36,7 +36,7 @@ constexpr Cartridge::MIRROR Mapper004_state::mirror[2];
 static inline uint8_t* getPRGBank(Mapper004_state* state, uint8_t index);
 static inline uint8_t* getCHRBank(Mapper004_state* state, uint8_t index);
 
-IRAM_ATTR bool mapper004_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
+bool mapper004_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
 {
     if (addr < 0x6000) return false;
 
@@ -52,7 +52,7 @@ IRAM_ATTR bool mapper004_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
     return true;
 }
 
-IRAM_ATTR bool mapper004_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
+bool mapper004_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
 {
     if (addr < 0x6000) return false;
 
@@ -140,7 +140,7 @@ IRAM_ATTR bool mapper004_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
     return false;
 }
 
-IRAM_ATTR bool mapper004_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
+bool mapper004_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
 {
     if (addr > 0x1FFF) return false;
 
@@ -150,7 +150,7 @@ IRAM_ATTR bool mapper004_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
     return true;
 }
 
-IRAM_ATTR bool mapper004_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
+bool mapper004_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
 {
     return false;
 }

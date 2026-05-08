@@ -45,7 +45,7 @@ static inline uint8_t* getCHRBank4K(Mapper001_state* state, uint8_t index);
 static inline void loadCHRRAM(Mapper001_state* state, uint8_t* bank, uint16_t size,
                               uint32_t offset);
 
-IRAM_ATTR bool mapper001_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
+bool mapper001_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
 {
     if (addr < 0x6000) return false;
 
@@ -67,7 +67,7 @@ IRAM_ATTR bool mapper001_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
     return true;
 }
 
-IRAM_ATTR bool mapper001_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
+bool mapper001_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
 {
     if (addr < 0x6000) return false;
 
@@ -171,7 +171,7 @@ IRAM_ATTR bool mapper001_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
     return true;
 }
 
-IRAM_ATTR bool mapper001_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
+bool mapper001_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
 {
     if (addr > 0x1FFF) return false;
 
@@ -181,7 +181,7 @@ IRAM_ATTR bool mapper001_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
     return true;
 }
 
-IRAM_ATTR bool mapper001_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
+bool mapper001_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
 {
     if (addr > 0x1FFF) return false;
 

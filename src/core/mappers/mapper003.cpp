@@ -1,7 +1,7 @@
 #include "mapper003.h"
 #include "../cartridge.h"
 
-IRAM_ATTR bool mapper003_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
+bool mapper003_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
 {
     if (addr < 0x8000) return false;
 
@@ -10,7 +10,7 @@ IRAM_ATTR bool mapper003_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
     return true;
 }
 
-IRAM_ATTR bool mapper003_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
+bool mapper003_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
 {
     if (addr < 0x8000) return false;
 
@@ -22,7 +22,7 @@ IRAM_ATTR bool mapper003_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
     return true;
 }
 
-IRAM_ATTR bool mapper003_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
+bool mapper003_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
 {
     if (addr > 0x1FFF) return false;
 
@@ -31,7 +31,7 @@ IRAM_ATTR bool mapper003_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
     return true;
 }
 
-IRAM_ATTR bool mapper003_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
+bool mapper003_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
 {
     return false;
 }

@@ -70,7 +70,7 @@ Cartridge::~Cartridge()
 {
 }
 
-IRAM_ATTR bool Cartridge::cpuRead(uint16_t addr, uint8_t& data)
+bool Cartridge::cpuRead(uint16_t addr, uint8_t& data)
 {
     switch (mapper_ID)
     {
@@ -84,7 +84,7 @@ IRAM_ATTR bool Cartridge::cpuRead(uint16_t addr, uint8_t& data)
     }
 }
 
-IRAM_ATTR bool Cartridge::cpuWrite(uint16_t addr, uint8_t data)
+bool Cartridge::cpuWrite(uint16_t addr, uint8_t data)
 {
     switch (mapper_ID)
     {
@@ -98,7 +98,7 @@ IRAM_ATTR bool Cartridge::cpuWrite(uint16_t addr, uint8_t data)
     }
 }
 
-IRAM_ATTR bool Cartridge::ppuRead(uint16_t addr, uint8_t& data)
+bool Cartridge::ppuRead(uint16_t addr, uint8_t& data)
 {
     switch (mapper_ID)
     {
@@ -112,7 +112,7 @@ IRAM_ATTR bool Cartridge::ppuRead(uint16_t addr, uint8_t& data)
     }
 }
 
-IRAM_ATTR bool Cartridge::ppuWrite(uint16_t addr, uint8_t data)
+bool Cartridge::ppuWrite(uint16_t addr, uint8_t data)
 {
     switch (mapper_ID)
     {
@@ -126,7 +126,7 @@ IRAM_ATTR bool Cartridge::ppuWrite(uint16_t addr, uint8_t data)
     }
 }
 
-IRAM_ATTR uint8_t* Cartridge::ppuReadPtr(uint16_t addr)
+uint8_t* Cartridge::ppuReadPtr(uint16_t addr)
 {
     switch (mapper_ID)
     {
