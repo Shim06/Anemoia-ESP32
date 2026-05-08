@@ -104,7 +104,7 @@ Mapper createMapper003(uint8_t PRG_banks, uint8_t CHR_banks, ROMBackend backend,
     {
     case ROMBackend::LRU:
         state->PRG_bank = (uint8_t*)malloc(32U * 1024U);
-        bankInit(&state->CHR_cache_8K, state->CHR_banks_8K, MAPPER003_NUM_CHR_BANKS_8K, 16U * 1024U,
+        bankInit(&state->CHR_cache_8K, state->CHR_banks_8K, MAPPER003_NUM_CHR_BANKS_8K, 8U * 1024U,
                  cart);
         break;
 
