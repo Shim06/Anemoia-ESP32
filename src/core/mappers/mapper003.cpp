@@ -88,6 +88,7 @@ void mapper003_loadState(Mapper* mapper, File& state)
         state.read((uint8_t*)&CHR_bank, sizeof(CHR_bank));
         invalidateCache(&s->CHR_cache_8K);
         s->ptr_CHR_bank_8K = getBank(&s->CHR_cache_8K, CHR_bank, RomType::CHR);
+        return;
 
     case ROMBackend::FLASH:
         state.read((uint8_t*)&CHR_bank, sizeof(CHR_bank));
