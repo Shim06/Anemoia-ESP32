@@ -20,6 +20,4 @@ struct MappedROM
 bool mappedROM_init(MappedROM* rom, Cartridge* cart, uint32_t crc32,
                    uint8_t num_prg_banks_16k, uint8_t num_chr_banks_8k);
 
-IRAM_ATTR uint8_t ROM_read(const MappedROM* rom, const RomType type, const uint32_t offset);
-
 #endif

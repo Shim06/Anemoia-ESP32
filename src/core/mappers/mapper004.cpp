@@ -155,7 +155,7 @@ bool mapper004_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
     return false;
 }
 
-IRAM_ATTR uint8_t* mapper004_ppuReadPtr(Mapper* mapper, uint16_t addr)
+uint8_t* mapper004_ppuReadPtr(Mapper* mapper, uint16_t addr)
 {
     if (addr > 0x1FFF) return nullptr;
 
@@ -164,7 +164,7 @@ IRAM_ATTR uint8_t* mapper004_ppuReadPtr(Mapper* mapper, uint16_t addr)
     return &state->ptr_CHR_bank_1K[bank][addr & 0x03FF];
 }
 
-IRAM_ATTR void mapper004_scanline(Mapper* mapper)
+void mapper004_scanline(Mapper* mapper)
 {
     Mapper004_state* state = (Mapper004_state*)mapper->state;
     if (state->IRQ_counter == 0) state->IRQ_counter = state->IRQ_latch;

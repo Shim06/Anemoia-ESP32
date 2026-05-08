@@ -36,7 +36,7 @@ bool mapper003_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
     return false;
 }
 
-IRAM_ATTR uint8_t* mapper003_ppuReadPtr(Mapper* mapper, uint16_t addr)
+uint8_t* mapper003_ppuReadPtr(Mapper* mapper, uint16_t addr)
 {
     if (addr > 0x1FFF) return nullptr;
 
@@ -108,7 +108,9 @@ Mapper createMapper003(uint8_t PRG_banks, uint8_t CHR_banks, ROMBackend backend,
                  cart);
         break;
 
-    case ROMBackend::FLASH: state->mROM = &cart->mROM; break;
+    case ROMBackend::FLASH:
+        state->mROM = &cart->mROM;
+        break;
     }
 
     state->backend = backend;

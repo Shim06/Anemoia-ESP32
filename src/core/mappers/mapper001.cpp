@@ -196,7 +196,7 @@ bool mapper001_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
     return false;
 }
 
-IRAM_ATTR uint8_t* mapper001_ppuReadPtr(Mapper* mapper, uint16_t addr)
+uint8_t* mapper001_ppuReadPtr(Mapper* mapper, uint16_t addr)
 {
     if (addr > 0x1FFF) return nullptr;
 
