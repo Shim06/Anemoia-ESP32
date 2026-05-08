@@ -4,7 +4,7 @@
 #include "../mapper.h"
 
 #define MAPPER004_NUM_PRG_BANKS_8K 18
-#define MAPPER004_NUM_CHR_BANKS_1K 26
+#define MAPPER004_NUM_CHR_BANKS_1K 24
 
 Mapper createMapper004(uint8_t PRG_banks, uint8_t CHR_banks, ROMBackend backend, Cartridge* cart);
 
