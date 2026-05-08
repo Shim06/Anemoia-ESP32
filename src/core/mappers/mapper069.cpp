@@ -182,7 +182,8 @@ void mapper069_reset(Mapper* mapper)
         state->ptr_PRG_bank_8K[0] = (uint8_t*)state->mROM->prg_base;
         state->ptr_PRG_bank_8K[1] = (uint8_t*)state->mROM->prg_base;
         state->ptr_PRG_bank_8K[2] = (uint8_t*)state->mROM->prg_base;
-        state->ptr_PRG_bank_8K[3] =
+        state->ptr_PRG_bank_8K[3] = (uint8_t*)state->mROM->prg_base;
+        state->ptr_PRG_bank_8K[4] =
             (uint8_t*)(state->mROM->prg_base + (state->mROM->prg_size - (8U * 1024U)));
 
         state->ptr_CHR_bank_1K[0] = (uint8_t*)state->mROM->chr_base;
@@ -227,7 +228,6 @@ void mapper069_dumpState(Mapper* mapper, File& state)
     switch (s->backend)
     {
     case ROMBackend::LRU:
-    {
         for (int i = 0; i < 4; i++)
             PRG_bank_8K[i] = getBankIndex(&s->PRG_cache_8K, s->ptr_PRG_bank_8K[i]);
         for (int i = 0; i < 8; i++)
@@ -236,7 +236,6 @@ void mapper069_dumpState(Mapper* mapper, File& state)
         state.write(CHR_bank_1K, sizeof(CHR_bank_1K));
         state.write(s->RAM, 8U * 1024U);
         return;
-    }
 
     case ROMBackend::FLASH:
         for (int i = 0; i < 4; i++)
@@ -291,6 +290,8 @@ void mapper069_loadState(Mapper* mapper, File& state)
             s->ptr_PRG_bank_8K[i] = (uint8_t*)(s->mROM->prg_base + (PRG_bank_8K[i] * (8U * 1024U)));
         for (int i = 0; i < 8; i++)
             s->ptr_CHR_bank_1K[i] = (uint8_t*)(s->mROM->chr_base + (CHR_bank_1K[i] * (1U * 1024U)));
+
+        state.read(s->RAM, 8U * 1024U);
         return;
     }
 }
@@ -308,7 +309,7 @@ Mapper createMapper069(uint8_t PRG_banks, uint8_t CHR_banks, ROMBackend backend,
     case ROMBackend::LRU:
         bankInit(&state->PRG_cache_8K, state->PRG_banks_8K, MAPPER069_NUM_PRG_BANKS_8K, 8U * 1024U,
                  cart);
-        bankInit(&state->CHR_cache_1K, state->CHR_banks_1K, MAPPER069_NUM_CHR_BANKS_1K, 1 * 1024,
+        bankInit(&state->CHR_cache_1K, state->CHR_banks_1K, MAPPER069_NUM_CHR_BANKS_1K, 1U * 1024,
                  cart);
         break;
 
