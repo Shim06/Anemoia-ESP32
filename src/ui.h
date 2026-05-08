@@ -40,6 +40,7 @@ public:
 private:
     void setBrightness(int value);
     void drawText(const char* text, const int16_t x, const int16_t y);
+    void drawRomMode();
     TFT_eSPI* screen = nullptr;
     int selected = 0;
     int prev_selected = 0;
