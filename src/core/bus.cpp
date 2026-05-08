@@ -163,10 +163,10 @@ void Bus::saveState()
     if (!SD.exists("/states")) SD.mkdir("/states");
     uint32_t CRC32 = cart->CRC32;
 
-    char CRC32_str[9];
+    static char CRC32_str[9];
     sprintf(CRC32_str, "%08lX", (unsigned long)CRC32);
 
-    char filename[32];
+    static char filename[32];
     sprintf(filename, "/states/%s.state", CRC32_str);
 
     File state = SD.open(filename, FILE_WRITE);
@@ -189,10 +189,10 @@ void Bus::loadState()
 {
     uint32_t CRC32 = cart->CRC32;
 
-    char CRC32_str[9];
+    static char CRC32_str[9];
     sprintf(CRC32_str, "%08lX", (unsigned long)CRC32);
 
-    char filename[32];
+    static char filename[32];
     sprintf(filename, "/states/%s.state", CRC32_str);
     if (!SD.exists(filename)) return;
 
@@ -200,8 +200,8 @@ void Bus::loadState()
     if (!state) return;
 
     // Verify header
-    char header[8];
-    char CRC[9];
+    static char header[8];
+    static char CRC[9];
     state.read((uint8_t*)&header, 7);
     header[7] = '\0';
     state.read((uint8_t*)&CRC, 8);
