@@ -63,7 +63,7 @@ Cartridge::Cartridge(const char* filename, ROMBackend backend)
         mappedROM_init(&mROM, this, CRC32, number_PRG_banks, number_CHR_banks);
     }
     createMapper(number_PRG_banks, number_CHR_banks, backend);
-    LOG("Cartridge Initialized");
+    LOGF("Cartridge (Mapper %i) Initialized\n", mapper_ID);
 }
 
 Cartridge::~Cartridge()
