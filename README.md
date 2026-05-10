@@ -7,8 +7,8 @@
 </h1>
 
 <p align="center">
-  Anemoia-ESP32 is a rewrite and port of the Anemoia Nintendo Entertainment System (NES) emulator running directly on the ESP32.  
-  It is written in C++ and is designed to bring classic NES games to the ESP32.  
+  Anemoia-ESP32 is a rewrite and port of the Anemoia Nintendo Entertainment System (NES) emulator running directly on the ESP32.
+  It is written in C++ and is designed to bring classic NES games to the ESP32.
   This project focuses on performance, being able to run the emulator at native speeds and with full audio emulation implemented. However, games with complex mappers may induce a small speed loss.
   <br/>
   Anemoia-ESP32 is available on GitHub under the <a href="https://github.com/Shim06/Anemoia-ESP32/blob/main/LICENSE" target="_blank">GNU General Public License v3.0 (GPLv3)</a>.
@@ -25,7 +25,7 @@
 [<img width="200" height="69" alt="NextPCB" src="https://github.com/user-attachments/assets/f6b9bda9-1b32-4372-8df8-b126741eb5a7">](https://www.nextpcb.com?code=Shim)
 
 
-This project is proudly sponsored by [NextPCB](https://www.nextpcb.com?code=Shim). Their support helps fund the development and continuation of this project, and I'm very grateful to have them as my first ever sponsor. 
+This project is proudly sponsored by [NextPCB](https://www.nextpcb.com?code=Shim). Their support helps fund the development and continuation of this project, and I'm very grateful to have them as my first ever sponsor.
 
 Want to make a PCB? NextPCB offers PCB fabrication and assembly services with fast turnaround times and affordable pricing to help bring your electronics projects to the next level.
 
@@ -45,6 +45,9 @@ Want to make a PCB? NextPCB offers PCB fabrication and assembly services with fa
 - [Controls](#controls)
   - [Menu Access](#menu-access)
   - [Controller Button Mappings](#controller-button-mappings)
+- [ROM Backends](#rom-backends)
+  - [LRU Cache](#lru-cache-default)
+  - [Flash Partition](#flash-partition-mmap)
 - [Getting Started](#getting-started)
   - [Option 1 - Web Flash](#option-1---web-flash-recommended)
   - [Option 2 - Build from Source](#option-2---build-from-source)
@@ -58,7 +61,7 @@ Want to make a PCB? NextPCB offers PCB fabrication and assembly services with fa
 ## Performance
 Anemoia-ESP32 is heavily optimized to achieve native NES speeds on the ESP32, running at ~60.098 FPS (NTSC) with 1 frame skip and full audio emulation enabled.
 
-Here are the performance benchmarks for several popular NES games. 
+Here are the performance benchmarks for several popular NES games.
 > [!NOTE]
 > The following benchmarks show average framerates recorded over 8192 frames (~2 minutes) of emulation time. Some games, such as `Kirby's Adventure`, which frequently switch banks may experience significant FPS drops in certain sections.
 
@@ -70,7 +73,7 @@ Here are the performance benchmarks for several popular NES games.
 | **Mega Man 2**          | MMC1 (1)  | **60.10 FPS** |
 | **Castlevania**         | UxROM (2) | **60.10 FPS** |
 | **Metroid**             | MMC1 (1)  | **60.10 FPS** |
-| **Kirby’s Adventure**   | MMC3 (4)  | **59.57 FPS** |
+| **Kirby's Adventure**   | MMC3 (4)  | **59.57 FPS** |
 | **Donkey Kong**         | NROM (0)  | **60.10 FPS** |
 
 
@@ -84,10 +87,10 @@ As of now, Anemoia-ESP32 has implemented six major memory mappers:
 * Mapper 4
 * Mapper 69
 
-Totalling to around 79% of the entire NES game catalogue. 
+Totalling to around 79% of the entire NES game catalogue.
 
-If you'd like to check if a certain game is supported, visit 
-[NesCartDB](https://nescartdb.com/) and search for the game on the 
+If you'd like to check if a certain game is supported, visit
+[NesCartDB](https://nescartdb.com/) and search for the game on the
 right-hand side of the site. Select the specific game version
 and look for the `iNES Mapper` number in the cart properties.
 The game should be supported if the iNES Mapper number is in the list
@@ -117,9 +120,13 @@ Anemoia-ESP32 requires a dual-core ESP32 with a minimum of 1 MB flash memory and
   - SNES controller
   - PS1 controller
   - PS2 controller
+  - Serial controller (WebSerial or UART adapter)
 
 > [!NOTE]
-> ST7789-based displays are recommended as they seem to fare better with 80MHz SPI speeds and are the most compatible. ILI9341-based screens may experience screen problems at higher SPI speeds.
+> ST7789-based displays are recommended as they seem to fare better with 80MHz SPI speeds and are the most compatible.
+
+> [!IMPORTANT]
+> **ILI9341 users:** ILI9341-based screens may experience display problems at 80MHz. Reduce the SPI frequency to **40MHz** in your `User_Setup.h`. This will cause the emulator to run a few FPS slower than ST7789 screens.
 
 ### Default Pin Setup
 ![Default pin schematic](https://github.com/user-attachments/assets/ded0f955-20be-4b0b-87f4-d7528cb23e67)
@@ -151,9 +158,9 @@ Anemoia-ESP32 requires a dual-core ESP32 with a minimum of 1 MB flash memory and
 | Signal   | ESP32 Pins     |
 |----------|----------------|
 | Input    | GPIO25         |
-              
+
 ### Controller
-There are currently three input methods: Tactile push buttons, an NES/SNES controller, and a PS1/PS2 controller.
+There are currently four input methods: Tactile push buttons, an NES/SNES controller, a PS1/PS2 controller, and a Serial controller.
 
 ### Tactile Push Buttons
 | Signal   | ESP32 Pins           |
@@ -191,19 +198,33 @@ There are currently three input methods: Tactile push buttons, an NES/SNES contr
 | Clock     | GPIO27         |
 <br>
 
+Also connect the power and ground lines if using a controller.
+Most controllers should work fine from 3.3V power supply.
 
-Also connect the power and ground lines if using a controller. 
-Most controllers should work fine from 3.3V power supply. 
+### Serial Controller
+
+Button presses can be sent over serial via two independent methods, provided by the SerialGameControllerAdapter project. Both can coexist and are handled separately.
+
+#### Method 1 — USB to Serial (WebSerial)
+Button input is read over the main USB serial connection. Open [WebSerialController.html](https://github.com/jethomson/SerialGameControllerAdapter/blob/main/WebSerialController.html) locally in a Chromium-based browser — it translates keyboard input (or a USB controller, if supported) into serial button commands. No extra hardware is required, making it ideal for testing Anemoia-ESP32 before any wiring or soldering.
+
+#### Method 2 — UART Adapter (ESP32-to-ESP32)
+A second ESP32 running the [`SerialGameControllerAdapter.ino`](https://github.com/jethomson/SerialGameControllerAdapter/blob/main/SerialGameControllerAdapter.ino) sketch reads inputs from an NES, SNES, PS1, PS2, or Bluetooth controller and forwards button presses over a secondary serial port (`Serial1`). A separate UART port is used specifically to avoid interfering with USB programming of the main board.
+
+| Signal                    | CYD Pin |
+|---------------------------|---------|
+| TX (Adapter) → RX (ESP32)   | GPIO22  |
+| RX (Adapter) ← TX (ESP32)   | GPIO27  |
 
 ---
 
 ### Cheap Yellow Display
 
-[Cheap Yellow Displays](https://github.com/witnessmenow/ESP32-Cheap-Yellow-Display) (CYD) are an all-in-one ESP32 board that comes with most of the hardware needed in this project already integrated, making it ideal for Anemoia-ESP32. Because of the limited pins brought out by the CYD, it is only practical to use a NES controller.
+[Cheap Yellow Displays](https://github.com/witnessmenow/ESP32-Cheap-Yellow-Display) (CYD) are an all-in-one ESP32 board that comes with most of the hardware needed in this project already integrated, making it ideal for Anemoia-ESP32. Because of the limited pins brought out by the CYD, it is only practical to use a NES controller or a serial controller.
 
 **Hardware Needed:**
 - Cheap Yellow Display
-- NES/SNES controller
+- NES/SNES controller (or serial controller — see [Serial Controller](#serial-controller))
 - Speaker (optional) - Can be attached with a 1.25mm JST connector to "SPEAK" or soldered directly
 
 ### NES/SNES controller
@@ -253,6 +274,7 @@ These are the recommended parts to use for this project.<br>
 
 ### Menu Access
 Press **Start + Select** simultaneously in a game to open the menu.
+Press **Select** to change the ROM backend. See [ROM Storage Backends](#rom-storage-backends) for details.
 
 ### Controller Button Mappings
 
@@ -282,6 +304,24 @@ Press **Start + Select** simultaneously in a game to open the menu.
 
 ---
 
+## ROM Backends
+
+ROMs are always sourced from the SD card. The two backends differ in how the ROM data is accessed at runtime. You can switch between them in the game selection screen by pressing the **Select** button.
+
+### LRU Cache (Default)
+ROM data is read from the SD card and cached in RAM using an LRU cache. This works well for most games, but games that frequently switch banks may experience slowdowns.
+
+### Flash Partition (mmap)
+Useful for games that run too slowly under the LRU cache due to RAM pressure. On first selection, the ROM is copied from the SD card into a dedicated `nesrom` flash partition. Afterwards, the partition is memory mapped and the mapper reads ROM data directly from flash via `esp_partition_mmap()`. Subsequent launches will skip the copy.
+
+> [!WARNING]
+> Every time a ROM is copied to the flash partition, a write cycle is consumed. ESP32 flash memory is rated for a limited number of erase/write cycles (typically ~100,000). Frequently switching ROMs using this backend will very slowly degrade the flash over time and may eventually cause flash corruption or failure. It is recommended to only use this when neccessary.
+
+> [!NOTE]
+> Only one ROM can be stored in the flash partition at a time. Selecting a new ROM will overwrite the existing one.
+
+---
+
 ## Getting Started
 
 ### Option 1 - Web Flash (Recommended)
@@ -302,7 +342,7 @@ No software installation required.
 ---
 ### After Flashing
 1. Format your microSD card to `FAT32`.
-2. Put .nes game roms inside the root of the microSD card.
+2. Put .nes game ROMs inside the root of the microSD card.
 3. Insert the microSD card into the microSD card module.
 4. Power on the ESP32 and select a game from the file select menu.
 
@@ -313,12 +353,12 @@ No software installation required.
 Either use `git clone https://github.com/Shim06/Anemoia-ESP32.git` on the command line to clone the repository or use Code → Download zip button and extract to get the files.
 
 ### Step 2
-1. Download and install the Arduino IDE. 
+1. Download and install the Arduino IDE.
 2. In <b> File → Preferences → Additional boards manager URLs </b> , add:
 ```cmd
 https://espressif.github.io/arduino-esp32/package_esp32_index.json
 ```
-3. Download the ESP32 board support `v3.2.1` through <b> Tools → Board → Boards Manager </b>. 
+3. Download the ESP32 board support `v3.2.1` through <b> Tools → Board → Boards Manager </b>.
 > [!IMPORTANT]
 > Make sure to download version 3.2.1, as different board versions may have worse performance.
 4. Download the `SdFat` and `TFT_eSPI` libraries from <b> Tools → Manage Libraries </b>.
@@ -335,6 +375,7 @@ Copy and paste the TFT_eSPI configuration file into the TFT_eSPI folder.
 > // #define ST7789_DRIVER
 > #define ILI9341_DRIVER
 > ```
+> Also reduce the SPI frequency to **40MHz**. ILI9341 screens are not reliable at 80MHz and will cause display issues. This will result in a small FPS reduction compared to ST7789 screens.
 
 ### Step 4 - Apply custom build flags
 1. Locate your ESP32 Arduino platform directory. This is typically at:
@@ -344,7 +385,7 @@ Copy and paste the TFT_eSPI configuration file into the TFT_eSPI folder.
 2. Copy the `platform.txt` file from this repository and paste into that folder.
 This file defines additional compiler flags and optimizations used by Anemoia-ESP32.
 > [!WARNING]
-> Backup your `platform.txt` file if you have your own custom settings already. 
+> Backup your `platform.txt` file if you have your own custom settings already.
 
 ### Step 5 - Upload
 1. Connect your ESP32 via USB.
