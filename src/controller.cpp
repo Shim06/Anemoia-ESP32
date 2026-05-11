@@ -228,7 +228,7 @@ static uint8_t PSXControllerRead()
     return state;
 }
 
-static bool UartProcessPacket(HardwareSerial &port, uint8_t &buttons_state)
+static bool UartProcessPacket(HardwareSerial& port, uint8_t& buttons_state)
 {
     // a packet is three bytes: START_BYTE, buttons_state, and checksum
     // up, down, left, and right pressed at the same time is impossible on a controller,
