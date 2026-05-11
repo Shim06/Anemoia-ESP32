@@ -5,6 +5,10 @@
 #include <Arduino.h>
 #include <TFT_eSPI.h>
 
+#ifndef OPTIMIZATION_FLAGS
+    #error The optimization flags were not applied! Please refer to *Step 4* of the README how to build and upload section.
+#endif
+
 #ifdef DEBUG
     #define LOG(msg)       Serial.println(msg)
     #define LOGF(fmt, ...) Serial.printf(fmt, __VA_ARGS__)

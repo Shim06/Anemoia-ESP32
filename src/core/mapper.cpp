@@ -25,7 +25,7 @@ void bankInit(BankCache* cache, Bank* banks, uint8_t num_banks, uint32_t bank_si
     }
 }
 
-IRAM_ATTR uint8_t* getBank(BankCache* cache, uint8_t bank_id, Mapper::ROM_TYPE rom)
+IRAM_ATTR uint8_t* getBank(BankCache* cache, uint8_t bank_id, RomType rom)
 {
     cache->tick++;
 
@@ -51,8 +51,8 @@ IRAM_ATTR uint8_t* getBank(BankCache* cache, uint8_t bank_id, Mapper::ROM_TYPE r
 
     uint8_t* bank = cache->banks[bank_index].bank_ptr;
     uint32_t size = cache->banks[bank_index].size;
-    if (rom == Mapper::ROM_TYPE::PRG_ROM) cache->cart->loadPRGBank(bank, size, bank_id * size);
-    else if (rom == Mapper::ROM_TYPE::CHR_ROM) cache->cart->loadCHRBank(bank, size, bank_id * size);
+    if (rom == RomType::PRG) cache->cart->loadPRGBank(bank, size, bank_id * size);
+    else if (rom == RomType::CHR) cache->cart->loadCHRBank(bank, size, bank_id * size);
 
     cache->banks[bank_index].bank_id = bank_id;
     cache->banks[bank_index].last_used = cache->tick;

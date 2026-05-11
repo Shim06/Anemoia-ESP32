@@ -6,15 +6,17 @@
 struct Mapper000_state
 {
     Cartridge* cart;
+    MappedROM* mROM;
+    ROMBackend backend;
     uint8_t number_PRG_banks;
     uint8_t number_CHR_banks;
-    uint8_t PRG_ROM[32 * 1024];
-    uint8_t CHR_ROM[8U * 1024U];
+    uint8_t* PRG_ROM;
+    uint8_t* CHR_ROM;
     uint8_t* CHR_bank;
     uint8_t* PRG_banks[2];
 };
 
-Mapper createMapper000(uint8_t PRG_banks, uint8_t CHR_banks, Cartridge* cart);
+Mapper createMapper000(uint8_t PRG_banks, uint8_t CHR_banks, ROMBackend backend, Cartridge* cart);
 
 bool mapper000_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data);
 bool mapper000_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data);

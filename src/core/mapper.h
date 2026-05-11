@@ -7,19 +7,16 @@
 #include <stdlib.h>
 
 #include "../debug.h"
+#include "../flash_mmap.h"
 #include "Arduino.h"
 #include "config.h"
+#include "rom_backends.h"
+#include "rom_types.h"
 
 class Cartridge;
 class Mapper
 {
 public:
-    enum ROM_TYPE : uint8_t
-    {
-        PRG_ROM,
-        CHR_ROM
-    };
-
     void* state = nullptr;
 };
 
@@ -48,7 +45,7 @@ struct BankCache
 
 void bankInit(BankCache* cache, Bank* banks, uint8_t num_banks, uint32_t bank_size,
               Cartridge* cart);
-uint8_t* getBank(BankCache* cache, uint8_t bank_id, Mapper::ROM_TYPE rom);
+uint8_t* getBank(BankCache* cache, uint8_t bank_id, RomType rom);
 uint8_t getBankIndex(BankCache* cache, uint8_t* ptr);
 void invalidateCache(BankCache* cache);
 

@@ -65,33 +65,19 @@ IRAM_ATTR void Bus::clock()
     // Using a counter/for loop with += 341 & -= 3 is too big of a performance hit.
     // 1 scanline == ~113.67 CPU clocks, so for every 3 scanlines, two scanlines will have an extra
     // CPU clock
-    if (!frame_latch)
+    for (ppu_scanline = 0; ppu_scanline < 240; ppu_scanline += 3)
     {
-        for (ppu_scanline = 0; ppu_scanline < 240; ppu_scanline += 3)
-        {
-            cpu.clock(113);
-            ppu.renderScanline(ppu_scanline);
+        cpu.clock(113);
+        if (!frame_latch) ppu.renderScanline(ppu_scanline);
+        else ppu.fakeSpriteHit(ppu_scanline);
 
-            cpu.clock(114);
-            ppu.renderScanline(ppu_scanline + 1);
+        cpu.clock(114);
+        if (!frame_latch) ppu.renderScanline(ppu_scanline + 1);
+        else ppu.fakeSpriteHit(ppu_scanline + 1);
 
-            cpu.clock(114);
-            ppu.renderScanline(ppu_scanline + 2);
-        }
-    }
-    else
-    {
-        for (ppu_scanline = 0; ppu_scanline < 240; ppu_scanline += 3)
-        {
-            cpu.clock(113);
-            ppu.fakeSpriteHit(ppu_scanline);
-
-            cpu.clock(114);
-            ppu.fakeSpriteHit(ppu_scanline + 1);
-
-            cpu.clock(114);
-            ppu.fakeSpriteHit(ppu_scanline + 2);
-        }
+        cpu.clock(114);
+        if (!frame_latch) ppu.renderScanline(ppu_scanline + 2);
+        else ppu.fakeSpriteHit(ppu_scanline + 2);
     }
 
     // Setup for the next frame
@@ -163,10 +149,10 @@ void Bus::saveState()
     if (!SD.exists("/states")) SD.mkdir("/states");
     uint32_t CRC32 = cart->CRC32;
 
-    char CRC32_str[9];
+    static char CRC32_str[9];
     sprintf(CRC32_str, "%08lX", (unsigned long)CRC32);
 
-    char filename[32];
+    static char filename[32];
     sprintf(filename, "/states/%s.state", CRC32_str);
 
     File state = SD.open(filename, FILE_WRITE);
@@ -189,10 +175,10 @@ void Bus::loadState()
 {
     uint32_t CRC32 = cart->CRC32;
 
-    char CRC32_str[9];
+    static char CRC32_str[9];
     sprintf(CRC32_str, "%08lX", (unsigned long)CRC32);
 
-    char filename[32];
+    static char filename[32];
     sprintf(filename, "/states/%s.state", CRC32_str);
     if (!SD.exists(filename)) return;
 
@@ -200,8 +186,8 @@ void Bus::loadState()
     if (!state) return;
 
     // Verify header
-    char header[8];
-    char CRC[9];
+    static char header[8];
+    static char CRC[9];
     state.read((uint8_t*)&header, 7);
     header[7] = '\0';
     state.read((uint8_t*)&CRC, 8);

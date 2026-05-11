@@ -17,10 +17,6 @@
 #include "src/debug.h"
 #include "src/ui.h"
 
-#ifndef OPTIMIZATION_FLAGS
-    #error The optimization flags were not applied! Please refer to *Step 4* of the README how to build and upload section.
-#endif
-
 HWConfig hw_config;
 TFT_eSPI screen = TFT_eSPI();
 SPIClass SD_SPI(SD_SPI_PORT);
@@ -100,6 +96,13 @@ IRAM_ATTR void emulate()
     xTaskCreatePinnedToCore(pollingTask, "Polling Task", 1024, &nes, 1, &polling_task_handle, 0);
 
     screen.setAddrWindow(32, 0, 256, 240);
+
+    LOGF("Free heap: %u bytes\n", heap_caps_get_free_size(MALLOC_CAP_DEFAULT));
+    LOGF("Free DMA heap: %u bytes\n", heap_caps_get_free_size(MALLOC_CAP_DMA));
+    multi_heap_info_t info;
+    heap_caps_get_info(&info, MALLOC_CAP_DMA);
+    LOGF("Largest free block: %u bytes (%u KiB)\n", info.largest_free_block,
+         info.largest_free_block / 1024);
 
 #ifdef DEBUG
     last_frame_time = esp_timer_get_time();

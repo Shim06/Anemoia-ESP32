@@ -44,7 +44,7 @@ void Apu2A03::reset()
     DMC.output_unit.silence_flag = true;
 }
 
-IRAM_ATTR void Apu2A03::cpuWrite(uint16_t addr, uint8_t data)
+void Apu2A03::cpuWrite(uint16_t addr, uint8_t data)
 {
     switch (addr)
     {
@@ -226,7 +226,7 @@ IRAM_ATTR void Apu2A03::cpuWrite(uint16_t addr, uint8_t data)
     }
 }
 
-IRAM_ATTR uint8_t Apu2A03::cpuRead(uint16_t addr)
+uint8_t Apu2A03::cpuRead(uint16_t addr)
 {
     uint8_t data = 0x00;
     if (addr == 0x4015) { IRQ = false; }
@@ -238,7 +238,7 @@ void Apu2A03::setVolume(uint8_t vol)
     volume = vol;
 }
 
-IRAM_ATTR void Apu2A03::clock()
+void Apu2A03::clock()
 {
     // Clock all sound channels
     pulseChannelClock(pulse1.seq, pulse1_enable);
