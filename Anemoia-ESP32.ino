@@ -22,12 +22,23 @@ TFT_eSPI screen = TFT_eSPI();
 SPIClass SD_SPI(SD_SPI_PORT);
 UI ui(&screen);
 Cartridge* cart;
+
+#ifdef DEMO_MODE_UNLOCKED
+bool demo_mode_active = true; // if any user input is detected this is set to false
+// uses same type selectGame() stores millis() output in. cannot have a timeout longer than
+// 65.535 [seconds]
+unsigned int demo_mode_timeout = 5000; // 5 [seconds]
+// how long the game demo (aka attract mode) runs for
+const uint64_t demo_mode_runtime = 120 * 1000000ULL; // 120 [seconds]
+#endif
+
 void setup()
 {
+    esp_reset_reason_t reset_reason = esp_reset_reason();
 #ifdef DEBUG
     Serial.begin(115200);
     log_pin_config();
-    LOGF("ESP reset reason: %d\n", esp_reset_reason());
+    LOGF("ESP reset reason: %d\n", reset_reason);
 #endif
 
     // Turn off Wifi and Bluetooth to reduce CPU overhead
@@ -40,6 +51,15 @@ void setup()
     esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);
 
     hw_config = loadConfig();
+
+    if (hw_config.backlight)
+    {
+        // keep backlight off at boot to hide visual artifacts
+        // backlight will be turned on further down
+        pinMode(TFT_BACKLIGHT_PIN, OUTPUT);
+        digitalWrite(TFT_BACKLIGHT_PIN, LOW);
+    }
+
     setupI2SDAC();
 
     // Initialize TFT screen
@@ -48,12 +68,25 @@ void setup()
 #ifndef DISABLE_DMA
     screen.initDMA();
 #endif
-    screen.fillScreen(BG_COLOR);
+
+    uint32_t bg_color = BG_COLOR;
+#ifdef DEMO_MODE_UNLOCKED
+    if (reset_reason == ESP_RST_SW)
+    {
+        // Save and Quit and demo game time limit reached both result in ESP_RST_SW
+        // This will skip showing the ROMs menu resulting in a cleaner transition between demos.
+        demo_mode_timeout = 0;
+    }
+    // it is possible demo_mode_timeout has a default value of 0, so do an independent check
+    // instead of setting bg_color to black in the reset_reason if block above
+    if (demo_mode_timeout == 0) { bg_color = TFT_BLACK; }
+#endif
+    screen.fillScreen(bg_color);
+
     screen.startWrite();
 
     if (hw_config.backlight)
     {
-        pinMode(TFT_BACKLIGHT_PIN, OUTPUT);
         ledcAttach(TFT_BACKLIGHT_PIN, BL_FREQ, BL_RESOLUTION);
         ledcWrite(TFT_BACKLIGHT_PIN, 255);
     }
@@ -110,10 +143,24 @@ IRAM_ATTR void emulate()
 
 // Target frame time: 16639µs (60.098 FPS)
 #define FRAME_TIME 16639
+    uint64_t emulator_start_time = esp_timer_get_time();
     uint64_t next_frame = esp_timer_get_time();
     // Emulation Loop
     while (true)
     {
+#ifdef DEMO_MODE_UNLOCKED
+        if (nes.controller)
+        {
+            // disable demo mode so user is not interrupted by demo time limit ending
+            demo_mode_active = false;
+        }
+        if (demo_mode_active)
+        {
+            uint64_t time_elapsed_since_start = esp_timer_get_time() - emulator_start_time;
+            if (time_elapsed_since_start >= demo_mode_runtime) { ESP.restart(); }
+        }
+#endif
+
         // Start + Select opens the pause menu
         if ((nes.controller & (uint8_t)CONTROLLER::Start) &&
             (nes.controller & (uint8_t)CONTROLLER::Select))

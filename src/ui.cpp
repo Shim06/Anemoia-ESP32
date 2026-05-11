@@ -1,4 +1,8 @@
 #include "ui.h"
+#ifdef DEMO_MODE_UNLOCKED
+extern bool demo_mode_active;
+extern unsigned int demo_mode_timeout;
+#endif
 
 UI::UI(TFT_eSPI* screen)
 {
@@ -15,11 +19,19 @@ Cartridge* UI::selectGame()
     constexpr unsigned int delay = 250;
     max_items = (screen->height() - 56) / ITEM_HEIGHT;
 
-    drawWindowBox(2, 20, screen->width() - 4, screen->height() - 40);
-    drawBars();
-    drawRomMode();
     getNesFiles();
-    drawFileList();
+
+    bool show_roms_menu = true;
+#ifdef DEMO_MODE_UNLOCKED
+    if (demo_mode_timeout == 0) { show_roms_menu = false; }
+#endif
+    if (show_roms_menu)
+    {
+        drawWindowBox(2, 20, screen->width() - 4, screen->height() - 40);
+        drawBars();
+        drawRomMode();
+        drawFileList();
+    }
 
     const int size = files.size();
     while (true)
@@ -76,6 +88,20 @@ Cartridge* UI::selectGame()
             ROMBackend backend = (ROMBackend)settings.rom_backend;
             return new Cartridge(game.c_str(), backend);
         }
+
+#ifdef DEMO_MODE_UNLOCKED
+        if (controllerRead())
+        {
+            demo_mode_active = false; // user input detected, demo mode disabled
+        }
+        if (demo_mode_active && (now - last_input_time) >= demo_mode_timeout)
+        {
+            selected = esp_random() % size;
+            std::string game = "/" + files[selected];
+            std::vector<std::string>().swap(files);
+            return new Cartridge(game.c_str());
+        }
+#endif
     }
 }
 

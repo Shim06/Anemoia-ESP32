@@ -228,19 +228,44 @@ static uint8_t PSXControllerRead()
     return state;
 }
 
+static bool UartProcessPacket(HardwareSerial& port, uint8_t& buttons_state)
+{
+    // a packet is three bytes: START_BYTE, buttons_state, and checksum
+    // up, down, left, and right pressed at the same time is impossible on a controller,
+    // so 0b1111000 (0xF0) makes a good start byte since the buttons state byte can
+    // never be 0xF0
+    const uint8_t START_BYTE = 0xF0;
+
+    if (port.available() < 3) return false;
+
+    if (port.read() != START_BYTE) return false;
+
+    if (!port.available()) return false;
+    buttons_state = port.read();
+
+    if (!port.available()) return false;
+    uint8_t checksum = port.read();
+
+    if (checksum != buttons_state) return false;
+
+    return true;
+}
+
 static uint8_t UartControllerRead()
 {
     static uint8_t state = 0x00;
     static uint8_t no_data_count = 0;
 
-    int b0 = Serial.read();
-    int b1 = Serial1.read();
-    if (b0 >= 0 || b1 >= 0)
+    uint8_t state0 = 0x00;
+    uint8_t state1 = 0x00;
+    bool success0 = UartProcessPacket(Serial, state0);
+    bool success1 = UartProcessPacket(Serial1, state1);
+
+    if (success0 || success1)
     {
         // if received button presses from both Serial and Serial1 combine them
-        state = 0x00;
-        if (b0 >= 0) state = (uint8_t)b0;
-        if (b1 >= 0) state |= (uint8_t)b1;
+        state = (uint8_t)state0;
+        state |= (uint8_t)state1;
 
         no_data_count = 0;
         return state;
@@ -324,6 +349,10 @@ void initController(ControllerType controller_type)
         // states sent from a WebSerial game controller webpage over USB to serial.
         // debug messages will remain off
         Serial.begin(115200);
+
+        // Discard garbage from serial buffer that can be read as false button presses
+        delay(10);
+        while (Serial.available() > 0) { Serial.read(); }
 #endif
 
         // Serial1 is used by an adapter board that supports multiple controller types and

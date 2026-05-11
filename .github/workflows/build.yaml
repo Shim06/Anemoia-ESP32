@@ -74,6 +74,7 @@ jobs:
         swap:       [swap_bytes, swap_bytes_off]
         screen_freq: [screen_freq_80MHz, screen_freq_40MHz]
         debug:      [debug_on, debug_off]
+        demo:      [demo_on, demo_off]
         exclude:
           - device: cyd
             swap: swap_bytes_off
@@ -125,8 +126,9 @@ jobs:
       - name: Build defines and platform flags
         run: |
           DEFINES=""
-          [ "${{ matrix.swap }}"   = "swap_bytes" ] && DEFINES="$DEFINES -DSCREEN_SWAP_BYTES" || DEFINES="$DEFINES -USCREEN_SWAP_BYTES"
-          [ "${{ matrix.debug }}"  = "debug_on"   ] && DEFINES="$DEFINES -DDEBUG"             || DEFINES="$DEFINES -UDEBUG"
+          [ "${{ matrix.swap }}"   = "swap_bytes" ] && DEFINES="$DEFINES -DSCREEN_SWAP_BYTES"  || DEFINES="$DEFINES -USCREEN_SWAP_BYTES"
+          [ "${{ matrix.debug }}"  = "debug_on"   ] && DEFINES="$DEFINES -DDEBUG"              || DEFINES="$DEFINES -UDEBUG"
+          [ "${{ matrix.demo }}"   = "demo_on"    ] && DEFINES="$DEFINES -DDEMO_MODE_UNLOCKED" || DEFINES="$DEFINES -UDEMO_MODE_UNLOCKED"
           [ "${{ matrix.device }}" = "cyd"        ] && DEFINES="$DEFINES -DCHEAP_YELLOW_DISPLAY_CONF"
           [ "${{ matrix.device }}" = "module"     ] && DEFINES="$DEFINES -DMODULE_BASED_PCB_CONF"
           [ "${{ matrix.device }}" = "discrete"   ] && DEFINES="$DEFINES -DDISCRETE_PCB_CONF"
@@ -173,6 +175,7 @@ jobs:
           echo "Swap bytes:   ${{ matrix.swap }}"
           echo "Screen freq:  ${{ matrix.screen_freq }}"
           echo "Debug:        ${{ matrix.debug }}"
+          echo "Demo Mode:    ${{ matrix.demo }}"
           echo ""
           echo "========== COMPILER DEFINES =========="
           echo "Extra defines: ${{ env.DEFINES }}"
@@ -213,7 +216,7 @@ jobs:
 
       - name: Compile firmware
         run: |
-          VARIANT="${{ matrix.device }}-${{ matrix.display }}-${{ matrix.swap }}-${{ matrix.screen_freq }}-${{ matrix.debug }}"
+          VARIANT="${{ matrix.device }}-${{ matrix.display }}-${{ matrix.swap }}-${{ matrix.screen_freq }}-${{ matrix.debug }}-${{ matrix.demo }}"
           arduino-cli compile \
             --fqbn "esp32:esp32:esp32:PartitionScheme=custom,EventsCore=0" \
             --build-property "compiler.cpp.extra_flags=${{ env.PLATFORM_FLAGS }} ${{ env.DEFINES }}" \
@@ -224,11 +227,11 @@ jobs:
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
         with:
-          name: firmware-${{ matrix.device }}-${{ matrix.display }}-${{ matrix.swap }}-${{ matrix.screen_freq }}-${{ matrix.debug }}
+          name: firmware-${{ matrix.device }}-${{ matrix.display }}-${{ matrix.swap }}-${{ matrix.screen_freq }}-${{ matrix.debug }}-${{ matrix.demo }}
           path: |
-            build/${{ matrix.device }}-${{ matrix.display }}-${{ matrix.swap }}-${{ matrix.screen_freq }}-${{ matrix.debug }}/*.ino.bin
-            build/${{ matrix.device }}-${{ matrix.display }}-${{ matrix.swap }}-${{ matrix.screen_freq }}-${{ matrix.debug }}/*.ino.bootloader.bin
-            build/${{ matrix.device }}-${{ matrix.display }}-${{ matrix.swap }}-${{ matrix.screen_freq }}-${{ matrix.debug }}/*.ino.partitions.bin
+            build/${{ matrix.device }}-${{ matrix.display }}-${{ matrix.swap }}-${{ matrix.screen_freq }}-${{ matrix.debug }}-${{ matrix.demo }}/*.ino.bin
+            build/${{ matrix.device }}-${{ matrix.display }}-${{ matrix.swap }}-${{ matrix.screen_freq }}-${{ matrix.debug }}-${{ matrix.demo }}/*.ino.bootloader.bin
+            build/${{ matrix.device }}-${{ matrix.display }}-${{ matrix.swap }}-${{ matrix.screen_freq }}-${{ matrix.debug }}-${{ matrix.demo }}/*.ino.partitions.bin
           retention-days: 1
 
   deploy:
@@ -268,14 +271,14 @@ jobs:
 
           for artifact_dir in artifacts/firmware-*/; do
             NAME=$(basename "$artifact_dir" | sed 's/^firmware-//')
-            IFS='-' read -r DEVICE DISPLAY SWAP SCREEN_FREQ DEBUG <<< "$NAME"
+            IFS='-' read -r DEVICE DISPLAY SWAP SCREEN_FREQ DEBUG DEMO_MODE_UNLOCKED <<< "$NAME"
             BOOTLOADER=$(find "$artifact_dir" -name "*.ino.bootloader.bin")
             PARTITIONS=$(find "$artifact_dir" -name "*.ino.partitions.bin")
             FIRMWARE=$(find "$artifact_dir" -name "*.ino.bin" ! -name "*.merged.bin" \
                                                                ! -name "*.bootloader.bin" \
                                                                ! -name "*.partitions.bin")
 
-            FW_DEST="binaries/$DEVICE/$DISPLAY/$SWAP/$SCREEN_FREQ/$DEBUG"
+            FW_DEST="binaries/$DEVICE/$DISPLAY/$SWAP/$SCREEN_FREQ/$DEBUG/$DEMO_MODE_UNLOCKED"
             mkdir -p "WebFlash/$FW_DEST"
             cp "$BOOTLOADER" "WebFlash/$FW_DEST/bootloader.bin"
             cp "$PARTITIONS" "WebFlash/$FW_DEST/partitions.bin"
@@ -336,7 +339,7 @@ jobs:
                       esac
 
                       # Write HWConfig struct to binary file and create LittleFS image
-                      CFG_NAME="$DEVICE-$DISPLAY-$BACKLIGHT-$SWAP-$SCREEN_FREQ-$CONTROLLER-$ROTATION-$SD_FREQ-$DACPIN-$DEBUG-config.bin"
+                      CFG_NAME="$DEVICE-$DISPLAY-$BACKLIGHT-$SWAP-$SCREEN_FREQ-$CONTROLLER-$ROTATION-$SD_FREQ-$DACPIN-$DEBUG-$DEMO_MODE_UNLOCKED-config.bin"
                       mkdir -p tmp/fs_stage
                       printf "$(printf '\\%03o' $ROT_VAL $DAC_VAL $CONTROLLER_VAL $SD_VAL $BL_VAL)" \
                           > tmp/fs_stage/hwconfig.bin
@@ -346,7 +349,7 @@ jobs:
 
                       printf '{\n  "name": "Anemoia-ESP32",\n  "version": "1.0.0",\n  "funding_url": "https://ko-fi.com/manalotoshim",\n  "builds": [{\n    "chipFamily": "ESP32",\n    "parts": [\n      { "path": "../%s/bootloader.bin", "offset": 4096 },\n      { "path": "../%s/partitions.bin", "offset": 32768 },\n      { "path": "../%s/firmware.bin",   "offset": 65536 },\n      { "path": "../configs/%s",        "offset": 3866624 }\n    ]\n  }]\n}' \
                         "$FW_DEST" "$FW_DEST" "$FW_DEST" "$CFG_NAME" \
-                        > "WebFlash/manifests/$DEVICE-$DISPLAY-$BACKLIGHT-$SWAP-$SCREEN_FREQ-$CONTROLLER-$ROTATION-$SD_FREQ-$DACPIN-$DEBUG.json"
+                        > "WebFlash/manifests/$DEVICE-$DISPLAY-$BACKLIGHT-$SWAP-$SCREEN_FREQ-$CONTROLLER-$ROTATION-$SD_FREQ-$DACPIN-$DEBUG-$DEMO_MODE_UNLOCKED.json"
                     done
                   done
                 done
