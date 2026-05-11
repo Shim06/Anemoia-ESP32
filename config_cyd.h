@@ -74,7 +74,6 @@
 // *** To see the ROMs menu again press the hardware reset button. ***
 // If user input is detected during the game demo, then the game can be played normally and the two
 // minute demo time limit is turned off.
-// #ifndef guard is required so this default does not interfere when building variants on github
 // #define DEMO_MODE_UNLOCKED
 
 #endif

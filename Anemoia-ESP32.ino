@@ -91,7 +91,6 @@ void setup()
 
     if (hw_config.backlight)
     {
-        pinMode(TFT_BACKLIGHT_PIN, OUTPUT);
         ledcAttach(TFT_BACKLIGHT_PIN, BL_FREQ, BL_RESOLUTION);
         ledcWrite(TFT_BACKLIGHT_PIN, 255);
     }
