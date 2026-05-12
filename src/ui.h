@@ -27,17 +27,18 @@ public:
     UI(TFT_eSPI* screen);
     ~UI();
     Cartridge* selectGame();
-    void getNesFiles();
-    void drawFileList();
-    void drawWindowBox(int x, int y, int w, int h);
-    void drawBars();
     void pauseMenu(Bus* nes);
     void settingsMenu(Bus* nes);
+    
     void initializeSettings();
     void loadEmulatorSettings(Bus* nes);
     bool paused = false;
 
 private:
+    void getNesFiles();
+    void drawFileList();
+    void drawWindowBox(int x, int y, int w, int h);
+    void drawBars();
     void setBrightness(int value);
     void drawText(const char* text, const int16_t x, const int16_t y);
     void drawRomMode();
