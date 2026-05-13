@@ -53,6 +53,7 @@ Want to make a PCB? NextPCB offers PCB fabrication and assembly services with fa
   - [Option 2 - Build from Source](#option-2---build-from-source)
   - [After Flashing](#after-flashing)
 - [How to Build and Upload](#how-to-build-and-upload)
+- [How it works](#how-it-works)
 - [Contributing](#contributing)
 - [License](#license)
 
