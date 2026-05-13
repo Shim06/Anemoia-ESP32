@@ -411,7 +411,7 @@ The real NES renders one pixel per clock cycle with the PPU and CPU running in t
 
 So instead of rendering dot-by-dot, the PPU renders an entire horizontal line at once. All the sprite evaluation, tile lookups, palette reads, and pixel priority for that row get handled in one pass. Through this, batching CPU and PPU operations can be done. It's less accurate than how the real hardware works, but the performance gain is massive and most games don't care. The ones that rely on mid-scanline PPU tricks are rare enough that it's an acceptable tradeoff.
 
-### How to store games
+### Storing Game ROMs
 
 NES cartridges can be up to 1 MB, but the console can only address 40 KB of ROM at a time. Mappers handle this by swapping banks in and out of the address space.
 
@@ -433,7 +433,7 @@ The saving grace is that the APU isn't tightly coupled to the CPU and PPU. It do
 
 ### Compiler Flags
 
-Once everything else was in place, some extra GCC flags on top of `-Ofast` were applied to let the compiler optimize harder on hot paths. That alone took the emulator from ~58 FPS to ~66 FPS — enough headroom to hold a stable 60 FPS with room to spare on heavy scenes.
+Once everything else was in place, some extra GCC flags on top of `-Ofast` were applied to let the compiler optimize harder on hot paths. That alone took the emulator from ~58 FPS to ~66 FPS. This leaves enough headroom to hold a stable 60 FPS with room to spare on heavy scenes.
 
 ## Contributing
 
