@@ -31,11 +31,13 @@ Cartridge* UI::selectGame()
         drawBars();
         drawRomMode();
         drawFileList();
+        restoreBrightness();
     }
 
     const int size = files.size();
     while (true)
     {
+        bool game_chosen = false;
         unsigned int now = millis();
 
         if (now - last_input_time > delay)
@@ -83,10 +85,7 @@ Cartridge* UI::selectGame()
 
         if (isDownPressed(CONTROLLER::A) && (selected >= 0 && selected < size))
         {
-            std::string game = "/" + files[selected];
-            std::vector<std::string>().swap(files);
-            ROMBackend backend = (ROMBackend)settings.rom_backend;
-            return new Cartridge(game.c_str(), backend);
+            game_chosen = true;
         }
 
 #ifdef DEMO_MODE_UNLOCKED
@@ -97,11 +96,22 @@ Cartridge* UI::selectGame()
         if (demo_mode_active && (now - last_input_time) >= demo_mode_timeout)
         {
             selected = esp_random() % size;
-            std::string game = "/" + files[selected];
-            std::vector<std::string>().swap(files);
-            return new Cartridge(game.c_str());
+            game_chosen = true;
         }
 #endif
+
+        if (game_chosen)
+        {
+            // Turn backlight off
+            // Backlight will be turned back on after game is drawn to hide
+            // visual glitches
+            if (hw_config.backlight) { ledcWrite(TFT_BACKLIGHT_PIN, 0); }
+
+            std::string game = "/" + files[selected];
+            std::vector<std::string>().swap(files);
+            ROMBackend backend = (ROMBackend)settings.rom_backend;
+            return new Cartridge(game.c_str(), backend);
+        }
     }
 }
 
@@ -574,14 +584,19 @@ void UI::initializeSettings()
         saveSettings(&temp);
     }
     loadSettings(&settings);
-
-    if (hw_config.backlight) setBrightness(settings.brightness);
+    // do not call setBrightness() here to allow for better control of the
+    // backlight in the main code to hide glitchy visuals when drawing the screen
 }
 
 void UI::loadEmulatorSettings(Bus* nes)
 {
     nes->ppu.setPalette(settings.palette);
     nes->cpu.apu.setVolume(settings.volume);
+}
+
+void UI::restoreBrightness()
+{
+    if (hw_config.backlight) setBrightness(settings.brightness);
 }
 
 void UI::setBrightness(int value)
