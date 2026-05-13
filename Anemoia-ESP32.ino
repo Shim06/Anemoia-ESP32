@@ -41,6 +41,15 @@ void setup()
     LOGF("ESP reset reason: %d\n", reset_reason);
 #endif
 
+#ifdef DEMO_MODE_UNLOCKED
+    if (reset_reason == ESP_RST_SW)
+    {
+        // Save and Quit and reaching the time limit for demo mode both result in ESP_RST_SW
+        // This will skip showing the ROMs menu resulting in a cleaner transition between demos
+        demo_mode_timeout = 0;
+    }
+#endif
+
     // Turn off Wifi and Bluetooth to reduce CPU overhead
     WiFi.mode(WIFI_OFF);
     esp_wifi_stop();
@@ -76,15 +85,6 @@ void setup()
     if (!initSD())
         while (true);
     ui.initializeSettings();
-
-#ifdef DEMO_MODE_UNLOCKED
-    if (reset_reason == ESP_RST_SW)
-    {
-        // Save and Quit and reaching the time limit for demo mode both result in ESP_RST_SW
-        // This will skip showing the ROMs menu resulting in a cleaner transition between demos
-        demo_mode_timeout = 0;
-    }
-#endif
 
     // Setup buttons
     initController(hw_config.controller_type);
