@@ -32,6 +32,7 @@ public:
 
     void initializeSettings();
     void loadEmulatorSettings(Bus* nes);
+    void restoreBrightness();
     bool paused = false;
 
 private:

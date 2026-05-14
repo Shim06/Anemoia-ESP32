@@ -27,7 +27,7 @@ Cartridge* cart;
 bool demo_mode_active = true; // if any user input is detected this is set to false
 // uses same type selectGame() stores millis() output in. cannot have a timeout longer than
 // 65.535 [seconds]
-unsigned int demo_mode_timeout = 5000; // 5 [seconds]
+unsigned int demo_mode_timeout = 10000; // 10 [seconds]
 // how long the game demo (aka attract mode) runs for
 const uint64_t demo_mode_runtime = 120 * 1000000ULL; // 120 [seconds]
 #endif
@@ -39,6 +39,15 @@ void setup()
     Serial.begin(115200);
     log_pin_config();
     LOGF("ESP reset reason: %d\n", reset_reason);
+#endif
+
+#ifdef DEMO_MODE_UNLOCKED
+    if (reset_reason == ESP_RST_SW)
+    {
+        // Save and Quit and reaching the time limit for demo mode both result in ESP_RST_SW
+        // This will skip showing the ROMs menu resulting in a cleaner transition between demos
+        demo_mode_timeout = 0;
+    }
 #endif
 
     // Turn off Wifi and Bluetooth to reduce CPU overhead
@@ -54,10 +63,11 @@ void setup()
 
     if (hw_config.backlight)
     {
-        // keep backlight off at boot to hide visual artifacts
-        // backlight will be turned on further down
+        // Initialize backlight but keep it off
+        // Keeping the backlight off until the screen is drawn hides glitchy visuals
         pinMode(TFT_BACKLIGHT_PIN, OUTPUT);
-        digitalWrite(TFT_BACKLIGHT_PIN, LOW);
+        ledcAttach(TFT_BACKLIGHT_PIN, BL_FREQ, BL_RESOLUTION);
+        ledcWrite(TFT_BACKLIGHT_PIN, 0); // backlight is off
     }
 
     setupI2SDAC();
@@ -68,28 +78,8 @@ void setup()
 #ifndef DISABLE_DMA
     screen.initDMA();
 #endif
-
-    uint32_t bg_color = BG_COLOR;
-#ifdef DEMO_MODE_UNLOCKED
-    if (reset_reason == ESP_RST_SW)
-    {
-        // Save and Quit and demo game time limit reached both result in ESP_RST_SW
-        // This will skip showing the ROMs menu resulting in a cleaner transition between demos.
-        demo_mode_timeout = 0;
-    }
-    // it is possible demo_mode_timeout has a default value of 0, so do an independent check
-    // instead of setting bg_color to black in the reset_reason if block above
-    if (demo_mode_timeout == 0) { bg_color = TFT_BLACK; }
-#endif
-    screen.fillScreen(bg_color);
-
+    screen.fillScreen(BG_COLOR);
     screen.startWrite();
-
-    if (hw_config.backlight)
-    {
-        ledcAttach(TFT_BACKLIGHT_PIN, BL_FREQ, BL_RESOLUTION);
-        ledcWrite(TFT_BACKLIGHT_PIN, 255);
-    }
 
     // Initialize microsd card
     if (!initSD())
@@ -108,6 +98,11 @@ void loop()
     invalidCartridge();
 }
 
+IRAM_ATTR void onTimer()
+{
+    ui.restoreBrightness();
+}
+
 #ifdef DEBUG
 unsigned long last_frame_time = 0;
 unsigned long current_frame_time = 0;
@@ -116,6 +111,7 @@ unsigned long frame_count = 0;
 #endif
 IRAM_ATTR void emulate()
 {
+
     Bus nes;
     nes.insertCartridge(cart);
     nes.connectScreen(&screen);
@@ -141,14 +137,23 @@ IRAM_ATTR void emulate()
     last_frame_time = esp_timer_get_time();
 #endif
 
+    // Backlight is off
+    // Restore backlight shortly after emulation starts to hide
+    // visual glitches during initial screen draw
+    const uint64_t restore_backlight_after = 750000; // 0.75 seconds
+    hw_timer_t* timer = NULL;
+    timer = timerBegin(1000000);
+    timerAttachInterrupt(timer, &onTimer);
+    timerAlarm(timer, restore_backlight_after, false, 0); // one-shot timer
+
 // Target frame time: 16639µs (60.098 FPS)
 #define FRAME_TIME 16639
-    uint64_t emulator_start_time = esp_timer_get_time();
     uint64_t next_frame = esp_timer_get_time();
     // Emulation Loop
     while (true)
     {
 #ifdef DEMO_MODE_UNLOCKED
+        static uint64_t emulator_start_time = esp_timer_get_time();
         if (nes.controller)
         {
             // disable demo mode so user is not interrupted by demo time limit ending
@@ -211,6 +216,9 @@ bool initSD()
     SD_SPI.begin(SD_SCLK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN);
     if (!SD.begin(SD_CS_PIN, SD_SPI, hw_config.sd_freq * 1000000))
     {
+        // Turn backlight on so error message can be seen
+        if (hw_config.backlight) { ledcWrite(TFT_BACKLIGHT_PIN, 255); }
+
         LOG("SD Card Mount Failed");
 
         screen.setTextSize(2);
@@ -242,6 +250,8 @@ bool initSD()
 
 void invalidCartridge()
 {
+    // Turn backlight on so error message can be seen
+    if (hw_config.backlight) { ledcWrite(TFT_BACKLIGHT_PIN, 255); }
     screen.fillScreen(BG_COLOR);
     screen.setTextColor(TFT_WHITE);
     screen.setTextDatum(MC_DATUM);
