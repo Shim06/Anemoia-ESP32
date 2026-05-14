@@ -71,6 +71,29 @@ Cartridge* UI::selectGame()
                 last_input_time = now;
             }
 
+            if (isDownPressed(CONTROLLER::Left))
+            {
+                int screen_pos = selected - scroll_offset;
+                selected -= max_items;
+                if (selected < 0) selected = 0;
+                scroll_offset = selected - screen_pos;
+                if (scroll_offset < 0) scroll_offset = 0;
+                drawFileList();
+                last_input_time = now;
+            }
+
+            if (isDownPressed(CONTROLLER::Right))
+            {
+                int screen_pos = selected - scroll_offset;
+                selected += max_items;
+                if (selected > size - 1) selected = size - 1;
+                scroll_offset = selected - screen_pos;
+                if (scroll_offset < 0) scroll_offset = 0;
+                if (scroll_offset > size - 1) scroll_offset = size - 1;
+                drawFileList();
+                last_input_time = now;
+            }
+
             if (isDownPressed(CONTROLLER::Select))
             {
                 settings.rom_backend = (settings.rom_backend + 1) % 2;

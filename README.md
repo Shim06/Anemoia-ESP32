@@ -53,6 +53,7 @@ Want to make a PCB? NextPCB offers PCB fabrication and assembly services with fa
   - [Option 2 - Build from Source](#option-2---build-from-source)
   - [After Flashing](#after-flashing)
 - [How to Build and Upload](#how-to-build-and-upload)
+- [How it works](#how-it-works)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -391,6 +392,48 @@ This file defines additional compiler flags and optimizations used by Anemoia-ES
 1. Connect your ESP32 via USB.
 2. In the Arduino IDE, go to <b> Tools → Board </b> and select your ESP32 board (e.g., ESP32 Dev Module).
 3. Click Upload or press `Ctrl+U` to build and flash the emulator. Optionally, edit the `#define` pins as desired.
+
+## How it works
+
+The ESP32 runs at 240 MHz and has 520 KB of SRAM. That sounds like plenty until you actually try to run an NES emulator on it. Then it stops feeling like plenty very fast. Every optimization here came from hitting a wall and figuring out how to get around it.
+
+### Line Buffer + DMA Rendering
+
+A full NES framebuffer at 256×240 pixels in 16-bit RGB eats 120 KB of RAM. That's roughly a third of the ESP32's total RAM. And this is without accounting for the memory consumed by the emulator itself. So the framebuffer has to go. Instead, only a few scanlines get buffered at a time and pushed to the display in batches.
+
+The problem with pushing constantly is that pushing data over SPI takes time, and that takes precious time from the processor for emulation. The fix is DMA. Instead of the CPU sitting there transferring bytes to the display, you hand it off to the DMA controller and let it run in the background. Resulting in very little overhead in pushing pixels to the display.
+
+The emulator also runs with a constant frame skip of 1. Every other frame gets skipped entirely. The emulation keeps running at full speed, only the display output is affected, and it's what gives the emulator enough headroom to stay stable across pretty much everything the NES throws at it.
+
+### Scanline-Based PPU
+
+The real NES renders one pixel per clock cycle with the PPU and CPU running in tight lockstep. Emulating that timing accurately on the ESP32 just isn't viable. The overhead is just too high to even get anywhere close to 60 FPS.
+
+So instead of rendering dot-by-dot, the PPU renders an entire horizontal line at once. All the sprite evaluation, tile lookups, palette reads, and pixel priority for that row get handled in one pass. Through this, batching CPU and PPU operations can be done. It's less accurate than how the real hardware works, but the performance gain is massive and most games don't care. The ones that rely on mid-scanline PPU tricks are rare enough that it's an acceptable tradeoff.
+
+### Storing Game ROMs
+
+NES cartridges can be up to 1 MB, but the console can only address 40 KB of ROM at a time. Mappers handle this by swapping banks in and out of the address space.
+
+How do you fit a 1 MB game cartridge into a device that has 384KB of RAM, with most of it used by the emulator?
+
+Short answer is you don't. The ESP32 can't hold a full ROM in RAM, so the obvious solution is loading banks from the microSD card when the mapper asks for them.
+
+The obvious solution also turned out to be completely unusable. Games were switching banks several times per frame. Loading a 16–32 KB chunk from SD that often over SPI is way too slow, and the emulator ground to a halt.
+
+The fix was using the remaining free RAM as a cache. Loaded banks stay in RAM, and if the mapper requests one that's already there, no SD read happens. When the cache fills up, the least recently used bank gets evicted. Turns out games tend to cycle through the same small set of banks for any given section, so once the cache is warm, the SD card barely gets touched. The slowdown disappeared entirely.
+
+However, some games will still switch to various different banks too often and tank performance, so there is an additional option of flash memory mapping. By copying the ROM from the SD card into the ESP32's flash and memory mapping it via `esp_partition_mmap()`, you can access it directly as if it were RAM. No dynamic loading, just a pointer. The tradeoff is that constantly rewriting to the flash will slowly degrade it, so it should only be used when neccessary.
+
+### Offloading the Audio Emulation
+
+The NES APU has five sound channels, each with their own timers, envelopes, and sweep units. This is expensive enough to emulate that throwing it onto the main core alongside everything else would have tanked performance.
+
+The saving grace is that the APU isn't tightly coupled to the CPU and PPU. It doesn't need to run in perfect sync, so it can live on the other core entirely on its own. Additionally, Input polling can be offloaded there too. The result is that audio emulation and input polling has basically zero impact on emulation performance.
+
+### Compiler Flags
+
+Once everything else was in place, some extra GCC flags on top of `-Ofast` were applied to let the compiler optimize harder on hot paths. That alone took the emulator from ~58 FPS to ~66 FPS. This leaves enough headroom to hold a stable 60 FPS with room to spare on heavy scenes.
 
 ## Contributing
 
