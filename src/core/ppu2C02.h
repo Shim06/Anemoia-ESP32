@@ -72,7 +72,7 @@ private:
     uint8_t palette_table[32];
     uint8_t scanline_counter = 0;
 
-    uint16_t scanline_buffer[BUFFER_SIZE];
+    uint8_t scanline_buffer[BUFFER_SIZE];
     uint8_t scanline_metadata[BUFFER_SIZE];
 #ifdef ILI9341_DRIVER
     static uint16_t display_buffer_front[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
@@ -870,7 +870,7 @@ private:
 
 public:
     uint8_t* ptr_sprite = (uint8_t*)sprite;
-    uint16_t* ptr_buffer = scanline_buffer;
+    uint8_t* ptr_buffer = scanline_buffer;
 #ifdef ILI9341_DRIVER
     static uint16_t* ptr_display;
     static uint16_t* ptr_back_buffer;
