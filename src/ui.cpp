@@ -1,7 +1,7 @@
 #include "ui.h"
 #ifdef DEMO_MODE_UNLOCKED
 extern bool demo_mode_active;
-extern unsigned int demo_mode_timeout;
+extern unsigned int demo_mode_roms_menu_timeout;
 #endif
 
 UI::UI(TFT_eSPI* screen)
@@ -23,7 +23,7 @@ Cartridge* UI::selectGame()
 
     bool show_roms_menu = true;
 #ifdef DEMO_MODE_UNLOCKED
-    if (demo_mode_timeout == 0) { show_roms_menu = false; }
+    if (demo_mode_roms_menu_timeout == 0) { show_roms_menu = false; }
 #endif
     if (show_roms_menu)
     {
@@ -116,7 +116,7 @@ Cartridge* UI::selectGame()
         {
             demo_mode_active = false; // user input detected, demo mode disabled
         }
-        if (demo_mode_active && (now - last_input_time) >= demo_mode_timeout)
+        if (demo_mode_active && (now - last_input_time) >= demo_mode_roms_menu_timeout)
         {
             selected = esp_random() % size;
             game_chosen = true;
