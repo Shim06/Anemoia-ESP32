@@ -107,7 +107,8 @@ Cartridge* UI::selectGame()
             game_chosen = true;
         }
 
-        if (hw_config.demo_mode) {
+        if (hw_config.demo_mode)
+        {
             if (controllerRead())
             {
                 demo_mode_active = false; // user input detected, demo mode disabled
