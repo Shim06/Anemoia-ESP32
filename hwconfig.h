@@ -12,6 +12,7 @@ struct __attribute__((packed)) HWConfig
     ControllerType controller_type;
     uint8_t sd_freq;
     bool backlight;
+    bool demo_mode;
 };
 
 inline HWConfig loadConfig()
@@ -25,6 +26,11 @@ inline HWConfig loadConfig()
         .backlight = true,
 #else
         .backlight = false,
+#endif
+#ifdef DEMO_MODE_UNLOCKED
+        .demo_mode = true,
+#else
+        .demo_mode = false,
 #endif
     };
     // hwconfig.bin can make development difficult because it will override #defines
@@ -64,6 +70,7 @@ inline HWConfig loadConfig()
     LOGF("hw_config.controller: %d\n", cfg.controller_type);
     LOGF("hw_config.sd_freq:    %dMHz\n", cfg.sd_freq);
     LOGF("hw_config.backlight:  %d\n", cfg.backlight);
+    LOGF("hw_config.demo_mode:  %d\n", cfg.demo_mode);
     return cfg;
 }
 

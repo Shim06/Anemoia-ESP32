@@ -1,8 +1,4 @@
 #include "ui.h"
-#ifdef DEMO_MODE_UNLOCKED
-extern bool demo_mode_active;
-extern unsigned int demo_mode_roms_menu_timeout;
-#endif
 
 UI::UI(TFT_eSPI* screen)
 {
@@ -17,14 +13,14 @@ Cartridge* UI::selectGame()
 {
     unsigned int last_input_time = 0;
     constexpr unsigned int delay = 250;
+    extern bool demo_mode_active;
+    extern unsigned int demo_mode_roms_menu_timeout;
     max_items = (screen->height() - 56) / ITEM_HEIGHT;
 
     getNesFiles();
 
     bool show_roms_menu = true;
-#ifdef DEMO_MODE_UNLOCKED
-    if (demo_mode_roms_menu_timeout == 0) { show_roms_menu = false; }
-#endif
+    if (hw_config.demo_mode && demo_mode_roms_menu_timeout == 0) { show_roms_menu = false; }
     if (show_roms_menu)
     {
         drawWindowBox(2, 20, screen->width() - 4, screen->height() - 40);
@@ -111,17 +107,17 @@ Cartridge* UI::selectGame()
             game_chosen = true;
         }
 
-#ifdef DEMO_MODE_UNLOCKED
-        if (controllerRead())
-        {
-            demo_mode_active = false; // user input detected, demo mode disabled
+        if (hw_config.demo_mode) {
+            if (controllerRead())
+            {
+                demo_mode_active = false; // user input detected, demo mode disabled
+            }
+            if (demo_mode_active && (now - last_input_time) >= demo_mode_roms_menu_timeout)
+            {
+                selected = esp_random() % size;
+                game_chosen = true;
+            }
         }
-        if (demo_mode_active && (now - last_input_time) >= demo_mode_roms_menu_timeout)
-        {
-            selected = esp_random() % size;
-            game_chosen = true;
-        }
-#endif
 
         if (game_chosen)
         {

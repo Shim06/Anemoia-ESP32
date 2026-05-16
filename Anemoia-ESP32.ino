@@ -23,7 +23,6 @@ SPIClass SD_SPI(SD_SPI_PORT);
 UI ui(&screen);
 Cartridge* cart;
 
-#ifdef DEMO_MODE_UNLOCKED
 RTC_NOINIT_ATTR bool demo_mode_reset;
 bool demo_mode_active = true; // If any user input is detected this is set to false
 // Uses same type selectGame() stores millis() output in. Cannot have a timeout longer than
@@ -31,7 +30,6 @@ bool demo_mode_active = true; // If any user input is detected this is set to fa
 unsigned int demo_mode_roms_menu_timeout = 10000; // 10 [seconds]
 // how long the game demo (aka attract mode) runs for
 const uint64_t demo_mode_runtime = 120 * 1000000ULL; // 120 [seconds]
-#endif
 
 void setup()
 {
@@ -40,27 +38,6 @@ void setup()
     Serial.begin(115200);
     log_pin_config();
     LOGF("ESP reset reason: %d\n", reset_reason);
-#endif
-
-#ifdef DEMO_MODE_UNLOCKED
-    if (reset_reason == ESP_RST_SW)
-    {
-        // Save and Quit and reaching the time limit for demo mode both result in ESP_RST_SW
-        // Use demo_mode_reset, which persists across software resets, to distinguish between them.
-        // If Save and Quit is used the ROMs menu will be shown again after reset.
-        // If the time limit for demo mode is reached, skip the ROMs menu after reset.
-        if (demo_mode_reset)
-        {
-            demo_mode_reset = false;
-            // This will skip showing the ROMs menu resulting in a cleaner transition between demos
-            demo_mode_roms_menu_timeout = 0;
-        }
-    }
-    else
-    {
-        // Power on (ESP_RST_POWERON) initializes demo_mode_reset
-        demo_mode_reset = false;
-    }
 #endif
 
     // Turn off Wifi and Bluetooth to reduce CPU overhead
@@ -73,6 +50,28 @@ void setup()
     esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);
 
     hw_config = loadConfig();
+
+    if (hw_config.demo_mode)
+    {
+        if (reset_reason == ESP_RST_SW)
+        {
+            // Save and Quit and reaching the time limit for demo mode both result in ESP_RST_SW
+            // Use demo_mode_reset, which persists across software resets, to distinguish between them.
+            // If Save and Quit is used the ROMs menu will be shown again after reset.
+            // If the time limit for demo mode is reached, skip the ROMs menu after reset.
+            if (demo_mode_reset)
+            {
+                demo_mode_reset = false;
+                // This will skip showing the ROMs menu resulting in a cleaner transition between demos
+                demo_mode_roms_menu_timeout = 0;
+            }
+        }
+        else
+        {
+            // Power on (ESP_RST_POWERON) initializes demo_mode_reset
+            demo_mode_reset = false;
+        }
+    }
 
     if (hw_config.backlight)
     {
@@ -165,23 +164,24 @@ IRAM_ATTR void emulate()
     // Emulation Loop
     while (true)
     {
-#ifdef DEMO_MODE_UNLOCKED
-        static uint64_t emulator_start_time = esp_timer_get_time();
-        if (nes.controller)
+        if (hw_config.demo_mode)
         {
-            // disable demo mode so user is not interrupted by demo time limit ending
-            demo_mode_active = false;
-        }
-        if (demo_mode_active)
-        {
-            uint64_t time_elapsed_since_start = esp_timer_get_time() - emulator_start_time;
-            if (time_elapsed_since_start >= demo_mode_runtime)
+            static uint64_t emulator_start_time = esp_timer_get_time();
+            if (nes.controller)
             {
-                demo_mode_reset = true;
-                ESP.restart();
+                // disable demo mode so user is not interrupted by demo time limit ending
+                demo_mode_active = false;
+            }
+            if (demo_mode_active)
+            {
+                uint64_t time_elapsed_since_start = esp_timer_get_time() - emulator_start_time;
+                if (time_elapsed_since_start >= demo_mode_runtime)
+                {
+                    demo_mode_reset = true;
+                    ESP.restart();
+                }
             }
         }
-#endif
 
         // Start + Select opens the pause menu
         if ((nes.controller & (uint8_t)CONTROLLER::Start) &&
