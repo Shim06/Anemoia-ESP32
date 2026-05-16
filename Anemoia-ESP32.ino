@@ -56,13 +56,14 @@ void setup()
         if (reset_reason == ESP_RST_SW)
         {
             // Save and Quit and reaching the time limit for demo mode both result in ESP_RST_SW
-            // Use demo_mode_reset, which persists across software resets, to distinguish between them.
-            // If Save and Quit is used the ROMs menu will be shown again after reset.
-            // If the time limit for demo mode is reached, skip the ROMs menu after reset.
+            // Use demo_mode_reset, which persists across software resets, to distinguish between
+            // them. If Save and Quit is used the ROMs menu will be shown again after reset. If the
+            // time limit for demo mode is reached, skip the ROMs menu after reset.
             if (demo_mode_reset)
             {
                 demo_mode_reset = false;
-                // This will skip showing the ROMs menu resulting in a cleaner transition between demos
+                // This will skip showing the ROMs menu resulting in a cleaner transition between
+                // demos
                 demo_mode_roms_menu_timeout = 0;
             }
         }
