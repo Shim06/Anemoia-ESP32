@@ -210,10 +210,7 @@ inline void Ppu2C02::renderBackground()
     if (!mask.render_background)
     {
         uint8_t bg_color = palette_table[0];
-        uint32_t color32 = ((uint32_t)bg_color << 16) | bg_color;
-        uint32_t* buffer = (uint32_t*)scanline_buffer;
-        for (int i = 0, size = (BUFFER_SIZE >> 2); i < size; i++) buffer[i] = color32;
-
+        memset(scanline_buffer, bg_color, BUFFER_SIZE);
         memset(scanline_metadata, 0x80, BUFFER_SIZE);
         ptr_buffer = scanline_buffer + x;
         ptr_scanline_meta = scanline_metadata + x;
