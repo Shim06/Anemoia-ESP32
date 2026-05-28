@@ -3,12 +3,12 @@
 
 struct Mapper069_state
 {
-    Cartridge* cart;
-    MappedROM* mROM;
+    Cartridge* cart = nullptr;
+    MappedROM* mROM = nullptr;
     ROMBackend backend;
     uint8_t number_PRG_banks;
     uint8_t number_CHR_banks;
-    uint8_t* RAM;
+    uint8_t* RAM = nullptr;
 
     uint8_t* ptr_PRG_bank_8K[5];
     uint8_t* ptr_CHR_bank_1K[8];
