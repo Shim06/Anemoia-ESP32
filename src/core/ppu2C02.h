@@ -42,6 +42,7 @@ public:
         bus = n;
     }
     void connectCartridge(Cartridge* cartridge);
+    void connectFramebuffer(uint8_t* framebuffer);
     void setMirror(Cartridge::MIRROR mirror);
     Cartridge::MIRROR getMirror();
 
@@ -71,14 +72,17 @@ private:
     uint8_t* ptr_nametable[4];
     uint8_t palette_table[32];
     uint8_t scanline_counter = 0;
-
     uint8_t scanline_buffer[BUFFER_SIZE];
     uint8_t scanline_metadata[BUFFER_SIZE];
-#ifdef ILI9341_DRIVER
+#ifdef COMPOSITE_VIDEO
+    uint8_t* display_buffer = nullptr;
+#else
+    #ifdef ILI9341_DRIVER
     static uint16_t display_buffer_front[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
     static uint16_t display_buffer_back[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
-#else
+    #else
     static uint16_t display_buffer[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
+    #endif
 #endif
 
     // clang-format off
@@ -855,11 +859,15 @@ private:
 public:
     uint8_t* ptr_sprite = (uint8_t*)sprite;
     uint8_t* ptr_buffer = scanline_buffer;
-#ifdef ILI9341_DRIVER
+#ifdef COMPOSITE_VIDEO
+    uint8_t* ptr_display;
+#else
+    #ifdef ILI9341_DRIVER
     static uint16_t* ptr_display;
     static uint16_t* ptr_back_buffer;
-#else
+    #else
     static constexpr uint16_t* ptr_display = display_buffer;
+    #endif
 #endif
 };
 

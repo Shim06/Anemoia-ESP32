@@ -2,14 +2,18 @@
 #include "bus.h"
 
 #define READ_PALETTE(x) palette_table[((x) & 0x1F) ^ (((x) & 0x13) == 0x10 ? 0x10 : 0x00)]
-#ifdef ILI9341_DRIVER
+
+#ifndef COMPOSITE_VIDEO
+    #ifdef ILI9341_DRIVER
 DMA_ATTR uint16_t Ppu2C02::display_buffer_front[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
 DMA_ATTR uint16_t Ppu2C02::display_buffer_back[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
 uint16_t* Ppu2C02::ptr_display = Ppu2C02::display_buffer_front;
 uint16_t* Ppu2C02::ptr_back_buffer = Ppu2C02::display_buffer_back;
-#else
+    #else
 DMA_ATTR uint16_t Ppu2C02::display_buffer[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
+    #endif
 #endif
+
 constexpr uint8_t Ppu2C02::palette_mirror[32];
 
 Ppu2C02::Ppu2C02()
@@ -26,13 +30,15 @@ Ppu2C02::Ppu2C02()
     memset(palette_table, 0, sizeof(palette_table));
     memset(scanline_buffer, 0, sizeof(scanline_buffer));
     memset(scanline_metadata, 0, sizeof(scanline_metadata));
-#ifdef ILI9341_DRIVER
+    memset(sprite, 0, sizeof(sprite));
+#ifndef COMPOSITE_VIDEO
+    #ifdef ILI9341_DRIVER
     memset(display_buffer_front, 0, sizeof(display_buffer_front));
     memset(display_buffer_back, 0, sizeof(display_buffer_back));
-#else
+    #else
     memset(display_buffer, 0, sizeof(display_buffer));
+    #endif
 #endif
-    memset(sprite, 0, sizeof(sprite));
 }
 
 Ppu2C02::~Ppu2C02()
@@ -511,26 +517,30 @@ inline void Ppu2C02::finishScanline()
     if (mask.render_background || mask.render_sprite) cart->ppuScanline();
 
 // Transfer internal scanline buffer to display buffer
-#ifdef ILI9341_DRIVER
+#ifndef COMPOSITE_VIDEO
+    #ifdef ILI9341_DRIVER
     uint16_t* display = ptr_back_buffer + ((uint32_t)scanline_counter * SCANLINE_SIZE);
-#else
+    #else
     uint16_t* display = ptr_display + ((uint32_t)scanline_counter * SCANLINE_SIZE);
-#endif
+    #endif
     uint8_t* buffer = ptr_buffer;
     for (int i = 0; i < SCANLINE_SIZE; i++) display[i] = nes_palette[mask.emphasize][buffer[i]];
 
     scanline_counter++;
     if (scanline_counter >= SCANLINES_PER_BUFFER)
     {
-#ifdef ILI9341_DRIVER
+    #ifdef ILI9341_DRIVER
         uint16_t* temp = ptr_display;
         ptr_display = ptr_back_buffer;
         ptr_back_buffer = temp;
-#endif
-
+    #endif
         bus->renderImage(scanline - (SCANLINES_PER_BUFFER - 1));
         scanline_counter = 0;
     }
+#else
+    uint8_t* buffer = ptr_buffer;
+    for (int i = 0; i < SCANLINE_SIZE; i++) display_buffer[scanline * 256 + i] = buffer[i] & 0x3F;
+#endif
 }
 
 void Ppu2C02::reset()
@@ -672,4 +682,10 @@ void Ppu2C02::loadState(File& state)
     state.read((uint8_t*)&x, sizeof(x));
     state.read((uint8_t*)&w, sizeof(w));
     state.read((uint8_t*)&PPUDATA_buffer, sizeof(PPUDATA_buffer));
+}
+
+void Ppu2C02::connectFramebuffer(uint8_t* framebuffer)
+{
+    display_buffer = framebuffer;
+    ptr_display = display_buffer;
 }

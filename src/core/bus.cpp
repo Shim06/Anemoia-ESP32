@@ -124,6 +124,11 @@ void Bus::connectScreen(TFT_eSPI* screen)
     ptr_screen = screen;
 }
 
+void Bus::connectFramebuffer(uint8_t* framebuffer)
+{
+    ppu.connectFramebuffer(framebuffer);
+}
+
 IRAM_ATTR void Bus::renderImage(uint16_t scanline)
 {
 #ifndef DISABLE_DMA

@@ -10,17 +10,21 @@
 #include "driver/i2s.h"
 #include "esp_bt.h"
 #include "esp_bt_main.h"
+#include "esp_task_wdt.h"
 #include "esp_wifi.h"
 #include "runtime_config.h"
+#include "src/composite_video.h"
 #include "src/controller.h"
 #include "src/core/bus.h"
 #include "src/debug.h"
 #include "src/ui.h"
 
 RuntimeConfig runtime_config;
-TFT_eSPI screen = TFT_eSPI();
 SPIClass SD_SPI(SD_SPI_PORT);
+#ifndef COMPOSITE_VIDEO
+TFT_eSPI screen = TFT_eSPI();
 UI ui(&screen);
+#endif
 Cartridge* cart;
 
 RTC_NOINIT_ATTR bool demo_mode_reset;
@@ -34,6 +38,7 @@ const uint64_t demo_mode_runtime = 120 * 1000000ULL; // 120 [seconds]
 void setup()
 {
     esp_reset_reason_t reset_reason = esp_reset_reason();
+    setCpuFrequencyMhz(240);
 #ifdef DEBUG
     Serial.begin(115200);
     log_pin_config();
@@ -49,6 +54,7 @@ void setup()
     esp_bt_mem_release(ESP_BT_MODE_BTDM);
     esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);
 
+#ifndef COMPOSITE_VIDEO
     runtime_config = loadConfig();
 
     if (runtime_config.demo_mode)
@@ -88,16 +94,21 @@ void setup()
     // Initialize TFT screen
     screen.begin();
     screen.setRotation(runtime_config.rotation);
-#ifndef DISABLE_DMA
+    #ifndef DISABLE_DMA
     screen.initDMA();
-#endif
+    #endif
     screen.fillScreen(BG_COLOR);
     screen.startWrite();
+
+    ui.initializeSettings();
+#else
+    initCompositeVideo();
+    hw_config = loadConfig();
+#endif
 
     // Initialize microsd card
     if (!initSD())
         while (true);
-    ui.initializeSettings();
 
     // Setup buttons
     initController(runtime_config.controller_type);
@@ -105,7 +116,7 @@ void setup()
 
 void loop()
 {
-    cart = ui.selectGame();
+    cart = selectGame();
     if (cart && cart->isValid()) { emulate(); }
 
     invalidCartridge();
@@ -126,18 +137,21 @@ IRAM_ATTR void emulate()
 {
 
     Bus nes;
-    nes.insertCartridge(cart);
-    nes.connectScreen(&screen);
-    nes.reset();
+#ifdef COMPOSITE_VIDEO
+    nes.connectFramebuffer(cv_framebuffer);
+#else
     ui.loadEmulatorSettings(&nes);
+    nes.connectScreen(&screen);
+    screen.setAddrWindow(32, 0, 256, 240);
+#endif
+    nes.insertCartridge(cart);
+    nes.reset();
 
     TaskHandle_t apu_task_handle;
     xTaskCreatePinnedToCore(apuTask, "APU Task", 1024, &nes.cpu.apu, 1, &apu_task_handle, 0);
 
     TaskHandle_t polling_task_handle;
     xTaskCreatePinnedToCore(pollingTask, "Polling Task", 1024, &nes, 1, &polling_task_handle, 0);
-
-    screen.setAddrWindow(32, 0, 256, 240);
 
     LOGF("Free heap: %u bytes\n", heap_caps_get_free_size(MALLOC_CAP_DEFAULT));
     LOGF("Free DMA heap: %u bytes\n", heap_caps_get_free_size(MALLOC_CAP_DMA));
@@ -191,6 +205,7 @@ IRAM_ATTR void emulate()
         if ((nes.controller & (uint8_t)CONTROLLER::Start) &&
             (nes.controller & (uint8_t)CONTROLLER::Select))
         {
+#ifndef COMPOSITE_VIDEO
             if (!ui.paused)
             {
                 vTaskSuspend(apu_task_handle);
@@ -200,6 +215,14 @@ IRAM_ATTR void emulate()
                 nes.controller = 0;
                 screen.setAddrWindow(32, 0, 256, 240);
             }
+#else
+            if (!cv_paused)
+            {
+                cv_pauseMenu(&nes);
+                next_frame = esp_timer_get_time() + FRAME_TIME;
+                nes.controller = 0;
+            }
+#endif
         }
 
         // Generate one frame
@@ -228,8 +251,8 @@ IRAM_ATTR void emulate()
 #endif
         next_frame += FRAME_TIME;
     }
-#undef FRAME_TIME
 }
+#undef FRAME_TIME
 
 bool initSD()
 {
@@ -241,7 +264,7 @@ bool initSD()
         if (runtime_config.backlight) { ledcWrite(TFT_BACKLIGHT_PIN, 255); }
 
         LOG("SD Card Mount Failed");
-
+#ifndef COMPOSITE_VIDEO
         screen.setTextSize(2);
         const char* txt1 = "SD Init failed!";
         const char* txt2 = "Insert SD card or";
@@ -262,6 +285,7 @@ bool initSD()
         screen.drawString(txt2, x2, 88, 2);
         screen.drawString(txt3, x3, 120, 2);
         screen.drawString(txt4, x4, 152, 2);
+#endif
         return false;
     }
 
@@ -271,12 +295,14 @@ bool initSD()
 
 void invalidCartridge()
 {
+#ifndef COMPOSITE_VIDEO
     // Turn backlight on so error message can be seen
     if (runtime_config.backlight) { ledcWrite(TFT_BACKLIGHT_PIN, 255); }
     screen.fillScreen(BG_COLOR);
     screen.setTextColor(TFT_WHITE);
     screen.setTextDatum(MC_DATUM);
     screen.drawString("ROM Mapper not supported!", screen.width() / 2, screen.height() / 2, 2);
+#endif
     delay(3000);
     ESP.restart();
 }
@@ -339,7 +365,14 @@ void apuTask(void* param)
 {
     Apu2A03* apu = (Apu2A03*)param;
 
-    while (true) { apu->clock(); }
+    while (true)
+    {
+#ifndef COMPOSITE_VIDEO
+        apu->clock();
+#else
+        vTaskDelay(1000000000);
+#endif
+    }
 }
 
 void pollingTask(void* param)
@@ -355,4 +388,32 @@ void pollingTask(void* param)
 
         vTaskDelayUntil(&lastWakeTime, frameTicks);
     }
+}
+
+static SemaphoreHandle_t video_init_done;
+void videoInitTask(void* param)
+{
+    video_init(VIDEO_STANDARD);
+    xSemaphoreGive(video_init_done);
+    vTaskDelete(NULL);
+}
+
+void initCompositeVideo()
+{
+    // Initialize composite video output on core 0 to avoid contention with emulation tasks
+    video_init_done = xSemaphoreCreateBinary();
+
+    xTaskCreatePinnedToCore(videoInitTask, "VidInit", 8192, nullptr, 1, NULL, 0);
+
+    xSemaphoreTake(video_init_done, portMAX_DELAY);
+    vSemaphoreDelete(video_init_done);
+}
+
+Cartridge* selectGame()
+{
+#ifdef COMPOSITE_VIDEO
+    return cv_selectGame();
+#else
+    return ui.selectGame();
+#endif
 }
