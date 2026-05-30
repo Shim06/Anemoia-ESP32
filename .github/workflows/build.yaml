@@ -310,7 +310,7 @@ jobs:
                   for DACPIN in $DACPIN_LIST; do
                     for BACKLIGHT in $BACKLIGHT_LIST; do
                       for DEMO_MODE in $DEMO_MODE_LIST; do
-                        # Map to byte values matching HWConfig struct
+                        # Map to byte values matching RuntimeConfig struct
                         case "$ROTATION" in
                           rotation1) ROT_VAL=1 ;;
                           rotation3) ROT_VAL=3 ;;
@@ -346,7 +346,7 @@ jobs:
                           demo_mode_on)  DM_VAL=1 ;;
                         esac
 
-                        # Write HWConfig struct to binary file and create LittleFS image
+                        # Write RuntimeConfig struct to binary file and create LittleFS image
                         CFG_NAME="$DEVICE-$DISPLAY-$BACKLIGHT-$SWAP-$SCREEN_FREQ-$CONTROLLER-$ROTATION-$SD_FREQ-$DACPIN-$DEBUG-$DEMO_MODE-config.bin"
                         mkdir -p tmp/fs_stage
                         printf "$(printf '\\%03o' $ROT_VAL $DAC_VAL $CONTROLLER_VAL $SD_VAL $BL_VAL $DM_VAL)" \
