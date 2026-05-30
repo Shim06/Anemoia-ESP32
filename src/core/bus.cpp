@@ -131,10 +131,12 @@ void Bus::connectFramebuffer(uint8_t* framebuffer)
 
 IRAM_ATTR void Bus::renderImage(uint16_t scanline)
 {
-#ifndef DISABLE_DMA
+#ifndef COMPOSITE_VIDEO
+    #ifndef DISABLE_DMA
     ptr_screen->pushPixelsDMA(ppu.ptr_display, 256 * SCANLINES_PER_BUFFER);
-#else
+    #else
     ptr_screen->pushPixels(ppu.ptr_display, 256 * SCANLINES_PER_BUFFER);
+    #endif
 #endif
 }
 
