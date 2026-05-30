@@ -241,46 +241,45 @@ static bool UartProcessPacket(HardwareSerial& port, uint8_t& buttons_state)
     if (port.read() != START_BYTE) return false;
 
     if (!port.available()) return false;
-    buttons_state = port.read();
+    uint8_t buttons_state_new = port.read();
 
     if (!port.available()) return false;
     uint8_t checksum = port.read();
 
-    if (checksum != buttons_state) return false;
+    if (checksum != buttons_state_new) return false;
 
+    buttons_state = buttons_state_new;
     return true;
 }
 
 static uint8_t UartControllerRead()
 {
-    static uint8_t state = 0x00;
+    constexpr uint8_t no_data_limit = 10;
     static uint8_t no_data_count = 0;
 
-    uint8_t state0 = 0x00;
-    uint8_t state1 = 0x00;
-    bool success0 = UartProcessPacket(Serial, state0);
-    bool success1 = UartProcessPacket(Serial1, state1);
+    // UartProcessPacket() only updates buttons_state if successful
+    static uint8_t buttons_state0 = 0x00;
+    static uint8_t buttons_state1 = 0x00;
+    bool success0 = UartProcessPacket(Serial, buttons_state0);
+    bool success1 = UartProcessPacket(Serial1, buttons_state1);
 
     if (success0 || success1)
     {
-        // if received button presses from both Serial and Serial1 combine them
-        state = (uint8_t)state0;
-        state |= (uint8_t)state1;
-
         no_data_count = 0;
-        return state;
     }
-
-    // if there is no data, then  reuse previous state 10 times before
-    // setting state to 0x00 (no buttons pressed)
-    no_data_count++;
-    if (no_data_count >= 10)
+    else if (no_data_count < no_data_limit)
     {
-        state = 0x00;
-        no_data_count = 10; // pin at 10 to prevent overflow
+        // if there is no data, then output previous data 10 times before
+        // returning 0x00 (no buttons pressed)
+        no_data_count++;
+        if (no_data_count >= no_data_limit)
+        {
+            buttons_state0 = 0x00;
+            buttons_state1 = 0x00;
+        }
     }
 
-    return state;
+    return buttons_state0 | buttons_state1;
 }
 
 static uint8_t dummyControllerRead()
