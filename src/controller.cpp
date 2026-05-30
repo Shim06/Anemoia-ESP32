@@ -1,10 +1,10 @@
 #include "controller.h"
 #include "../config.h"
-#include "../hwconfig.h"
+#include "../runtime_config.h"
 #include "core/bus.h"
 #include <Arduino.h>
 
-extern HWConfig hw_config;
+extern RuntimeConfig runtime_config;
 static uint8_t (*_controllerRead)() = nullptr;
 
 uint8_t controllerRead()
@@ -361,7 +361,7 @@ void initController(ControllerType controller_type)
         Serial1.begin(115200, SERIAL_8N1, CONTROLLER_UART_RX, CONTROLLER_UART_TX);
         delay(200); // allow controller adapter to finish booting
 
-        Serial1.write(hw_config.controller_type);
+        Serial1.write(runtime_config.controller_type);
         _controllerRead = UartControllerRead;
         break;
     case CT_NC:

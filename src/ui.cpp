@@ -20,7 +20,7 @@ Cartridge* UI::selectGame()
     getNesFiles();
 
     bool show_roms_menu = true;
-    if (hw_config.demo_mode && demo_mode_roms_menu_timeout == 0) { show_roms_menu = false; }
+    if (runtime_config.demo_mode && demo_mode_roms_menu_timeout == 0) { show_roms_menu = false; }
     if (show_roms_menu)
     {
         drawWindowBox(2, 20, screen->width() - 4, screen->height() - 40);
@@ -107,7 +107,7 @@ Cartridge* UI::selectGame()
             game_chosen = true;
         }
 
-        if (hw_config.demo_mode)
+        if (runtime_config.demo_mode)
         {
             if (controllerRead())
             {
@@ -125,7 +125,7 @@ Cartridge* UI::selectGame()
             // Turn backlight off
             // Backlight will be turned back on after game is drawn to hide
             // visual glitches
-            if (hw_config.backlight) { ledcWrite(TFT_BACKLIGHT_PIN, 0); }
+            if (runtime_config.backlight) { ledcWrite(TFT_BACKLIGHT_PIN, 0); }
 
             std::string game = "/" + files[selected];
             std::vector<std::string>().swap(files);
@@ -451,7 +451,7 @@ void UI::settingsMenu(Bus* nes)
         int16_t y = items_y[i] + text_padding;
         if (i == Brightness)
         {
-            if (hw_config.backlight) { drawText(items[i], window_x + 12, y); }
+            if (runtime_config.backlight) { drawText(items[i], window_x + 12, y); }
             else
             {
                 screen->setCursor(window_x + 12, y);
@@ -474,7 +474,7 @@ void UI::settingsMenu(Bus* nes)
             {
                 select--;
                 if (select < 0) select = (num_items - 1);
-                if (!hw_config.backlight && select == Brightness)
+                if (!runtime_config.backlight && select == Brightness)
                 {
                     select--;
                     if (select < 0) select = (num_items - 1);
@@ -486,7 +486,7 @@ void UI::settingsMenu(Bus* nes)
             {
                 select++;
                 if (select > (num_items - 1)) select = 0;
-                if (!hw_config.backlight && select == Brightness)
+                if (!runtime_config.backlight && select == Brightness)
                 {
                     select++;
                     if (select > (num_items - 1)) select = 0;
@@ -616,7 +616,7 @@ void UI::loadEmulatorSettings(Bus* nes)
 
 void UI::restoreBrightness()
 {
-    if (hw_config.backlight) setBrightness(settings.brightness);
+    if (runtime_config.backlight) setBrightness(settings.brightness);
 }
 
 void UI::setBrightness(int value)

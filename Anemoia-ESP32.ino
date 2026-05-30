@@ -11,13 +11,13 @@
 #include "esp_bt.h"
 #include "esp_bt_main.h"
 #include "esp_wifi.h"
-#include "hwconfig.h"
+#include "runtime_config.h"
 #include "src/controller.h"
 #include "src/core/bus.h"
 #include "src/debug.h"
 #include "src/ui.h"
 
-HWConfig hw_config;
+RuntimeConfig runtime_config;
 TFT_eSPI screen = TFT_eSPI();
 SPIClass SD_SPI(SD_SPI_PORT);
 UI ui(&screen);
@@ -49,9 +49,9 @@ void setup()
     esp_bt_mem_release(ESP_BT_MODE_BTDM);
     esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);
 
-    hw_config = loadConfig();
+    runtime_config = loadConfig();
 
-    if (hw_config.demo_mode)
+    if (runtime_config.demo_mode)
     {
         if (reset_reason == ESP_RST_SW)
         {
@@ -74,7 +74,7 @@ void setup()
         }
     }
 
-    if (hw_config.backlight)
+    if (runtime_config.backlight)
     {
         // Initialize backlight but keep it off
         // Keeping the backlight off until the screen is drawn hides glitchy visuals
@@ -87,7 +87,7 @@ void setup()
 
     // Initialize TFT screen
     screen.begin();
-    screen.setRotation(hw_config.rotation);
+    screen.setRotation(runtime_config.rotation);
 #ifndef DISABLE_DMA
     screen.initDMA();
 #endif
@@ -100,7 +100,7 @@ void setup()
     ui.initializeSettings();
 
     // Setup buttons
-    initController(hw_config.controller_type);
+    initController(runtime_config.controller_type);
 }
 
 void loop()
@@ -165,7 +165,7 @@ IRAM_ATTR void emulate()
     // Emulation Loop
     while (true)
     {
-        if (hw_config.demo_mode)
+        if (runtime_config.demo_mode)
         {
             static uint64_t emulator_start_time = esp_timer_get_time();
             if (nes.controller)
@@ -232,10 +232,10 @@ bool initSD()
 {
     LOG("Initializing SD...");
     SD_SPI.begin(SD_SCLK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN);
-    if (!SD.begin(SD_CS_PIN, SD_SPI, hw_config.sd_freq * 1000000))
+    if (!SD.begin(SD_CS_PIN, SD_SPI, runtime_config.sd_freq * 1000000))
     {
         // Turn backlight on so error message can be seen
-        if (hw_config.backlight) { ledcWrite(TFT_BACKLIGHT_PIN, 255); }
+        if (runtime_config.backlight) { ledcWrite(TFT_BACKLIGHT_PIN, 255); }
 
         LOG("SD Card Mount Failed");
 
@@ -269,7 +269,7 @@ bool initSD()
 void invalidCartridge()
 {
     // Turn backlight on so error message can be seen
-    if (hw_config.backlight) { ledcWrite(TFT_BACKLIGHT_PIN, 255); }
+    if (runtime_config.backlight) { ledcWrite(TFT_BACKLIGHT_PIN, 255); }
     screen.fillScreen(BG_COLOR);
     screen.setTextColor(TFT_WHITE);
     screen.setTextDatum(MC_DATUM);
@@ -294,11 +294,11 @@ void setupI2SDAC()
                                 .tx_desc_auto_clear = true,
                                 .fixed_mclk = 0 };
 
-    if (hw_config.dac_pin == 1) i2s_config.channel_format = I2S_CHANNEL_FMT_ONLY_LEFT;
+    if (runtime_config.dac_pin == 1) i2s_config.channel_format = I2S_CHANNEL_FMT_ONLY_LEFT;
     i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL);
 
-    if (hw_config.dac_pin == 0) i2s_set_dac_mode(I2S_DAC_CHANNEL_RIGHT_EN);
-    else if (hw_config.dac_pin == 1) i2s_set_dac_mode(I2S_DAC_CHANNEL_LEFT_EN);
+    if (runtime_config.dac_pin == 0) i2s_set_dac_mode(I2S_DAC_CHANNEL_RIGHT_EN);
+    else if (runtime_config.dac_pin == 1) i2s_set_dac_mode(I2S_DAC_CHANNEL_LEFT_EN);
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     i2s_config_t i2s_config = { .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
                                 .sample_rate = SAMPLE_RATE,

@@ -350,7 +350,7 @@ jobs:
                         CFG_NAME="$DEVICE-$DISPLAY-$BACKLIGHT-$SWAP-$SCREEN_FREQ-$CONTROLLER-$ROTATION-$SD_FREQ-$DACPIN-$DEBUG-$DEMO_MODE-config.bin"
                         mkdir -p tmp/fs_stage
                         printf "$(printf '\\%03o' $ROT_VAL $DAC_VAL $CONTROLLER_VAL $SD_VAL $BL_VAL $DM_VAL)" \
-                            > tmp/fs_stage/hwconfig.bin
+                            > tmp/fs_stage/runtime_config.bin
                         # mklittlefs -c tmp/fs_stage -s 0x160000 "WebFlash/configs/$CFG_NAME"
                         mklittlefs -c tmp/fs_stage -s 0x0F000 "WebFlash/configs/$CFG_NAME"
                         rm -rf "tmp/fs_stage"
