@@ -5,14 +5,14 @@
 
 struct Mapper000_state
 {
-    Cartridge* cart;
-    MappedROM* mROM;
+    Cartridge* cart = nullptr;
+    MappedROM* mROM = nullptr;
     ROMBackend backend;
     uint8_t number_PRG_banks;
     uint8_t number_CHR_banks;
-    uint8_t* PRG_ROM;
-    uint8_t* CHR_ROM;
-    uint8_t* CHR_bank;
+    uint8_t* PRG_ROM = nullptr;
+    uint8_t* CHR_ROM = nullptr;
+    uint8_t* CHR_bank = nullptr;
     uint8_t* PRG_banks[2];
 };
 

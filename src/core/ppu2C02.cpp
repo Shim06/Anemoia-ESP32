@@ -210,17 +210,21 @@ inline void Ppu2C02::renderBackground()
     if (!mask.render_background)
     {
         uint8_t bg_color = palette_table[0];
-        uint32_t color32 = ((uint32_t)bg_color << 16) | bg_color;
-        uint32_t* buffer = (uint32_t*)scanline_buffer;
-        for (int i = 0, size = (BUFFER_SIZE >> 2); i < size; i++) buffer[i] = color32;
-
+        memset(scanline_buffer, bg_color, BUFFER_SIZE);
         memset(scanline_metadata, 0x80, BUFFER_SIZE);
         ptr_buffer = scanline_buffer + x;
         ptr_scanline_meta = scanline_metadata + x;
         return;
     }
 
-    uint8_t bg_color = palette_table[0];
+    uint8_t x_tile, y_tile, tile_index, nametable_index, bg_color;
+    uint8_t attribute_byte, attribute_shift, attribute;
+    uint16_t offset, nametable_byte_base, attribute_byte_base;
+    uint8_t* ptr_pattern_tile;
+    uint8_t* ptr_attribute;
+    uint8_t* ptr_tile;
+
+    bg_color = palette_table[0];
     ptr_buffer = scanline_buffer;
     ptr_scanline_meta = scanline_metadata;
     x_tile = v.coarse_x;
@@ -291,31 +295,34 @@ inline void Ppu2C02::renderSprites()
     if (!mask.render_sprite) { return; }
 
     OAM* ptr_sprite_OAM;
+    uint8_t* buffer_offset;
+    uint8_t* metadata_offset;
+    uint8_t* ptr_tile;
+    uint8_t sprite_x, sprite_y;
     uint8_t sprite_size;
     uint8_t sprite_count = 0;
-
-    uint8_t bg_color = palette_table[0];
+    uint8_t tile_index, bg_color, attribute_byte, attribute, palette_offset;
+    uint8_t pixel[8];
     uint8_t tile_palette[4];
+    uint16_t offset, tile_addr, pattern;
+    int16_t y_offset;
+
+    bg_color = palette_table[0];
     tile_palette[0] = bg_color;
 
     ptr_sprite_OAM = sprite;
     offset = (control.sprite_table_addr ? 0x1000 : 0);
-
     sprite_size = (control.sprite_size ? 16 : 8);
 
-    uint8_t* buffer_offset = scanline_buffer + x;
-    uint8_t* metadata_offset = scanline_metadata + x;
+    buffer_offset = scanline_buffer + x;
+    metadata_offset = scanline_metadata + x;
     for (int i = 0; i < 64; i++, ptr_sprite_OAM++)
     {
-        uint8_t sprite_x, sprite_y;
         sprite_y = ptr_sprite_OAM->y + 1;
         // Check if sprite is in scanline
         if ((sprite_y > scanline) || (sprite_y <= (scanline - sprite_size)) || (sprite_y == 0) ||
             (sprite_y >= 240))
             continue;
-
-        int16_t y_offset;
-        uint16_t tile_addr;
 
         sprite_x = ptr_sprite_OAM->x;
         tile_index = ptr_sprite_OAM->index;
@@ -340,12 +347,11 @@ inline void Ppu2C02::renderSprites()
         else ptr_tile += y_offset;
 
         // Draw to buffer
-        uint16_t pattern = ((ptr_tile[8] & 0xAA) << 8) | ((ptr_tile[8] & 0x55) << 1) |
-                           ((ptr_tile[0] & 0xAA) << 7) | (ptr_tile[0] & 0x55);
+        pattern = ((ptr_tile[8] & 0xAA) << 8) | ((ptr_tile[8] & 0x55) << 1) |
+                  ((ptr_tile[0] & 0xAA) << 7) | (ptr_tile[0] & 0x55);
         if (pattern)
         {
-            uint8_t pixel[8];
-            uint8_t palette_offset = 16 + attribute;
+            palette_offset = 16 + attribute;
             for (int t = 1; t < 4; t++) tile_palette[t] = READ_PALETTE(palette_offset + t);
 
             if (attribute_byte & 0x40) // If flip sprite horizontally
@@ -423,14 +429,14 @@ inline void Ppu2C02::renderSprites()
 
 void Ppu2C02::fakeSpriteHit(uint16_t current_scanline)
 {
-    scanline = current_scanline;
     if (mask.render_background || mask.render_sprite) cart->ppuScanline();
     if (!mask.render_sprite || status.sprite_zero_hit) return;
 
     uint8_t sprite_size;
-    offset = (control.sprite_table_addr ? 0x1000 : 0);
+    uint16_t offset = (control.sprite_table_addr ? 0x1000 : 0);
     sprite_size = (control.sprite_size ? 16 : 8);
 
+    scanline = current_scanline;
     uint8_t sprite_y;
     sprite_y = sprite[0].y + 1;
     // Check if sprite is in scanline
@@ -441,12 +447,12 @@ void Ppu2C02::fakeSpriteHit(uint16_t current_scanline)
     int16_t y_offset;
     uint16_t tile_addr;
 
-    tile_index = sprite[0].index;
-    attribute_byte = sprite[0].attribute;
+    uint8_t tile_index = sprite[0].index;
+    uint8_t attribute_byte = sprite[0].attribute;
 
     tile_addr = (control.sprite_size) ? ((tile_index & 0x01) << 12) | ((tile_index & 0xFE) << 4)
                                       : offset + (tile_index << 4);
-    ptr_tile = cart->ppuReadPtr(tile_addr);
+    uint8_t* ptr_tile = cart->ppuReadPtr(tile_addr);
 
     y_offset = (int16_t)(scanline - sprite_y);
     if (y_offset > 7) y_offset += 8;
@@ -539,8 +545,6 @@ void Ppu2C02::reset()
     OAMADDR = 0x00;
     OAMDATA = 0x00;
     PPUDATA_buffer = 0x00;
-    nametable_byte = 0x00;
-    attribute_byte = 0x00;
 }
 
 void Ppu2C02::connectCartridge(Cartridge* cartridge)
@@ -640,19 +644,6 @@ void Ppu2C02::dumpState(File& state)
     state.write((uint8_t*)&x, sizeof(x));
     state.write((uint8_t*)&w, sizeof(w));
     state.write((uint8_t*)&PPUDATA_buffer, sizeof(PPUDATA_buffer));
-
-    state.write((uint8_t*)&offset, sizeof(offset));
-    state.write((uint8_t*)&nametable_index, sizeof(nametable_index));
-    state.write((uint8_t*)&nametable_byte_base, sizeof(nametable_byte_base));
-    state.write((uint8_t*)&attribute_byte_base, sizeof(attribute_byte_base));
-    state.write((uint8_t*)&nametable_byte, sizeof(nametable_byte));
-    state.write((uint8_t*)&attribute_byte, sizeof(attribute_byte));
-    state.write((uint8_t*)&x_tile, sizeof(x_tile));
-    state.write((uint8_t*)&y_tile, sizeof(y_tile));
-    state.write((uint8_t*)&attribute_shift, sizeof(attribute_shift));
-    state.write((uint8_t*)&attribute, sizeof(attribute));
-    state.write((uint8_t*)&tile_index, sizeof(tile_index));
-    state.write((uint8_t*)&sprite_count, sizeof(sprite_count));
 }
 
 void Ppu2C02::loadState(File& state)
@@ -681,17 +672,4 @@ void Ppu2C02::loadState(File& state)
     state.read((uint8_t*)&x, sizeof(x));
     state.read((uint8_t*)&w, sizeof(w));
     state.read((uint8_t*)&PPUDATA_buffer, sizeof(PPUDATA_buffer));
-
-    state.read((uint8_t*)&offset, sizeof(offset));
-    state.read((uint8_t*)&nametable_index, sizeof(nametable_index));
-    state.read((uint8_t*)&nametable_byte_base, sizeof(nametable_byte_base));
-    state.read((uint8_t*)&attribute_byte_base, sizeof(attribute_byte_base));
-    state.read((uint8_t*)&nametable_byte, sizeof(nametable_byte));
-    state.read((uint8_t*)&attribute_byte, sizeof(attribute_byte));
-    state.read((uint8_t*)&x_tile, sizeof(x_tile));
-    state.read((uint8_t*)&y_tile, sizeof(y_tile));
-    state.read((uint8_t*)&attribute_shift, sizeof(attribute_shift));
-    state.read((uint8_t*)&attribute, sizeof(attribute));
-    state.read((uint8_t*)&tile_index, sizeof(tile_index));
-    state.read((uint8_t*)&sprite_count, sizeof(sprite_count));
 }

@@ -849,24 +849,8 @@ private:
     uint8_t PPUDATA_buffer = 0x00;
 
     // Rendering
-    uint16_t offset = 0x0000;
-    uint8_t nametable_index = 0x00;
-    uint16_t nametable_byte_base = 0x00;
-    uint16_t attribute_byte_base = 0x00;
-    uint8_t nametable_byte = 0x00;
-    uint8_t attribute_byte = 0x00;
-    uint8_t x_tile = 0x00;
-    uint8_t y_tile = 0x00;
-    uint8_t attribute_shift = 0x00;
-    uint8_t attribute = 0x00;
-    uint8_t tile_index = 0x00;
     uint16_t scanline = 0x00;
-    uint8_t* ptr_tile = nullptr;
-    uint8_t* ptr_attribute = nullptr;
-    uint8_t* ptr_pattern_tile = nullptr;
     uint8_t* ptr_scanline_meta = nullptr;
-
-    uint8_t sprite_count = 0;
 
 public:
     uint8_t* ptr_sprite = (uint8_t*)sprite;

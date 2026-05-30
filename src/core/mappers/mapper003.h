@@ -6,16 +6,16 @@
 #define MAPPER003_NUM_CHR_BANKS_8K 16
 struct Mapper003_state
 {
-    Cartridge* cart;
-    MappedROM* mROM;
+    Cartridge* cart = nullptr;
+    MappedROM* mROM = nullptr;
     ROMBackend backend;
     uint8_t number_PRG_banks;
     uint8_t number_CHR_banks;
 
-    uint8_t* ptr_CHR_bank_8K;
+    uint8_t* ptr_CHR_bank_8K = nullptr;
     Bank CHR_banks_8K[MAPPER003_NUM_CHR_BANKS_8K];
     BankCache CHR_cache_8K;
-    uint8_t* PRG_bank;
+    uint8_t* PRG_bank = nullptr;
 };
 
 Mapper createMapper003(uint8_t PRG_banks, uint8_t CHR_banks, ROMBackend backend, Cartridge* cart);
