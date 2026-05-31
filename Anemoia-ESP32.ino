@@ -218,7 +218,9 @@ IRAM_ATTR void emulate()
 #else
             if (!cv_paused)
             {
+                vTaskSuspend(apu_task_handle);
                 cv_pauseMenu(&nes);
+                vTaskResume(apu_task_handle);
                 next_frame = esp_timer_get_time() + FRAME_TIME;
                 nes.controller = 0;
             }
