@@ -13,17 +13,27 @@ Cartridge* UI::selectGame()
 {
     unsigned int last_input_time = 0;
     constexpr unsigned int delay = 250;
+    extern bool demo_mode_active;
+    extern unsigned int demo_mode_roms_menu_timeout;
     max_items = (screen->height() - 56) / ITEM_HEIGHT;
 
-    drawWindowBox(2, 20, screen->width() - 4, screen->height() - 40);
-    drawBars();
-    drawRomMode();
     getNesFiles();
-    drawFileList();
+
+    bool show_roms_menu = true;
+    if (runtime_config.demo_mode && demo_mode_roms_menu_timeout == 0) { show_roms_menu = false; }
+    if (show_roms_menu)
+    {
+        drawWindowBox(2, 20, screen->width() - 4, screen->height() - 40);
+        drawBars();
+        drawRomMode();
+        drawFileList();
+        restoreBrightness();
+    }
 
     const int size = files.size();
     while (true)
     {
+        bool game_chosen = false;
         unsigned int now = millis();
 
         if (now - last_input_time > delay)
@@ -94,6 +104,29 @@ Cartridge* UI::selectGame()
 
         if (isDownPressed(CONTROLLER::A) && (selected >= 0 && selected < size))
         {
+            game_chosen = true;
+        }
+
+        if (runtime_config.demo_mode)
+        {
+            if (controllerRead())
+            {
+                demo_mode_active = false; // user input detected, demo mode disabled
+            }
+            if (demo_mode_active && (now - last_input_time) >= demo_mode_roms_menu_timeout)
+            {
+                selected = esp_random() % size;
+                game_chosen = true;
+            }
+        }
+
+        if (game_chosen)
+        {
+            // Turn backlight off
+            // Backlight will be turned back on after game is drawn to hide
+            // visual glitches
+            if (runtime_config.backlight) { ledcWrite(TFT_BACKLIGHT_PIN, 0); }
+
             std::string game = "/" + files[selected];
             std::vector<std::string>().swap(files);
             ROMBackend backend = (ROMBackend)settings.rom_backend;
@@ -418,7 +451,7 @@ void UI::settingsMenu(Bus* nes)
         int16_t y = items_y[i] + text_padding;
         if (i == Brightness)
         {
-            if (hw_config.backlight) { drawText(items[i], window_x + 12, y); }
+            if (runtime_config.backlight) { drawText(items[i], window_x + 12, y); }
             else
             {
                 screen->setCursor(window_x + 12, y);
@@ -441,7 +474,7 @@ void UI::settingsMenu(Bus* nes)
             {
                 select--;
                 if (select < 0) select = (num_items - 1);
-                if (!hw_config.backlight && select == Brightness)
+                if (!runtime_config.backlight && select == Brightness)
                 {
                     select--;
                     if (select < 0) select = (num_items - 1);
@@ -453,7 +486,7 @@ void UI::settingsMenu(Bus* nes)
             {
                 select++;
                 if (select > (num_items - 1)) select = 0;
-                if (!hw_config.backlight && select == Brightness)
+                if (!runtime_config.backlight && select == Brightness)
                 {
                     select++;
                     if (select > (num_items - 1)) select = 0;
@@ -571,14 +604,19 @@ void UI::initializeSettings()
         saveSettings(&temp);
     }
     loadSettings(&settings);
-
-    if (hw_config.backlight) setBrightness(settings.brightness);
+    // do not call setBrightness() here to allow for better control of the
+    // backlight in the main code to hide glitchy visuals when drawing the screen
 }
 
 void UI::loadEmulatorSettings(Bus* nes)
 {
     nes->ppu.setPalette(settings.palette);
     nes->cpu.apu.setVolume(settings.volume);
+}
+
+void UI::restoreBrightness()
+{
+    if (runtime_config.backlight) setBrightness(settings.brightness);
 }
 
 void UI::setBrightness(int value)

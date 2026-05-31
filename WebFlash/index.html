@@ -95,6 +95,11 @@
     </div>
     -->
 
+    <!-- Demo mode (compile time) -->
+    <div>
+      <label title="If no controller input within 10 seconds after startup, load random ROM and let it run for 2 minutes"><input type="checkbox" id="demo_mode"> Enable Game Demos (Attract Mode)</label>
+    </div>
+
     <!-- Backlight -->
     <div id="backlightOption">
       <label><input type="checkbox" id="backlight"> Display Backlight Pin Enable</label>
@@ -140,6 +145,7 @@
       let controller = getRadio("controller");
       let dacpin     = getRadio("dacpin");
       const debug    = document.getElementById("debug").checked ? "debug_on" : "debug_off";
+      const demo     = document.getElementById("demo_mode").checked ? "demo_mode_on" : "demo_mode_off";
 
       if (device === "cyd") {
         backlight  = "backlight_on";
@@ -174,7 +180,7 @@
 
       const manifestPath = "manifests/" +
         device + "-" + display + "-" + backlight + "-" + swap + "-" + screen_freq + "-" +
-        controller + "-" + rotation + "-" + sd_freq + "-" + dacpin + "-" + debug +
+        controller + "-" + rotation + "-" + sd_freq + "-" + dacpin + "-" + debug + "-" + demo +
         ".json";
       console.log(manifestPath);
       installButton.manifest = manifestPath;

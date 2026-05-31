@@ -11,23 +11,33 @@
 #include "esp_bt.h"
 #include "esp_bt_main.h"
 #include "esp_wifi.h"
-#include "hwconfig.h"
+#include "runtime_config.h"
 #include "src/controller.h"
 #include "src/core/bus.h"
 #include "src/debug.h"
 #include "src/ui.h"
 
-HWConfig hw_config;
+RuntimeConfig runtime_config;
 TFT_eSPI screen = TFT_eSPI();
 SPIClass SD_SPI(SD_SPI_PORT);
 UI ui(&screen);
 Cartridge* cart;
+
+RTC_NOINIT_ATTR bool demo_mode_reset;
+bool demo_mode_active = true; // If any user input is detected this is set to false
+// Uses same type selectGame() stores millis() output in. Cannot have a timeout longer than
+// 65.535 [seconds]
+unsigned int demo_mode_roms_menu_timeout = 10000; // 10 [seconds]
+// how long the game demo (aka attract mode) runs for
+const uint64_t demo_mode_runtime = 120 * 1000000ULL; // 120 [seconds]
+
 void setup()
 {
+    esp_reset_reason_t reset_reason = esp_reset_reason();
 #ifdef DEBUG
     Serial.begin(115200);
     log_pin_config();
-    LOGF("ESP reset reason: %d\n", esp_reset_reason());
+    LOGF("ESP reset reason: %d\n", reset_reason);
 #endif
 
     // Turn off Wifi and Bluetooth to reduce CPU overhead
@@ -39,24 +49,50 @@ void setup()
     esp_bt_mem_release(ESP_BT_MODE_BTDM);
     esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);
 
-    hw_config = loadConfig();
+    runtime_config = loadConfig();
+
+    if (runtime_config.demo_mode)
+    {
+        if (reset_reason == ESP_RST_SW)
+        {
+            // Save and Quit and reaching the time limit for demo mode both result in ESP_RST_SW
+            // Use demo_mode_reset, which persists across software resets, to distinguish between
+            // them. If Save and Quit is used the ROMs menu will be shown again after reset. If the
+            // time limit for demo mode is reached, skip the ROMs menu after reset.
+            if (demo_mode_reset)
+            {
+                demo_mode_reset = false;
+                // This will skip showing the ROMs menu resulting in a cleaner transition between
+                // demos
+                demo_mode_roms_menu_timeout = 0;
+            }
+        }
+        else
+        {
+            // Power on (ESP_RST_POWERON) initializes demo_mode_reset
+            demo_mode_reset = false;
+        }
+    }
+
+    if (runtime_config.backlight)
+    {
+        // Initialize backlight but keep it off
+        // Keeping the backlight off until the screen is drawn hides glitchy visuals
+        pinMode(TFT_BACKLIGHT_PIN, OUTPUT);
+        ledcAttach(TFT_BACKLIGHT_PIN, BL_FREQ, BL_RESOLUTION);
+        ledcWrite(TFT_BACKLIGHT_PIN, 0); // backlight is off
+    }
+
     setupI2SDAC();
 
     // Initialize TFT screen
     screen.begin();
-    screen.setRotation(hw_config.rotation);
+    screen.setRotation(runtime_config.rotation);
 #ifndef DISABLE_DMA
     screen.initDMA();
 #endif
     screen.fillScreen(BG_COLOR);
     screen.startWrite();
-
-    if (hw_config.backlight)
-    {
-        pinMode(TFT_BACKLIGHT_PIN, OUTPUT);
-        ledcAttach(TFT_BACKLIGHT_PIN, BL_FREQ, BL_RESOLUTION);
-        ledcWrite(TFT_BACKLIGHT_PIN, 255);
-    }
 
     // Initialize microsd card
     if (!initSD())
@@ -64,7 +100,7 @@ void setup()
     ui.initializeSettings();
 
     // Setup buttons
-    initController(hw_config.controller_type);
+    initController(runtime_config.controller_type);
 }
 
 void loop()
@@ -75,6 +111,11 @@ void loop()
     invalidCartridge();
 }
 
+IRAM_ATTR void onTimer()
+{
+    ui.restoreBrightness();
+}
+
 #ifdef DEBUG
 unsigned long last_frame_time = 0;
 unsigned long current_frame_time = 0;
@@ -83,6 +124,7 @@ unsigned long frame_count = 0;
 #endif
 IRAM_ATTR void emulate()
 {
+
     Bus nes;
     nes.insertCartridge(cart);
     nes.connectScreen(&screen);
@@ -108,12 +150,40 @@ IRAM_ATTR void emulate()
     last_frame_time = esp_timer_get_time();
 #endif
 
+    // Backlight is off
+    // Restore backlight shortly after emulation starts to hide
+    // visual glitches during initial screen draw
+    const uint64_t restore_backlight_after = 750000; // 0.75 seconds
+    hw_timer_t* timer = NULL;
+    timer = timerBegin(1000000);
+    timerAttachInterrupt(timer, &onTimer);
+    timerAlarm(timer, restore_backlight_after, false, 0); // one-shot timer
+
 // Target frame time: 16639µs (60.098 FPS)
 #define FRAME_TIME 16639
     uint64_t next_frame = esp_timer_get_time();
     // Emulation Loop
     while (true)
     {
+        if (runtime_config.demo_mode)
+        {
+            static uint64_t emulator_start_time = esp_timer_get_time();
+            if (nes.controller)
+            {
+                // disable demo mode so user is not interrupted by demo time limit ending
+                demo_mode_active = false;
+            }
+            if (demo_mode_active)
+            {
+                uint64_t time_elapsed_since_start = esp_timer_get_time() - emulator_start_time;
+                if (time_elapsed_since_start >= demo_mode_runtime)
+                {
+                    demo_mode_reset = true;
+                    ESP.restart();
+                }
+            }
+        }
+
         // Start + Select opens the pause menu
         if ((nes.controller & (uint8_t)CONTROLLER::Start) &&
             (nes.controller & (uint8_t)CONTROLLER::Select))
@@ -162,8 +232,11 @@ bool initSD()
 {
     LOG("Initializing SD...");
     SD_SPI.begin(SD_SCLK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN);
-    if (!SD.begin(SD_CS_PIN, SD_SPI, hw_config.sd_freq * 1000000))
+    if (!SD.begin(SD_CS_PIN, SD_SPI, runtime_config.sd_freq * 1000000))
     {
+        // Turn backlight on so error message can be seen
+        if (runtime_config.backlight) { ledcWrite(TFT_BACKLIGHT_PIN, 255); }
+
         LOG("SD Card Mount Failed");
 
         screen.setTextSize(2);
@@ -195,6 +268,8 @@ bool initSD()
 
 void invalidCartridge()
 {
+    // Turn backlight on so error message can be seen
+    if (runtime_config.backlight) { ledcWrite(TFT_BACKLIGHT_PIN, 255); }
     screen.fillScreen(BG_COLOR);
     screen.setTextColor(TFT_WHITE);
     screen.setTextDatum(MC_DATUM);
@@ -219,11 +294,11 @@ void setupI2SDAC()
                                 .tx_desc_auto_clear = true,
                                 .fixed_mclk = 0 };
 
-    if (hw_config.dac_pin == 1) i2s_config.channel_format = I2S_CHANNEL_FMT_ONLY_LEFT;
+    if (runtime_config.dac_pin == 1) i2s_config.channel_format = I2S_CHANNEL_FMT_ONLY_LEFT;
     i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL);
 
-    if (hw_config.dac_pin == 0) i2s_set_dac_mode(I2S_DAC_CHANNEL_RIGHT_EN);
-    else if (hw_config.dac_pin == 1) i2s_set_dac_mode(I2S_DAC_CHANNEL_LEFT_EN);
+    if (runtime_config.dac_pin == 0) i2s_set_dac_mode(I2S_DAC_CHANNEL_RIGHT_EN);
+    else if (runtime_config.dac_pin == 1) i2s_set_dac_mode(I2S_DAC_CHANNEL_LEFT_EN);
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
     i2s_config_t i2s_config = { .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
                                 .sample_rate = SAMPLE_RATE,

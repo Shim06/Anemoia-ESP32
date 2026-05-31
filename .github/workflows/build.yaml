@@ -265,6 +265,7 @@ jobs:
           SD_FREQS="sd_freq_80MHz sd_freq_40MHz"
           DACPINS="dac_gpio25 dac_gpio26"
           BACKLIGHTS="backlight_off backlight_on"
+          DEMO_MODES="demo_mode_off demo_mode_on"
 
           for artifact_dir in artifacts/firmware-*/; do
             NAME=$(basename "$artifact_dir" | sed 's/^firmware-//')
@@ -284,19 +285,23 @@ jobs:
             CONTROLLER_LIST="$CONTROLLERS"
             DACPIN_LIST="$DACPINS"
             BACKLIGHT_LIST="$BACKLIGHTS"
+            DEMO_MODE_LIST="$DEMO_MODES"
 
             if [ "$DEVICE" = "cyd" ]; then
               CONTROLLER_LIST="no_controller nes uart"
               DACPIN_LIST="dac_gpio26"
               BACKLIGHT_LIST="backlight_on"
+              DEMO_MODE_LIST="demo_mode_on"
             elif [ "$DEVICE" = "module" ]; then
               CONTROLLER_LIST="gpio"
               DACPIN_LIST="dac_gpio26"
               BACKLIGHT_LIST="backlight_off"
+              DEMO_MODE_LIST="demo_mode_off"
             elif [ "$DEVICE" = "discrete" ]; then
               CONTROLLER_LIST="gpio"
               DACPIN_LIST="dac_gpio25"
               BACKLIGHT_LIST="backlight_on"
+              DEMO_MODE_LIST="demo_mode_off"
             fi
 
             for CONTROLLER in $CONTROLLER_LIST; do
@@ -304,49 +309,56 @@ jobs:
                 for SD_FREQ in $SD_FREQS; do
                   for DACPIN in $DACPIN_LIST; do
                     for BACKLIGHT in $BACKLIGHT_LIST; do
-                      # Map to byte values matching HWConfig struct
-                      case "$ROTATION" in
-                        rotation1) ROT_VAL=1 ;;
-                        rotation3) ROT_VAL=3 ;;
-                      esac
+                      for DEMO_MODE in $DEMO_MODE_LIST; do
+                        # Map to byte values matching RuntimeConfig struct
+                        case "$ROTATION" in
+                          rotation1) ROT_VAL=1 ;;
+                          rotation3) ROT_VAL=3 ;;
+                        esac
 
-                      case "$DACPIN" in
-                        dac_gpio25) DAC_VAL=0 ;;
-                        dac_gpio26) DAC_VAL=1 ;;
-                        *) DAC_VAL=0 ;;
-                      esac
+                        case "$DACPIN" in
+                          dac_gpio25) DAC_VAL=0 ;;
+                          dac_gpio26) DAC_VAL=1 ;;
+                          *) DAC_VAL=0 ;;
+                        esac
 
-                      case "$CONTROLLER" in
-                        no_controller) CONTROLLER_VAL=255 ;;
-                        gpio) CONTROLLER_VAL=0 ;;
-                        nes) CONTROLLER_VAL=1 ;;
-                        snes) CONTROLLER_VAL=2 ;;
-                        psx) CONTROLLER_VAL=3 ;;
-                        uart) CONTROLLER_VAL=4 ;;
-                      esac
+                        case "$CONTROLLER" in
+                          no_controller) CONTROLLER_VAL=255 ;;
+                          gpio) CONTROLLER_VAL=0 ;;
+                          nes) CONTROLLER_VAL=1 ;;
+                          snes) CONTROLLER_VAL=2 ;;
+                          psx) CONTROLLER_VAL=3 ;;
+                          uart) CONTROLLER_VAL=4 ;;
+                        esac
 
-                      case "$SD_FREQ" in
-                        sd_freq_80MHz) SD_VAL=80 ;;
-                        sd_freq_40MHz) SD_VAL=40 ;;
-                      esac
+                        case "$SD_FREQ" in
+                          sd_freq_80MHz) SD_VAL=80 ;;
+                          sd_freq_40MHz) SD_VAL=40 ;;
+                        esac
 
-                      case "$BACKLIGHT" in
-                        backlight_off) BL_VAL=0 ;;
-                        backlight_on)  BL_VAL=1 ;;
-                      esac
+                        case "$BACKLIGHT" in
+                          backlight_off) BL_VAL=0 ;;
+                          backlight_on)  BL_VAL=1 ;;
+                        esac
+                        
+                        case "$DEMO_MODE" in
+                          demo_mode_off) DM_VAL=0 ;;
+                          demo_mode_on)  DM_VAL=1 ;;
+                        esac
 
-                      # Write HWConfig struct to binary file and create LittleFS image
-                      CFG_NAME="$DEVICE-$DISPLAY-$BACKLIGHT-$SWAP-$SCREEN_FREQ-$CONTROLLER-$ROTATION-$SD_FREQ-$DACPIN-$DEBUG-config.bin"
-                      mkdir -p tmp/fs_stage
-                      printf "$(printf '\\%03o' $ROT_VAL $DAC_VAL $CONTROLLER_VAL $SD_VAL $BL_VAL)" \
-                          > tmp/fs_stage/hwconfig.bin
-                      # mklittlefs -c tmp/fs_stage -s 0x160000 "WebFlash/configs/$CFG_NAME"
-                      mklittlefs -c tmp/fs_stage -s 0x0F000 "WebFlash/configs/$CFG_NAME"
-                      rm -rf "tmp/fs_stage"
+                        # Write RuntimeConfig struct to binary file and create LittleFS image
+                        CFG_NAME="$DEVICE-$DISPLAY-$BACKLIGHT-$SWAP-$SCREEN_FREQ-$CONTROLLER-$ROTATION-$SD_FREQ-$DACPIN-$DEBUG-$DEMO_MODE-config.bin"
+                        mkdir -p tmp/fs_stage
+                        printf "$(printf '\\%03o' $ROT_VAL $DAC_VAL $CONTROLLER_VAL $SD_VAL $BL_VAL $DM_VAL)" \
+                            > tmp/fs_stage/runtime_config.bin
+                        # mklittlefs -c tmp/fs_stage -s 0x160000 "WebFlash/configs/$CFG_NAME"
+                        mklittlefs -c tmp/fs_stage -s 0x0F000 "WebFlash/configs/$CFG_NAME"
+                        rm -rf "tmp/fs_stage"
 
-                      printf '{\n  "name": "Anemoia-ESP32",\n  "version": "1.0.0",\n  "funding_url": "https://ko-fi.com/manalotoshim",\n  "builds": [{\n    "chipFamily": "ESP32",\n    "parts": [\n      { "path": "../%s/bootloader.bin", "offset": 4096 },\n      { "path": "../%s/partitions.bin", "offset": 32768 },\n      { "path": "../%s/firmware.bin",   "offset": 65536 },\n      { "path": "../configs/%s",        "offset": 3866624 }\n    ]\n  }]\n}' \
-                        "$FW_DEST" "$FW_DEST" "$FW_DEST" "$CFG_NAME" \
-                        > "WebFlash/manifests/$DEVICE-$DISPLAY-$BACKLIGHT-$SWAP-$SCREEN_FREQ-$CONTROLLER-$ROTATION-$SD_FREQ-$DACPIN-$DEBUG.json"
+                        printf '{\n  "name": "Anemoia-ESP32",\n  "version": "1.0.0",\n  "funding_url": "https://ko-fi.com/manalotoshim",\n  "builds": [{\n    "chipFamily": "ESP32",\n    "parts": [\n      { "path": "../%s/bootloader.bin", "offset": 4096 },\n      { "path": "../%s/partitions.bin", "offset": 32768 },\n      { "path": "../%s/firmware.bin",   "offset": 65536 },\n      { "path": "../configs/%s",        "offset": 3866624 }\n    ]\n  }]\n}' \
+                          "$FW_DEST" "$FW_DEST" "$FW_DEST" "$CFG_NAME" \
+                          > "WebFlash/manifests/$DEVICE-$DISPLAY-$BACKLIGHT-$SWAP-$SCREEN_FREQ-$CONTROLLER-$ROTATION-$SD_FREQ-$DACPIN-$DEBUG-$DEMO_MODE.json"
+                      done
                     done
                   done
                 done
@@ -366,3 +378,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+

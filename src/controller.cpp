@@ -1,10 +1,10 @@
 #include "controller.h"
 #include "../config.h"
-#include "../hwconfig.h"
+#include "../runtime_config.h"
 #include "core/bus.h"
 #include <Arduino.h>
 
-extern HWConfig hw_config;
+extern RuntimeConfig runtime_config;
 static uint8_t (*_controllerRead)() = nullptr;
 
 uint8_t controllerRead()
@@ -228,34 +228,55 @@ static uint8_t PSXControllerRead()
     return state;
 }
 
+static bool UartProcessPacket(HardwareSerial& port, uint8_t& buttons_state)
+{
+    // a packet is three bytes: START_BYTE, buttons_state, and checksum
+    // up, down, left, and right pressed at the same time is impossible on a controller,
+    // so 0b1111000 (0xF0) makes a good start byte since the buttons state byte can
+    // never be 0xF0
+    const uint8_t START_BYTE = 0xF0;
+
+    if (port.available() < 3) return false;
+
+    if (port.read() != START_BYTE) return false;
+
+    if (!port.available()) return false;
+    uint8_t buttons_state_new = port.read();
+
+    if (!port.available()) return false;
+    uint8_t checksum = port.read();
+
+    if (checksum != buttons_state_new) return false;
+
+    buttons_state = buttons_state_new;
+    return true;
+}
+
 static uint8_t UartControllerRead()
 {
-    static uint8_t state = 0x00;
+    constexpr uint8_t no_data_limit = 10;
     static uint8_t no_data_count = 0;
 
-    int b0 = Serial.read();
-    int b1 = Serial1.read();
-    if (b0 >= 0 || b1 >= 0)
-    {
-        // if received button presses from both Serial and Serial1 combine them
-        state = 0x00;
-        if (b0 >= 0) state = (uint8_t)b0;
-        if (b1 >= 0) state |= (uint8_t)b1;
+    // UartProcessPacket() only updates buttons_state if successful
+    static uint8_t buttons_state0 = 0x00;
+    static uint8_t buttons_state1 = 0x00;
+    bool success0 = UartProcessPacket(Serial, buttons_state0);
+    bool success1 = UartProcessPacket(Serial1, buttons_state1);
 
-        no_data_count = 0;
-        return state;
+    if (success0 || success1) { no_data_count = 0; }
+    else if (no_data_count < no_data_limit)
+    {
+        // if there is no data, then output previous data 10 times before
+        // returning 0x00 (no buttons pressed)
+        no_data_count++;
+        if (no_data_count >= no_data_limit)
+        {
+            buttons_state0 = 0x00;
+            buttons_state1 = 0x00;
+        }
     }
 
-    // if there is no data, then  reuse previous state 10 times before
-    // setting state to 0x00 (no buttons pressed)
-    no_data_count++;
-    if (no_data_count >= 10)
-    {
-        state = 0x00;
-        no_data_count = 10; // pin at 10 to prevent overflow
-    }
-
-    return state;
+    return buttons_state0 | buttons_state1;
 }
 
 static uint8_t dummyControllerRead()
@@ -324,6 +345,10 @@ void initController(ControllerType controller_type)
         // states sent from a WebSerial game controller webpage over USB to serial.
         // debug messages will remain off
         Serial.begin(115200);
+
+        // Discard garbage from serial buffer that can be read as false button presses
+        delay(10);
+        while (Serial.available() > 0) { Serial.read(); }
 #endif
 
         // Serial1 is used by an adapter board that supports multiple controller types and
@@ -333,7 +358,7 @@ void initController(ControllerType controller_type)
         Serial1.begin(115200, SERIAL_8N1, CONTROLLER_UART_RX, CONTROLLER_UART_TX);
         delay(200); // allow controller adapter to finish booting
 
-        Serial1.write(hw_config.controller_type);
+        Serial1.write(runtime_config.controller_type);
         _controllerRead = UartControllerRead;
         break;
     case CT_NC:
