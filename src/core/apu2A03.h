@@ -7,7 +7,11 @@
 #include "config.h"
 #include "driver/i2s.h"
 
-#define SAMPLE_RATE       44100
+#ifndef COMPOSITE_VIDEO
+    #define SAMPLE_RATE 44100
+#else
+    #define SAMPLE_RATE 15720
+#endif
 #define AUDIO_BUFFER_SIZE 128
 
 class Bus;
@@ -199,6 +203,7 @@ private:
     bool DMC_enable = false;
 
     void generateSample();
+    void writeBuffer();
 
     void pulseChannelClock(sequencerUnit& seq, bool enable);
     void triangleChannelClock(triangleChannel& triangle, bool enable);

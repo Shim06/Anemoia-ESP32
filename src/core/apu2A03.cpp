@@ -2,6 +2,13 @@
 #include "bus.h"
 #include "cpu6502.h"
 
+#ifdef COMPOSITE_VIDEO
+extern uint8_t _audio_buffer[512];
+extern uint32_t _audio_r;
+extern uint32_t _audio_w;
+void audio_write_16(const int16_t* s, int len, int channels);
+#endif
+
 DMA_ATTR uint16_t Apu2A03::audio_buffer[AUDIO_BUFFER_SIZE * 2];
 
 Apu2A03::Apu2A03()
@@ -377,10 +384,19 @@ inline void Apu2A03::generateSample()
     if (buffer_index >= AUDIO_BUFFER_SIZE)
     {
         buffer_index = 0;
-
-        static size_t dummy;
-        i2s_write(I2S_NUM_0, audio_buffer, sizeof(audio_buffer), &dummy, portMAX_DELAY);
+        writeBuffer();
     }
+}
+
+inline void Apu2A03::writeBuffer()
+{
+#ifndef COMPOSITE_VIDEO
+    static size_t dummy;
+    i2s_write(I2S_NUM_0, audio_buffer, sizeof(audio_buffer), &dummy, portMAX_DELAY);
+#else
+    while ((_audio_w - _audio_r) + AUDIO_BUFFER_SIZE > sizeof(_audio_buffer)) vTaskDelay(1);
+    audio_write_16((const int16_t*)audio_buffer, AUDIO_BUFFER_SIZE, 2);
+#endif
 }
 
 inline void Apu2A03::pulseChannelClock(sequencerUnit& seq, bool enable)

@@ -365,14 +365,7 @@ void apuTask(void* param)
 {
     Apu2A03* apu = (Apu2A03*)param;
 
-    while (true)
-    {
-#ifndef COMPOSITE_VIDEO
-        apu->clock();
-#else
-        vTaskDelay(1000000000);
-#endif
-    }
+    while (true) { apu->clock(); }
 }
 
 void pollingTask(void* param)

@@ -222,7 +222,7 @@ void video_init_hw(int line_width, int samples_per_cc)
     //                   v gnd
 
     // ledcAttach(AUDIO_PIN, 2000000, 7); // 625000 khz is as fast as we go w 7 bits
-    ledcAttach(AUDIO_PIN, 625000, 7);
+    ledcAttachChannel(AUDIO_PIN, 625000, 7, 0);
     ledcWrite(0, 0);
 }
 
@@ -540,8 +540,8 @@ void IRAM_ATTR pal_sync(uint16_t* line, int i)
     pal_sync2(line + _line_width / 2, _line_width / 2, t & 1);
 }
 
-//  audio is buffered as 6 bit unsigned samples
-uint8_t _audio_buffer[128];
+// audio is buffered as 6 bit unsigned samples
+uint8_t _audio_buffer[1024];
 uint32_t _audio_r = 0;
 uint32_t _audio_w = 0;
 void audio_write_16(const int16_t* s, int len, int channels)
@@ -580,11 +580,9 @@ void video_sync()
 
 void IRAM_ATTR video_isr(volatile void* vbuf)
 {
-    if (!_framebuffer) return;
-
-    // uint8_t s =
-    //     _audio_r < _audio_w ? _audio_buffer[_audio_r++ & (sizeof(_audio_buffer) - 1)] : 0x20;
-    // audio_sample(s);
+    uint8_t s =
+        _audio_r < _audio_w ? _audio_buffer[_audio_r++ & (sizeof(_audio_buffer) - 1)] : 0x20;
+    audio_sample(s);
     // audio_sample(_sin64[_x++ & 0x3F]);
 
     int i = _line_counter++;
