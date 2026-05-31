@@ -263,10 +263,7 @@ static uint8_t UartControllerRead()
     bool success0 = UartProcessPacket(Serial, buttons_state0);
     bool success1 = UartProcessPacket(Serial1, buttons_state1);
 
-    if (success0 || success1)
-    {
-        no_data_count = 0;
-    }
+    if (success0 || success1) { no_data_count = 0; }
     else if (no_data_count < no_data_limit)
     {
         // if there is no data, then output previous data 10 times before
