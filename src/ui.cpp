@@ -374,7 +374,11 @@ void UI::pauseMenu(Bus* nes)
                     paused = false;
                     return;
 
-                case SaveAndQuit: ESP.restart(); return;
+                case SaveAndQuit:
+                    // turn off audio before restart to prevent speaker popping
+                    i2s_driver_uninstall(I2S_NUM_0);
+                    ESP.restart();
+                    return;
                 default: break;
                 }
             }
