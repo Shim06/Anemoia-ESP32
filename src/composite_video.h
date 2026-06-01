@@ -150,16 +150,48 @@ static esp_err_t composite_video_start_dma(int line_width, int samples_per_cc, i
     I2S0.out_link.addr = (uint32_t)_dma_desc;
 
     //  Setup up the apll: See ref 3.2.7 Audio PLL
-    //  f_xtal = (int)rtc_clk_xtal_freq_get() * 1000000;
-    //  f_out = xtal_freq * (4 + sdm2 + sdm1/256 + sdm0/65536); // 250 < f_out < 500
-    //  apll_freq = f_out/((o_div + 2) * 2)
-    //  operating range of the f_out is 250 MHz ~ 500 MHz
-    //  operating range of the apll_freq is 16 ~ 128 MHz.
-    //  select sdm0,sdm1,sdm2 to produce nice multiples of colorburst frequencies
+    // Formula:
+    // vco = 40000000 * (4 + sdm2 + sdm1/256 + sdm0/65536);
+    // apll_freq = f_out / ((o_div + 2) * 2);
+    // dac_freq = apll_freq / 4; // <- This is the output frequency of GPIO25
+    // operating range of the f_out is 250 MHz ~ 500 MHz
+    // operating range of the apll_freq is 16 ~ 128 MHz.
+    // select sdm0,sdm1,sdm2 to produce nice multiples of colorburst frequencies
 
-    //  see calc_freq() for math: (4+a)*10/((2 + b)*2) mhz
-    //  up to 20mhz seems to work ok:
-    //  rtc_clk_apll_enable(1,0x00,0x00,0x4,0);   // 20mhz for fancy DDS
+    // Calculations for the closest possible frequency
+    // These coefficients should supposedly be more accurate than the original coefficients used
+    // === NTSC_3x (target = 10.7386363636 MHz) ===
+    //   o_div = 2
+    //   sdm2  = 4
+    //   sdm1  = 151
+    //   sdm0  = 70
+    //   vco   = 343.6364746094 MHz  (valid: 250-500 MHz)
+    //   apll  = 42.9545593262 MHz
+    //   dac   = 10738639.8315429688 Hz
+    //   error = +3.467943 Hz
+    //   rtc_clk_apll_coeff_set(2, 70, 151, 4);
+
+    // === NTSC_4x (target = 14.3181818182 MHz) ===
+    //   o_div = 2
+    //   sdm2  = 7
+    //   sdm1  = 116
+    //   sdm0  = 93
+    //   vco   = 458.1817626953 MHz  (valid: 250-500 MHz)
+    //   apll  = 57.2727203369 MHz
+    //   dac   = 14318180.0842285156 Hz
+    //   error = -1.733971 Hz
+    //   rtc_clk_apll_coeff_set(2, 93, 116, 7);
+
+    // === PAL_4x (target = 17.7344760000 MHz) ===
+    //   o_div = 1
+    //   sdm2  = 6
+    //   sdm1  = 164
+    //   sdm0  = 4
+    //   vco   = 425.6274414062 MHz  (valid: 250-500 MHz)
+    //   apll  = 70.9379069010 MHz
+    //   dac   = 17734476.7252604179 Hz
+    //   error = +0.725260 Hz
+    //   rtc_clk_apll_coeff_set(1, 4, 164, 6);
 
     rtc_clk_apll_enable(1);
     if (!_pal_)
@@ -167,13 +199,12 @@ static esp_err_t composite_video_start_dma(int line_width, int samples_per_cc, i
         switch (samples_per_cc)
         {
         case 3:
-            // rtc_clk_apll_coeff_set(2, 0x46, 0x97, 0x4);
-            rtc_clk_apll_coeff_set(3, 95, 133, 12); // Supposedly more accurate version
-            break;                                  // 10.7386363636 3x NTSC (10.7386398315mhz)
+            rtc_clk_apll_coeff_set(2, 0x46, 0x97, 0x4);
+            break; // 10.7386363636 3x NTSC (10.7386398315mhz)
         case 4:
-            rtc_clk_apll_coeff_set(1, 0x46, 0x97, 0x4);
-            // rtc_clk_apll_coeff_set(2, 93, 116, 7);
-            break; // 14.3181818182 4x NTSC (14.3181864421mhz)
+            // rtc_clk_apll_coeff_set(1, 0x46, 0x97, 0x4);
+            rtc_clk_apll_coeff_set(2, 93, 116, 7); // Supposedly more accurate version
+            break;                                 // 14.3181818182 4x NTSC (14.3181864421mhz)
         }
     }
     else
