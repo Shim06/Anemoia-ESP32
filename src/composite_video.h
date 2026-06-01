@@ -587,9 +587,10 @@ void audio_write_16(const int16_t* s, int len, int channels)
             s += 2;
         }
         else b = *s++ >> 8;
-        if (b < -32) b = -32;
-        if (b > 31) b = 31;
-        _audio_buffer[_audio_w++ & (sizeof(_audio_buffer) - 1)] = b + 32;
+        b >>= 1; // scale [0, 255] down to [0, 127]
+        if (b < 0) b = 0;
+        if (b > 127) b = 127;
+        _audio_buffer[_audio_w++ & (sizeof(_audio_buffer) - 1)] = b;
     }
 }
 
@@ -612,7 +613,7 @@ void video_sync()
 void IRAM_ATTR video_isr(volatile void* vbuf)
 {
     uint8_t s =
-        _audio_r < _audio_w ? _audio_buffer[_audio_r++ & (sizeof(_audio_buffer) - 1)] : 0x20;
+        _audio_r < _audio_w ? _audio_buffer[_audio_r++ & (sizeof(_audio_buffer) - 1)] : 0x40;
     audio_sample(s);
     // audio_sample(_sin64[_x++ & 0x3F]);
 
