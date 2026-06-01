@@ -179,6 +179,9 @@ IRAM_ATTR void emulate()
                 if (time_elapsed_since_start >= demo_mode_runtime)
                 {
                     demo_mode_reset = true;
+                    // turn off audio before restart to prevent speaker popping
+                    vTaskSuspend(apu_task_handle);
+                    i2s_driver_uninstall(I2S_NUM_0);
                     ESP.restart();
                 }
             }
