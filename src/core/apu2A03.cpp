@@ -3,11 +3,6 @@
 #include "cpu6502.h"
 
 DMA_ATTR uint16_t Apu2A03::audio_buffer[AUDIO_BUFFER_SIZE * 2];
-constexpr uint8_t Apu2A03::duty_sequences[4][8];
-constexpr uint8_t Apu2A03::length_counter_lookup[32];
-constexpr uint8_t Apu2A03::triangle_sequence[32];
-constexpr uint16_t Apu2A03::noise_period_lookup[16];
-constexpr uint16_t Apu2A03::DMC_rate_lookup[16];
 
 Apu2A03::Apu2A03()
 {
