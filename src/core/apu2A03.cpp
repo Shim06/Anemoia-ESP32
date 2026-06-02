@@ -3,7 +3,6 @@
 #include "cpu6502.h"
 
 #ifdef COMPOSITE_VIDEO
-extern uint8_t _audio_buffer[1024];
 void cv_audio_write_16(const uint16_t* s, int len, int channels);
 bool cv_audio_buffer_full(int buffer_size);
 #endif
