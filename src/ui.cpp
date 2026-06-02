@@ -357,6 +357,7 @@ void UI::pauseMenu(Bus* nes)
 
                 case Reset:
                     nes->reset();
+                    screen->fillScreen(TFT_BLACK);
                     screen->startWrite();
                     paused = false;
                     return;
