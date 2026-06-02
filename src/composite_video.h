@@ -575,7 +575,7 @@ void IRAM_ATTR pal_sync(uint16_t* line, int i)
 uint8_t _audio_buffer[1024];
 uint32_t _audio_r = 0;
 uint32_t _audio_w = 0;
-void audio_write_16(const int16_t* s, int len, int channels)
+void audio_write_16(const uint16_t* s, int len, int channels)
 {
     int b;
     while (len--)
@@ -588,7 +588,6 @@ void audio_write_16(const int16_t* s, int len, int channels)
         }
         else b = *s++ >> 8;
         b >>= 1; // scale [0, 255] down to [0, 127]
-        if (b < 0) b = 0;
         if (b > 127) b = 127;
         _audio_buffer[_audio_w++ & (sizeof(_audio_buffer) - 1)] = b;
     }
