@@ -394,7 +394,7 @@ inline void Apu2A03::writeBuffer()
     i2s_write(I2S_NUM_0, audio_buffer, sizeof(audio_buffer), &dummy, portMAX_DELAY);
 #else
     while (cv_audio_buffer_full(AUDIO_BUFFER_SIZE)) vTaskDelay(1);
-    audio_write_16((const uint16_t*)audio_buffer, AUDIO_BUFFER_SIZE, 2);
+    cv_audio_write_16((const uint16_t*)audio_buffer, AUDIO_BUFFER_SIZE, 2);
 #endif
 }
 
