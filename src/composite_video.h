@@ -575,7 +575,7 @@ void IRAM_ATTR pal_sync(uint16_t* line, int i)
 uint8_t _audio_buffer[1024];
 uint32_t _audio_r = 0;
 uint32_t _audio_w = 0;
-void audio_write_16(const uint16_t* s, int len, int channels)
+void cv_audio_write_16(const uint16_t* s, int len, int channels)
 {
     int b;
     while (len--)
@@ -591,6 +591,11 @@ void audio_write_16(const uint16_t* s, int len, int channels)
         if (b > 127) b = 127;
         _audio_buffer[_audio_w++ & (sizeof(_audio_buffer) - 1)] = b;
     }
+}
+
+bool cv_audio_buffer_full(int buffer_size)
+{
+    return (_audio_w - _audio_r) + buffer_size > sizeof(_audio_buffer);
 }
 
 // Wait for blanking before starting drawing
