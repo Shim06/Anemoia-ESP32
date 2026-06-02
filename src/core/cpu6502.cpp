@@ -3,8 +3,8 @@
 
 #define EXECUTE(addrmode, instruction)                                                             \
     {                                                                                              \
-        addrmode();                                                                                \
-        instruction();                                                                             \
+        additional_cycle1 = addrmode();                                                            \
+        additional_cycle2 = instruction();                                                         \
     }
 
 Cpu6502::Cpu6502()
@@ -41,6 +41,8 @@ IRAM_ATTR void Cpu6502::OAM_Write(uint8_t addr, uint8_t data)
 
 IRAM_ATTR void Cpu6502::clock(int i)
 {
+    uint8_t opcode = 0x00;
+    uint8_t additional_cycle1, additional_cycle2;
     for (int remaining_cycles = i; remaining_cycles > 0; remaining_cycles--)
     {
         if (cycles > 0)
@@ -52,8 +54,6 @@ IRAM_ATTR void Cpu6502::clock(int i)
 
         opcode = read(PC++);
         cycles = instr_cycles[opcode];
-        additional_cycle1 = 0;
-        additional_cycle2 = 0;
         switch (opcode)
         {
         case 0x00: EXECUTE(IMM, Instr_BRK); break;
@@ -327,8 +327,6 @@ IRAM_ATTR void Cpu6502::clock(int i)
         case 0xFD: EXECUTE(ABX, Instr_SBC); break;
         case 0xFE: EXECUTE(ABX, Instr_INC); break;
         case 0xFF: EXECUTE(IMP, Instr_XXX); break;
-
-        default: break;
         }
 
         cycles += (additional_cycle1 & additional_cycle2);
@@ -381,15 +379,16 @@ inline uint8_t Cpu6502::fetch()
     return fetched;
 }
 
-inline void Cpu6502::ABS()
+inline uint8_t Cpu6502::ABS()
 {
     uint8_t low_byte = read(PC++);
     uint8_t high_byte = read(PC++);
 
     addr_abs = (high_byte << 8) | low_byte;
+    return 0;
 }
 
-inline void Cpu6502::ABX()
+inline uint8_t Cpu6502::ABX()
 {
     uint8_t low_byte = read(PC++);
     uint8_t high_byte = read(PC++);
@@ -397,10 +396,11 @@ inline void Cpu6502::ABX()
     addr_abs = (high_byte << 8) | low_byte;
     addr_abs += X;
 
-    if ((addr_abs & 0xFF00) != (high_byte << 8)) additional_cycle1 = 1;
+    if ((addr_abs & 0xFF00) != (high_byte << 8)) return 1;
+    return 0;
 }
 
-inline void Cpu6502::ABY()
+inline uint8_t Cpu6502::ABY()
 {
     uint8_t low_byte = read(PC++);
     uint8_t high_byte = read(PC++);
@@ -408,21 +408,24 @@ inline void Cpu6502::ABY()
     addr_abs = (high_byte << 8) | low_byte;
     addr_abs += Y;
 
-    if ((addr_abs & 0xFF00) != (high_byte << 8)) additional_cycle1 = 1;
+    if ((addr_abs & 0xFF00) != (high_byte << 8)) return 1;
+    return 0;
 }
 
-inline void Cpu6502::IMM()
+inline uint8_t Cpu6502::IMM()
 {
     addr_abs = PC++;
+    return 0;
 }
 
-inline void Cpu6502::IMP()
+inline uint8_t Cpu6502::IMP()
 {
     fetched = A;
     addrmode_implied = true;
+    return 0;
 }
 
-inline void Cpu6502::IND()
+inline uint8_t Cpu6502::IND()
 {
     uint8_t low_byte = read(PC++);
     uint8_t high_byte = read(PC++);
@@ -431,9 +434,10 @@ inline void Cpu6502::IND()
 
     if (low_byte == 0xFF) addr_abs = (read(ptr & 0xFF00) << 8) | read(ptr);
     else addr_abs = (read(ptr + 1) << 8) | read(ptr);
+    return 0;
 }
 
-inline void Cpu6502::IDX()
+inline uint8_t Cpu6502::IDX()
 {
     uint8_t temp = read(PC++);
 
@@ -441,9 +445,10 @@ inline void Cpu6502::IDX()
     uint8_t high_byte = read((uint16_t)(temp + (uint16_t)X + 1) & 0x00FF);
 
     addr_abs = (high_byte << 8) | low_byte;
+    return 0;
 }
 
-inline void Cpu6502::IDY()
+inline uint8_t Cpu6502::IDY()
 {
     uint8_t temp = read(PC++);
 
@@ -453,315 +458,352 @@ inline void Cpu6502::IDY()
     addr_abs = (high_byte << 8) | low_byte;
     addr_abs += Y;
 
-    if ((addr_abs & 0xFF00) != (high_byte << 8)) additional_cycle1 = 1;
+    if ((addr_abs & 0xFF00) != (high_byte << 8)) return 1;
+    return 0;
 }
 
-inline void Cpu6502::REL()
+inline uint8_t Cpu6502::REL()
 {
     addr_rel = read(PC++);
     if (addr_rel & 0x80) addr_rel |= 0xFF00;
+    return 0;
 }
 
-inline void Cpu6502::ZPG()
+inline uint8_t Cpu6502::ZPG()
 {
     addr_abs = read(PC++);
+    return 0;
 }
 
-inline void Cpu6502::ZPX()
+inline uint8_t Cpu6502::ZPX()
 {
     addr_abs = read(PC++) + X;
     addr_abs &= 0x00FF;
+    return 0;
 }
 
-inline void Cpu6502::ZPY()
+inline uint8_t Cpu6502::ZPY()
 {
     addr_abs = read(PC++) + Y;
     addr_abs &= 0x00FF;
+    return 0;
 }
 
-inline void Cpu6502::Instr_LDA()
+inline uint8_t Cpu6502::Instr_LDA()
 {
     A = read(addr_abs);
     SET_ZN(A);
-    additional_cycle2 = 1;
+    return 1;
 }
 
-inline void Cpu6502::Instr_LDX()
+inline uint8_t Cpu6502::Instr_LDX()
 {
     X = read(addr_abs);
     SET_ZN(X);
-    additional_cycle2 = 1;
+    return 1;
 }
 
-inline void Cpu6502::Instr_LDY()
+inline uint8_t Cpu6502::Instr_LDY()
 {
     Y = read(addr_abs);
     SET_ZN(Y);
-    additional_cycle2 = 1;
+    return 1;
 }
 
-inline void Cpu6502::Instr_STA()
+inline uint8_t Cpu6502::Instr_STA()
 {
     write(addr_abs, A);
+    return 0;
 }
 
-inline void Cpu6502::Instr_STX()
+inline uint8_t Cpu6502::Instr_STX()
 {
     write(addr_abs, X);
+    return 0;
 }
 
-inline void Cpu6502::Instr_STY()
+inline uint8_t Cpu6502::Instr_STY()
 {
     write(addr_abs, Y);
+    return 0;
 }
 
-inline void Cpu6502::Instr_TAX()
+inline uint8_t Cpu6502::Instr_TAX()
 {
     X = A;
     SET_ZN(X);
+    return 0;
 }
 
-inline void Cpu6502::Instr_TAY()
+inline uint8_t Cpu6502::Instr_TAY()
 {
     Y = A;
     SET_ZN(Y);
+    return 0;
 }
 
-inline void Cpu6502::Instr_TSX()
+inline uint8_t Cpu6502::Instr_TSX()
 {
     X = SP;
     SET_ZN(X);
+    return 0;
 }
 
-inline void Cpu6502::Instr_TXA()
+inline uint8_t Cpu6502::Instr_TXA()
 {
     A = X;
     SET_ZN(A);
+    return 0;
 }
 
-inline void Cpu6502::Instr_TXS()
+inline uint8_t Cpu6502::Instr_TXS()
 {
     SP = X;
+    return 0;
 }
 
-inline void Cpu6502::Instr_TYA()
+inline uint8_t Cpu6502::Instr_TYA()
 {
     A = Y;
     SET_ZN(A);
+    return 0;
 }
 
-inline void Cpu6502::Instr_PHA()
+inline uint8_t Cpu6502::Instr_PHA()
 {
     write(0x0100 + SP, A);
     SP--;
+    return 0;
 }
 
-inline void Cpu6502::Instr_PHP()
+inline uint8_t Cpu6502::Instr_PHP()
 {
     write(0x0100 + SP, status | B | U);
     status &= ~B;
     status |= U;
     SP--;
+    return 0;
 }
 
-inline void Cpu6502::Instr_PLA()
+inline uint8_t Cpu6502::Instr_PLA()
 {
     SP++;
     A = read(0x0100 + SP);
     SET_ZN(A);
+    return 0;
 }
 
-inline void Cpu6502::Instr_PLP()
+inline uint8_t Cpu6502::Instr_PLP()
 {
     SP++;
     status = read(0x0100 + SP);
     status &= ~B;
     status |= U;
+    return 0;
 }
 
-inline void Cpu6502::Instr_DEC()
+inline uint8_t Cpu6502::Instr_DEC()
 {
-    temp = (read(addr_abs) - 1) & 0x00FF;
+    uint8_t temp = read(addr_abs) - 1;
     SET_ZN(temp);
-    write(addr_abs, (uint8_t)temp);
+    write(addr_abs, temp);
+    return 0;
 }
 
-inline void Cpu6502::Instr_DEX()
+inline uint8_t Cpu6502::Instr_DEX()
 {
     X--;
     SET_ZN(X);
+    return 0;
 }
 
-inline void Cpu6502::Instr_DEY()
+inline uint8_t Cpu6502::Instr_DEY()
 {
     Y--;
     SET_ZN(Y);
+    return 0;
 }
 
-inline void Cpu6502::Instr_INC()
+inline uint8_t Cpu6502::Instr_INC()
 {
-    temp = (read(addr_abs) + 1) & 0x00FF;
+    uint8_t temp = read(addr_abs) + 1;
     SET_ZN(temp);
-    write(addr_abs, (uint8_t)temp);
+    write(addr_abs, temp);
+    return 0;
 }
 
-inline void Cpu6502::Instr_INX()
+inline uint8_t Cpu6502::Instr_INX()
 {
     X++;
     SET_ZN(X);
+    return 0;
 }
 
-inline void Cpu6502::Instr_INY()
+inline uint8_t Cpu6502::Instr_INY()
 {
     Y++;
     SET_ZN(Y);
+    return 0;
 }
 
-inline void Cpu6502::Instr_ADC()
+inline uint8_t Cpu6502::Instr_ADC()
 {
-    fetched = read(addr_abs);
-    temp = (uint16_t)A + (uint16_t)fetched + (uint16_t)GET_FLAG(C);
+    uint8_t byte = read(addr_abs);
+    uint16_t temp = (uint16_t)A + (uint16_t)byte + (uint16_t)GET_FLAG(C);
     SET_FLAG(C, temp > 255);
-    SET_FLAG(V, ((~((uint16_t)A ^ (uint16_t)fetched) & ((uint16_t)A ^ temp)) & 0x0080) != 0);
+    SET_FLAG(V, ((~((uint16_t)A ^ (uint16_t)byte) & ((uint16_t)A ^ temp)) & 0x0080) != 0);
     A = temp & 0x00FF;
     SET_ZN(A);
-    additional_cycle2 = 1;
+    return 1;
 }
 
-inline void Cpu6502::Instr_SBC()
+inline uint8_t Cpu6502::Instr_SBC()
 {
     uint16_t value = ((uint16_t)read(addr_abs)) ^ 0x00FF;
 
-    temp = (uint16_t)A + value + (uint16_t)GET_FLAG(C);
+    uint16_t temp = (uint16_t)A + value + (uint16_t)GET_FLAG(C);
     SET_FLAG(C, temp > 255);
     SET_FLAG(V, ((temp ^ (uint16_t)A) & (temp ^ value) & 0x0080) != 0);
     A = temp & 0x00FF;
     SET_ZN(A);
-    additional_cycle2 = 1;
+    return 1;
 }
 
-inline void Cpu6502::Instr_AND()
+inline uint8_t Cpu6502::Instr_AND()
 {
     A = A & read(addr_abs);
     SET_ZN(A);
-    additional_cycle2 = 1;
+    return 1;
 }
 
-inline void Cpu6502::Instr_EOR()
+inline uint8_t Cpu6502::Instr_EOR()
 {
     A = A ^ read(addr_abs);
     SET_ZN(A);
-    additional_cycle2 = 1;
+    return 1;
 }
 
-inline void Cpu6502::Instr_ORA()
+inline uint8_t Cpu6502::Instr_ORA()
 {
     A = A | read(addr_abs);
     SET_ZN(A);
-    additional_cycle2 = 1;
+    return 1;
 }
 
-inline void Cpu6502::Instr_ASL()
+inline uint8_t Cpu6502::Instr_ASL()
 {
     fetch();
-    temp = (uint16_t)fetched << 1;
+    uint16_t temp = (uint16_t)fetched << 1;
     SET_FLAG(C, (temp & 0xFF00) > 0);
     SET_ZN(temp & 0x00FF);
     if (addrmode_implied) A = temp & 0x00FF;
     else write(addr_abs, temp & 0x00FF);
+    return 0;
 }
 
-inline void Cpu6502::Instr_LSR()
+inline uint8_t Cpu6502::Instr_LSR()
 {
     fetch();
     SET_FLAG(C, (fetched & 0x0001) != 0);
-    temp = fetched >> 1;
+    uint16_t temp = fetched >> 1;
     SET_ZN(temp & 0x00FF);
     if (addrmode_implied) A = temp & 0x00FF;
     else write(addr_abs, temp & 0x00FF);
+    return 0;
 }
 
-inline void Cpu6502::Instr_ROL()
+inline uint8_t Cpu6502::Instr_ROL()
 {
     fetch();
-    temp = (uint16_t)(fetched << 1) | GET_FLAG(C);
+    uint16_t temp = (uint16_t)(fetched << 1) | GET_FLAG(C);
     SET_FLAG(C, (temp & 0xFF00) != 0);
     SET_ZN(temp & 0x00FF);
     if (addrmode_implied) A = temp & 0x00FF;
     else write(addr_abs, temp & 0x00FF);
+    return 0;
 }
 
-inline void Cpu6502::Instr_ROR()
+inline uint8_t Cpu6502::Instr_ROR()
 {
     fetch();
-    temp = (uint16_t)(GET_FLAG(C) << 7) | (fetched >> 1);
+    uint16_t temp = (uint16_t)(GET_FLAG(C) << 7) | (fetched >> 1);
     SET_FLAG(C, (fetched & 0x01) != 0);
     SET_ZN(temp & 0x00FF);
     if (addrmode_implied) A = temp & 0x00FF;
     else write(addr_abs, temp & 0x00FF);
+    return 0;
 }
 
-inline void Cpu6502::Instr_CLC()
+inline uint8_t Cpu6502::Instr_CLC()
 {
     status &= ~C;
+    return 0;
 }
 
-inline void Cpu6502::Instr_CLD()
+inline uint8_t Cpu6502::Instr_CLD()
 {
     status &= ~D;
+    return 0;
 }
 
-inline void Cpu6502::Instr_CLI()
+inline uint8_t Cpu6502::Instr_CLI()
 {
     status &= ~I;
+    return 0;
 }
 
-inline void Cpu6502::Instr_CLV()
+inline uint8_t Cpu6502::Instr_CLV()
 {
     status &= ~V;
+    return 0;
 }
 
-inline void Cpu6502::Instr_SEC()
+inline uint8_t Cpu6502::Instr_SEC()
 {
     status |= C;
+    return 0;
 }
 
-inline void Cpu6502::Instr_SED()
+inline uint8_t Cpu6502::Instr_SED()
 {
     status |= D;
+    return 0;
 }
 
-inline void Cpu6502::Instr_SEI()
+inline uint8_t Cpu6502::Instr_SEI()
 {
     status |= I;
+    return 0;
 }
 
-inline void Cpu6502::Instr_CMP()
+inline uint8_t Cpu6502::Instr_CMP()
 {
-    fetched = read(addr_abs);
-    temp = (uint16_t)A - (uint16_t)fetched;
-    SET_FLAG(C, A >= fetched);
+    uint8_t byte = read(addr_abs);
+    uint16_t temp = (uint16_t)A - (uint16_t)byte;
+    SET_FLAG(C, A >= byte);
     SET_ZN(temp & 0x00FF);
-    additional_cycle2 = 1;
+    return 1;
 }
 
-inline void Cpu6502::Instr_CPX()
+inline uint8_t Cpu6502::Instr_CPX()
 {
-    fetched = read(addr_abs);
-    temp = (uint16_t)X - (uint16_t)fetched;
-    SET_FLAG(C, X >= fetched);
+    uint8_t byte = read(addr_abs);
+    uint16_t temp = (uint16_t)X - (uint16_t)byte;
+    SET_FLAG(C, X >= byte);
     SET_ZN(temp & 0x00FF);
+    return 0;
 }
 
-inline void Cpu6502::Instr_CPY()
+inline uint8_t Cpu6502::Instr_CPY()
 {
-    fetched = read(addr_abs);
-    temp = (uint16_t)Y - (uint16_t)fetched;
-    SET_FLAG(C, Y >= fetched);
+    uint8_t byte = read(addr_abs);
+    uint16_t temp = (uint16_t)Y - (uint16_t)byte;
+    SET_FLAG(C, Y >= byte);
     SET_ZN(temp & 0x00FF);
+    return 0;
 }
 
-inline void Cpu6502::Instr_BCC()
+inline uint8_t Cpu6502::Instr_BCC()
 {
     if (GET_FLAG(C) == 0)
     {
@@ -772,9 +814,10 @@ inline void Cpu6502::Instr_BCC()
 
         PC = addr_abs;
     }
+    return 0;
 }
 
-inline void Cpu6502::Instr_BCS()
+inline uint8_t Cpu6502::Instr_BCS()
 {
     if (GET_FLAG(C) == 1)
     {
@@ -785,9 +828,10 @@ inline void Cpu6502::Instr_BCS()
 
         PC = addr_abs;
     }
+    return 0;
 }
 
-inline void Cpu6502::Instr_BEQ()
+inline uint8_t Cpu6502::Instr_BEQ()
 {
     if (GET_FLAG(Z) == 1)
     {
@@ -798,9 +842,10 @@ inline void Cpu6502::Instr_BEQ()
 
         PC = addr_abs;
     }
+    return 0;
 }
 
-inline void Cpu6502::Instr_BMI()
+inline uint8_t Cpu6502::Instr_BMI()
 {
     if (GET_FLAG(N) == 1)
     {
@@ -811,9 +856,10 @@ inline void Cpu6502::Instr_BMI()
 
         PC = addr_abs;
     }
+    return 0;
 }
 
-inline void Cpu6502::Instr_BNE()
+inline uint8_t Cpu6502::Instr_BNE()
 {
     if (GET_FLAG(Z) == 0)
     {
@@ -824,9 +870,10 @@ inline void Cpu6502::Instr_BNE()
 
         PC = addr_abs;
     }
+    return 0;
 }
 
-inline void Cpu6502::Instr_BPL()
+inline uint8_t Cpu6502::Instr_BPL()
 {
     if (GET_FLAG(N) == 0)
     {
@@ -837,9 +884,10 @@ inline void Cpu6502::Instr_BPL()
 
         PC = addr_abs;
     }
+    return 0;
 }
 
-inline void Cpu6502::Instr_BVC()
+inline uint8_t Cpu6502::Instr_BVC()
 {
     if (GET_FLAG(V) == 0)
     {
@@ -850,9 +898,10 @@ inline void Cpu6502::Instr_BVC()
 
         PC = addr_abs;
     }
+    return 0;
 }
 
-inline void Cpu6502::Instr_BVS()
+inline uint8_t Cpu6502::Instr_BVS()
 {
     if (GET_FLAG(V) == 1)
     {
@@ -863,14 +912,16 @@ inline void Cpu6502::Instr_BVS()
 
         PC = addr_abs;
     }
+    return 0;
 }
 
-inline void Cpu6502::Instr_JMP()
+inline uint8_t Cpu6502::Instr_JMP()
 {
     PC = addr_abs;
+    return 0;
 }
 
-inline void Cpu6502::Instr_JSR()
+inline uint8_t Cpu6502::Instr_JSR()
 {
     PC--;
     write(0x0100 + SP, (PC >> 8) & 0x00FF);
@@ -878,18 +929,20 @@ inline void Cpu6502::Instr_JSR()
 
     SP -= 2;
     PC = addr_abs;
+    return 0;
 }
 
-inline void Cpu6502::Instr_RTS()
+inline uint8_t Cpu6502::Instr_RTS()
 {
     PC = read(0x0100 | (uint8_t)(SP + 1));
     PC |= read(0x0100 | (uint8_t)(SP + 2)) << 8;
 
     SP += 2;
     PC++;
+    return 0;
 }
 
-inline void Cpu6502::Instr_BRK()
+inline uint8_t Cpu6502::Instr_BRK()
 {
     write(0x0100 | SP, (PC >> 8) & 0x00FF);
     write(0x0100 | (uint8_t)(SP - 1), PC & 0x00FF);
@@ -903,9 +956,10 @@ inline void Cpu6502::Instr_BRK()
 
     SP -= 3;
     PC = (high_byte << 8) | low_byte;
+    return 0;
 }
 
-inline void Cpu6502::Instr_RTI()
+inline uint8_t Cpu6502::Instr_RTI()
 {
     status = read(0x0100 | (uint8_t)(SP + 1));
     status &= ~B;
@@ -914,25 +968,27 @@ inline void Cpu6502::Instr_RTI()
     PC = (uint16_t)read(0x0100 | (uint8_t)(SP + 2));
     PC |= (uint16_t)read(0x0100 | (uint8_t)(SP + 3)) << 8;
     SP += 3;
+    return 0;
 }
 
-inline void Cpu6502::Instr_BIT()
+inline uint8_t Cpu6502::Instr_BIT()
 {
-    fetched = read(addr_abs);
-    temp = A & fetched;
+    uint8_t byte = read(addr_abs);
+    uint8_t temp = A & byte;
     SET_FLAG(Z, temp == 0);
-    SET_FLAG(N, fetched & 0x80);
-    SET_FLAG(V, fetched & 0x40);
+    SET_FLAG(N, byte & 0x80);
+    SET_FLAG(V, byte & 0x40);
+    return 0;
 }
 
-inline void Cpu6502::Instr_NOP()
+inline uint8_t Cpu6502::Instr_NOP()
 {
-    return;
+    return 0;
 }
 
-inline void Cpu6502::Instr_XXX()
+inline uint8_t Cpu6502::Instr_XXX()
 {
-    return;
+    return 0;
 }
 
 void Cpu6502::IRQ()
@@ -986,13 +1042,9 @@ void Cpu6502::dumpState(File& state)
     state.write((uint8_t*)&fetched, sizeof(fetched));
     state.write((uint8_t*)&addr_abs, sizeof(addr_abs));
     state.write((uint8_t*)&addr_rel, sizeof(addr_rel));
-    state.write((uint8_t*)&opcode, sizeof(opcode));
     state.write((uint8_t*)&cycles, sizeof(cycles));
-    state.write((uint8_t*)&temp, sizeof(temp));
 
     state.write((uint8_t*)&addrmode_implied, sizeof(addrmode_implied));
-    state.write((uint8_t*)&additional_cycle1, sizeof(additional_cycle1));
-    state.write((uint8_t*)&additional_cycle2, sizeof(additional_cycle2));
     state.write((uint8_t*)&OAM_DMA_page, sizeof(OAM_DMA_page));
 }
 
@@ -1008,12 +1060,8 @@ void Cpu6502::loadState(File& state)
     state.read((uint8_t*)&fetched, sizeof(fetched));
     state.read((uint8_t*)&addr_abs, sizeof(addr_abs));
     state.read((uint8_t*)&addr_rel, sizeof(addr_rel));
-    state.read((uint8_t*)&opcode, sizeof(opcode));
     state.read((uint8_t*)&cycles, sizeof(cycles));
-    state.read((uint8_t*)&temp, sizeof(temp));
 
     state.read((uint8_t*)&addrmode_implied, sizeof(addrmode_implied));
-    state.read((uint8_t*)&additional_cycle1, sizeof(additional_cycle1));
-    state.read((uint8_t*)&additional_cycle2, sizeof(additional_cycle2));
     state.read((uint8_t*)&OAM_DMA_page, sizeof(OAM_DMA_page));
 }
