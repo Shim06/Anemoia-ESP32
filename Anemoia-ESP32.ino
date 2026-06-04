@@ -54,9 +54,8 @@ void setup()
     esp_bt_mem_release(ESP_BT_MODE_BTDM);
     esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);
 
-#ifndef COMPOSITE_VIDEO
     runtime_config = loadConfig();
-
+#ifndef COMPOSITE_VIDEO
     if (runtime_config.demo_mode)
     {
         if (reset_reason == ESP_RST_SW)
@@ -103,7 +102,6 @@ void setup()
     ui.initializeSettings();
 #else
     initCompositeVideo();
-    hw_config = loadConfig();
 #endif
 
     // Initialize microsd card
@@ -124,7 +122,9 @@ void loop()
 
 IRAM_ATTR void onTimer()
 {
+#ifndef COMPOSITE_VIDEO
     ui.restoreBrightness();
+#endif
 }
 
 #ifdef DEBUG
@@ -135,7 +135,6 @@ unsigned long frame_count = 0;
 #endif
 IRAM_ATTR void emulate()
 {
-
     Bus nes;
 #ifdef COMPOSITE_VIDEO
     nes.connectFramebuffer(cv_framebuffer);
