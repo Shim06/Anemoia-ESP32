@@ -36,6 +36,7 @@ Want to make a PCB? NextPCB offers PCB fabrication and assembly services with fa
 - [Performance](#performance)
 - [Compatibility](#compatibility)
 - [Hardware Overview](#hardware-overview)
+  - [Composite Video Output](#composite-video-output)
   - [Original Hardware](#original-hardware)
   - [Cheap Yellow Display](#cheap-yellow-display)
   - [Custom-made PCBs](#custom-made-pcbs)
@@ -102,9 +103,52 @@ Feel free to open an issue if a game has glitches or fails to boot.
 ---
 
 ## Hardware Overview
+Anemoia-ESP32 requires a dual-core ESP32 with a minimum of 1 MB flash memory and <u><strong>NO PSRAM IS REQUIRED</strong></u>.
+
+### Composite Video Output
+
+Anemoia-ESP32 supports composite video output via the `COMPOSITE_VIDEO` build flag, based on [esp_8_bit](https://github.com/rossumur/esp_8_bit) by Peter Barrett. This lets the emulator output directly to a CRT television or any display with a composite input — no SPI display required.
+
+**Additional hardware needed:**
+- Any CRT or display with a composite RCA input
+- 1kΩ resistor and 10nF capacitor (for the audio RC filter)
+
+**Wiring:**
+-----------
+|         |
+|      25 |-------------------------------► Video out (RCA)
+|         |
+|      18 |----[1kΩ]----+---------------► Audio out
+|  ESP32  |             |
+|         |            ---
+|         |            --- 10nF
+|         |             |
+|         |             ▼ GND
+-----------
+
+| Signal    | ESP32 Pin |
+|-----------|-----------|
+| Video out | GPIO25    |
+| Audio out | GPIO18    |
+
+> [!NOTE]
+> GPIO18 is the default audio pin and can be changed via `AUDIO_PIN` in `config.h`.
+
+To enable composite video, open `config.h` and uncomment:
+```cpp
+#define COMPOSITE_VIDEO
+```
+
+Then set your video standard and audio pin as needed:
+```cpp
+#define VIDEO_STANDARD 1  // 0 = PAL, 1 = NTSC
+#define AUDIO_PIN      18
+```
+
+> [!IMPORTANT]
+> Composite video and TFT output are mutually exclusive. Enabling `COMPOSITE_VIDEO` disables the SPI display pipeline entirely.
 
 ### Original Hardware
-Anemoia-ESP32 requires a dual-core ESP32 with a minimum of 1 MB flash memory and <u><strong>NO PSRAM IS REQUIRED</strong></u>.
 
 - ESP32
   - e.g. ESP32-DevKitC or ESP32-WROOM-32
