@@ -107,13 +107,14 @@ Anemoia-ESP32 requires a dual-core ESP32 with a minimum of 1 MB flash memory and
 
 ### Composite Video Output
 
-Anemoia-ESP32 supports composite video output via the `COMPOSITE_VIDEO` build flag, based on [esp_8_bit](https://github.com/rossumur/esp_8_bit) by Peter Barrett. This lets the emulator output directly to a CRT television or any display with a composite input — no SPI display required.
+Anemoia-ESP32 supports composite video output via the `COMPOSITE_VIDEO` define in `config.h`, based on [esp_8_bit](https://github.com/rossumur/esp_8_bit) by Peter Barrett. This lets the emulator output directly to a CRT television or any display with a composite input.
 
 **Additional hardware needed:**
 - Any CRT or display with a composite RCA input
-- 1kΩ resistor and 10nF capacitor (for the audio RC filter)
+- 1kΩ resistor and 10nF capacitor
 
 **Wiring:**
+```
 -----------
 |         |
 |      25 |-------------------------------► Video out (RCA)
@@ -125,6 +126,7 @@ Anemoia-ESP32 supports composite video output via the `COMPOSITE_VIDEO` build fl
 |         |             |
 |         |             ▼ GND
 -----------
+```
 
 | Signal    | ESP32 Pin |
 |-----------|-----------|
