@@ -8,8 +8,10 @@
 
 <p align="center">
   Anemoia-ESP32 is a rewrite and port of the Anemoia Nintendo Entertainment System (NES) emulator running directly on the ESP32.
-  It is written in C++ and is designed to bring classic NES games to the ESP32.
-  This project focuses on performance, being able to run the emulator at native speeds and with full audio emulation implemented. However, games with complex mappers may induce a small speed loss.
+  It is written in C++ and is designed to bring classic NES games to the ESP32 with support for both TFT displays and composite video output.
+  This project focuses on performance, being able to run the emulator at native speeds and with full audio emulation and save states implemented.
+  <br/>
+  <b>Flash the emulator instantly using the <a href="https://shim06.github.io/Anemoia-ESP32/" target="_blank">Web Flash</a>!</b>
   <br/>
   Anemoia-ESP32 is available on GitHub under the <a href="https://github.com/Shim06/Anemoia-ESP32/blob/main/LICENSE" target="_blank">GNU General Public License v3.0 (GPLv3)</a>.
 </p>
