@@ -686,6 +686,8 @@ void Ppu2C02::loadState(File& state)
 
 void Ppu2C02::connectFramebuffer(uint8_t* framebuffer)
 {
+#ifdef COMPOSITE_VIDEO
     display_buffer = framebuffer;
     ptr_display = display_buffer;
+#endif
 }
