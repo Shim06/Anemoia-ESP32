@@ -255,10 +255,10 @@ Most controllers should work fine from 3.3V power supply.
 Button presses can be sent over serial via two independent methods, provided by the SerialGameControllerAdapter project. Both can coexist and are handled separately.
 
 #### Method 1 — USB to Serial (WebSerial)
-Button input is read over the main USB serial connection. Open [WebSerialController.html](https://github.com/jethomson/SerialGameControllerAdapter/blob/main/WebSerialController.html) locally in a Chromium-based browser — it translates keyboard input (or a USB controller, if supported) into serial button commands. No extra hardware is required, making it ideal for testing Anemoia-ESP32 before any wiring or soldering.
+Button input is read over the main USB serial connection. Open [WebSerialController.html](https://jethomson.github.io/SerialGameControllerAdapter/WebSerialController.html) in a Chromium-based browser — it translates keyboard, mouse, touch, or USB controller input into serial button commands. No extra hardware is required, making it ideal for testing Anemoia-ESP32 before any wiring or soldering.
 
 #### Method 2 — UART Adapter (ESP32-to-ESP32)
-A second ESP32 running the [`SerialGameControllerAdapter.ino`](https://github.com/jethomson/SerialGameControllerAdapter/blob/main/SerialGameControllerAdapter.ino) sketch reads inputs from an NES, SNES, PS1, PS2, or Bluetooth controller and forwards button presses over a secondary serial port (`Serial1`). A separate UART port is used specifically to avoid interfering with USB programming of the main board.
+A second ESP32 running [SerialGameControllerAdapter](https://github.com/jethomson/SerialGameControllerAdapter) firmware. The adapter reads inputs from an NES, SNES, PS1, PS2, or Bluetooth controller and forwards button presses over a secondary serial port (`Serial1`). A separate UART port is used specifically to avoid interfering with USB programming of the main board.
 
 | Signal                    | CYD Pin |
 |---------------------------|---------|
