@@ -26,6 +26,7 @@
     <div>
       <p>Device Type:
         <label><input type="radio" name="device" value="esp32" checked>ESP32</label>
+        <label><input type="radio" name="device" value="composite">ESP32 (Composite Output) </label>
         <label><input type="radio" name="device" value="cyd">CYD</label>
         <label><input type="radio" name="device" value="module">Module-Based PCB</label>
         <label><input type="radio" name="device" value="discrete">Discrete PCB</label>
@@ -33,7 +34,7 @@
     </div>
 
     <!-- Display -->
-    <div>
+    <div id="displayOption">
       <p>SPI Display Driver:
         <label><input type="radio" name="display" value="ST7789" checked>ST7789</label>
         <label><input type="radio" name="display" value="ILI9341">ILI9341</label>
@@ -41,7 +42,7 @@
     </div>
 
     <!-- Screen SPI frequency (compile-time) -->
-    <div>
+    <div id="screenFreqOption">
       <p>Screen SPI Frequency:
         <label><input type="radio" name="screen_freq" value="screen_freq_80MHz" checked>80 MHz</label>
         <label><input type="radio" name="screen_freq" value="screen_freq_40MHz">40 MHz</label>
@@ -61,10 +62,18 @@
     </div>
 
     <!-- Screen rotation (runtime) -->
-    <div>
+    <div id="rotationOption">
       <p>Screen Rotation:
         <label><input type="radio" name="rotation" value="rotation1" checked>Landscape</label>
         <label><input type="radio" name="rotation" value="rotation3">Landscape Flipped</label>
+      </p>
+    </div>
+
+    <!-- Video Standard (composite only) -->
+    <div id="videoStandardOption" style="display:none">
+      <p>Video Standard:
+        <label><input type="radio" name="video_standard" value="ntsc" checked>NTSC</label>
+        <label><input type="radio" name="video_standard" value="pal">PAL</label>
       </p>
     </div>
 
@@ -147,6 +156,16 @@
       const debug    = document.getElementById("debug").checked ? "debug_on" : "debug_off";
       const demo     = document.getElementById("demo_mode").checked ? "demo_mode_on" : "demo_mode_off";
 
+      if (device === "composite") {
+        const video_standard = getRadio("video_standard");
+        const manifestPath = "manifests/" +
+          device + "-" + video_standard + "-" + controller + "-" + sd_freq + "-" + debug + "-" + demo +
+          ".json";
+        console.log(manifestPath);
+        installButton.manifest = manifestPath;
+        return;
+      }
+      
       if (device === "cyd") {
         backlight  = "backlight_on";
         swap       = "swap_bytes";
@@ -191,10 +210,15 @@
       const isCyd = device === "cyd";
       const isModule = device === "module";
       const isDiscrete = device === "discrete";
+      const isComposite = device === "composite";
       const isHidden = isCyd || isModule || isDiscrete;
-      document.getElementById("dacOption").style.display       = isHidden ? "none" : "";
-      document.getElementById("backlightOption").style.display = isHidden ? "none" : "";
-      document.getElementById("swapOption").style.display      = isHidden ? "none" : "";
+      document.getElementById("displayOption").style.display       = isComposite ? "none" : "";
+      document.getElementById("screenFreqOption").style.display    = isComposite ? "none" : "";
+      document.getElementById("rotationOption").style.display      = isComposite ? "none" : "";
+      document.getElementById("videoStandardOption").style.display = isComposite ? "" : "none";
+      document.getElementById("dacOption").style.display       = (isHidden || isComposite) ? "none" : "";
+      document.getElementById("backlightOption").style.display = (isHidden || isComposite) ? "none" : "";
+      document.getElementById("swapOption").style.display      = (isHidden || isComposite) ? "none" : "";
       document.getElementById("controllerOption").style.display = (isModule || isDiscrete) ? "none" : "";
 
       const container = document.getElementById("controllerOption");

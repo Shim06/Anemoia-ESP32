@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "src/debug.h"
+#include <FS.h>
 #include <LittleFS.h>
 
 struct __attribute__((packed)) RuntimeConfig
@@ -53,7 +54,7 @@ inline RuntimeConfig loadConfig()
         }
     }
     LOG("LittleFS mounted");
-    File f = LittleFS.open("/runtime_config.bin", "r");
+    fs::File f = LittleFS.open("/runtime_config.bin", "r");
     if (!f)
     {
         LOG("runtime_config.bin not found, using defines in config.h");

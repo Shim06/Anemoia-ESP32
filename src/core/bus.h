@@ -31,6 +31,7 @@ public:
 
     void insertCartridge(Cartridge* cartridge);
     void connectScreen(TFT_eSPI* screen);
+    void connectFramebuffer(uint8_t* framebuffer);
     void reset();
     void clock();
     void IRQ();

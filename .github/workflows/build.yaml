@@ -2,7 +2,7 @@ name: Build firmware and deploy GitHub Page
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - "**.c"
       - "**.cpp"
@@ -69,11 +69,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        device:     [esp32, cyd, module, discrete]
-        display:    [ST7789, ILI9341]
-        swap:       [swap_bytes, swap_bytes_off]
+        device: [esp32, cyd, module, discrete]
+        display: [ST7789, ILI9341]
+        swap: [swap_bytes, swap_bytes_off]
         screen_freq: [screen_freq_80MHz, screen_freq_40MHz]
-        debug:      [debug_on, debug_off]
+        debug: [debug_on, debug_off]
         exclude:
           - device: cyd
             swap: swap_bytes_off
@@ -231,8 +231,87 @@ jobs:
             build/${{ matrix.device }}-${{ matrix.display }}-${{ matrix.swap }}-${{ matrix.screen_freq }}-${{ matrix.debug }}/*.ino.partitions.bin
           retention-days: 1
 
+  build-composite:
+    needs: setup
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        video_standard: [ntsc, pal]
+        debug: [debug_on, debug_off]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Restore Arduino CLI cache
+        uses: actions/cache@v5
+        with:
+          path: /opt/hostedtoolcache/arduino-cli
+          key: arduino-cli-1.4.1
+
+      - name: Install Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+        with:
+          version: 1.4.1
+
+      - name: Restore Arduino packages cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.arduino15
+            ~/Arduino/libraries
+          key: ${{ runner.os }}-arduino-esp32-3.2.1
+
+      - name: Build defines and platform flags
+        run: |
+          case "${{ matrix.video_standard }}" in
+            ntsc) VS_VAL=1 ;;
+            pal)  VS_VAL=0 ;;
+          esac
+          DEFINES="-DCOMPOSITE_VIDEO -DVIDEO_STANDARD=$VS_VAL"
+          [ "${{ matrix.debug }}" = "debug_on" ] && DEFINES="$DEFINES -DDEBUG" || DEFINES="$DEFINES -UDEBUG"
+          PLATFORM_FLAGS="-DOPTIMIZATION_FLAGS -Ofast -ffunction-sections -fdata-sections -fno-exceptions -fno-rtti -funroll-loops -fno-tree-vectorize -frename-registers -fno-plt -flto"
+          echo "DEFINES=$DEFINES" >> $GITHUB_ENV
+          echo "PLATFORM_FLAGS=$PLATFORM_FLAGS" >> $GITHUB_ENV
+
+      - name: Configure platform.txt
+        run: |
+          cp platform.txt ~/.arduino15/packages/esp32/hardware/esp32/3.2.1/platform.txt
+
+      - name: Log build configuration
+        run: |
+          echo "========== BUILD CONFIGURATION =========="
+          echo "Device:         composite"
+          echo "Video standard: ${{ matrix.video_standard }}"
+          echo "Debug:          ${{ matrix.debug }}"
+          echo ""
+          echo "========== COMPILER DEFINES =========="
+          echo "Extra defines: ${{ env.DEFINES }}"
+          echo "=========================================="
+
+      - name: Compile firmware
+        run: |
+          VARIANT="composite-${{ matrix.video_standard }}-${{ matrix.debug }}"
+          arduino-cli compile \
+            --fqbn "esp32:esp32:esp32:PartitionScheme=custom,EventsCore=0" \
+            --build-property "compiler.cpp.extra_flags=${{ env.PLATFORM_FLAGS }} ${{ env.DEFINES }}" \
+            --build-property "compiler.c.extra_flags=${{ env.PLATFORM_FLAGS }} ${{ env.DEFINES }}" \
+            --output-dir build/$VARIANT \
+            .
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-composite-${{ matrix.video_standard }}-${{ matrix.debug }}
+          path: |
+            build/composite-${{ matrix.video_standard }}-${{ matrix.debug }}/*.ino.bin
+            build/composite-${{ matrix.video_standard }}-${{ matrix.debug }}/*.ino.bootloader.bin
+            build/composite-${{ matrix.video_standard }}-${{ matrix.debug }}/*.ino.partitions.bin
+          retention-days: 1
+
   deploy:
-    needs: build
+    needs: [build, build-composite]
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -270,6 +349,7 @@ jobs:
           for artifact_dir in artifacts/firmware-*/; do
             NAME=$(basename "$artifact_dir" | sed 's/^firmware-//')
             IFS='-' read -r DEVICE DISPLAY SWAP SCREEN_FREQ DEBUG <<< "$NAME"
+            [ "$DEVICE" = "composite" ] && continue
             BOOTLOADER=$(find "$artifact_dir" -name "*.ino.bootloader.bin")
             PARTITIONS=$(find "$artifact_dir" -name "*.ino.partitions.bin")
             FIRMWARE=$(find "$artifact_dir" -name "*.ino.bin" ! -name "*.merged.bin" \
@@ -340,7 +420,7 @@ jobs:
                           backlight_off) BL_VAL=0 ;;
                           backlight_on)  BL_VAL=1 ;;
                         esac
-                        
+
                         case "$DEMO_MODE" in
                           demo_mode_off) DM_VAL=0 ;;
                           demo_mode_on)  DM_VAL=1 ;;
@@ -366,16 +446,69 @@ jobs:
             done
           done
 
+          # Handle composite builds
+          for artifact_dir in artifacts/firmware-composite-*/; do
+            NAME=$(basename "$artifact_dir" | sed 's/^firmware-//')
+            IFS='-' read -r DEVICE VIDEO_STANDARD DEBUG <<< "$NAME"
+
+            BOOTLOADER=$(find "$artifact_dir" -name "*.ino.bootloader.bin")
+            PARTITIONS=$(find "$artifact_dir" -name "*.ino.partitions.bin")
+            FIRMWARE=$(find "$artifact_dir" -name "*.ino.bin" ! -name "*.merged.bin" \
+                                                               ! -name "*.bootloader.bin" \
+                                                               ! -name "*.partitions.bin")
+
+            FW_DEST="binaries/composite/$VIDEO_STANDARD/$DEBUG"
+            mkdir -p "WebFlash/$FW_DEST"
+            cp "$BOOTLOADER" "WebFlash/$FW_DEST/bootloader.bin"
+            cp "$PARTITIONS" "WebFlash/$FW_DEST/partitions.bin"
+            cp "$FIRMWARE"   "WebFlash/$FW_DEST/firmware.bin"
+
+            for CONTROLLER in no_controller gpio nes snes psx uart; do
+              for SD_FREQ in $SD_FREQS; do
+                for DEMO_MODE in $DEMO_MODES; do
+                  case "$CONTROLLER" in
+                    no_controller) CONTROLLER_VAL=255 ;;
+                    gpio)          CONTROLLER_VAL=0   ;;
+                    nes)           CONTROLLER_VAL=1   ;;
+                    snes)          CONTROLLER_VAL=2   ;;
+                    psx)           CONTROLLER_VAL=3   ;;
+                    uart)          CONTROLLER_VAL=4   ;;
+                  esac
+
+                  case "$SD_FREQ" in
+                    sd_freq_80MHz) SD_VAL=80 ;;
+                    sd_freq_40MHz) SD_VAL=40 ;;
+                  esac
+
+                  case "$DEMO_MODE" in
+                    demo_mode_off) DM_VAL=0 ;;
+                    demo_mode_on)  DM_VAL=1 ;;
+                  esac
+
+                  CFG_NAME="composite-$VIDEO_STANDARD-$CONTROLLER-$SD_FREQ-$DEBUG-$DEMO_MODE-config.bin"
+                  mkdir -p tmp/fs_stage
+                  printf "$(printf '\\%03o' 1 0 $CONTROLLER_VAL $SD_VAL 0 $DM_VAL)" \
+                      > tmp/fs_stage/runtime_config.bin
+                  mklittlefs -c tmp/fs_stage -s 0x0F000 "WebFlash/configs/$CFG_NAME"
+                  rm -rf "tmp/fs_stage"
+
+                  printf '{\n  "name": "Anemoia-ESP32",\n  "version": "1.0.0",\n  "funding_url": "https://ko-fi.com/manalotoshim",\n  "builds": [{\n    "chipFamily": "ESP32",\n    "parts": [\n      { "path": "../%s/bootloader.bin", "offset": 4096 },\n      { "path": "../%s/partitions.bin", "offset": 32768 },\n      { "path": "../%s/firmware.bin",   "offset": 65536 },\n      { "path": "../configs/%s",        "offset": 3866624 }\n    ]\n  }]\n}' \
+                    "$FW_DEST" "$FW_DEST" "$FW_DEST" "$CFG_NAME" \
+                    > "WebFlash/manifests/composite-$VIDEO_STANDARD-$CONTROLLER-$SD_FREQ-$DEBUG-$DEMO_MODE.json"
+                done
+              done
+            done
+          done
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: './WebFlash'
+          path: "./WebFlash"
           retention-days: 1
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
