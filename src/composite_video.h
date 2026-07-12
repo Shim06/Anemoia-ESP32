@@ -676,6 +676,26 @@ void IRAM_ATTR video_isr(volatile void* vbuf)
     }
 }
 
+void composite_video_stop_dma()
+{
+    I2S0.out_link.stop = 1;
+    I2S0.conf.tx_start = 0;
+    I2S0.int_ena.out_eof = 0;
+    esp_intr_disable(_isr_handle);
+    esp_intr_free(_isr_handle);
+    _isr_handle = nullptr;
+
+    rtc_clk_apll_enable(0);
+
+    for (int i = 0; i < 2; i++)
+    {
+        heap_caps_free((void*)_dma_desc[i].buf);
+        _dma_desc[i].buf = nullptr;
+    }
+
+    periph_module_disable(PERIPH_I2S0_MODULE);
+}
+
 // Composite UI
 // Constant: font8x8_basic
 // Contains an 8x8 font map for unicode points U+0000 - U+007F (basic latin)
@@ -1090,7 +1110,10 @@ void cv_pauseMenu(Bus* nes)
                     cv_paused = false;
                     return;
 
-                case SaveAndQuit: ESP.restart(); return;
+                case SaveAndQuit:
+                    composite_video_stop_dma();
+                    ESP.restart();
+                    return;
                 default: break;
                 }
             }
