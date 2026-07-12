@@ -366,6 +366,7 @@ void Cpu6502::reset()
     fetched = 0x00;
 
     cycles = 8;
+    apu.reset();
 }
 
 IRAM_ATTR void Cpu6502::apuWrite(uint16_t addr, uint8_t data)
