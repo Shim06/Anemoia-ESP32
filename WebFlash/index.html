@@ -114,6 +114,11 @@
       <label><input type="checkbox" id="backlight"> Display Backlight Pin Enable</label>
     </div>
 
+    <!-- Invert Colors -->
+    <div id="invertOption">
+      <label><input type="checkbox" id="invert_colors"> Invert Colors</label>
+    </div>
+
     <!-- Color byte -->
     <div id="swapOption">
       <label><input type="checkbox" id="swap"> Swap Color Byte Order</label>
@@ -149,6 +154,7 @@
       const rotation    = getRadio("rotation");
       const sd_freq     = getRadio("sd_freq");
 
+      const invert = document.getElementById("invert_colors").checked ? "invert_on" : "invert_off";
       let swap       = document.getElementById("swap").checked ? "swap_bytes_off" : "swap_bytes";
       let backlight  = document.getElementById("backlight").checked ? "backlight_on" : "backlight_off";
       let controller = getRadio("controller");
@@ -165,7 +171,7 @@
         installButton.manifest = manifestPath;
         return;
       }
-      
+
       if (device === "cyd") {
         backlight  = "backlight_on";
         swap       = "swap_bytes";
@@ -186,19 +192,17 @@
       if (device == "module") {
         controller = "gpio";
         backlight  = "backlight_off";
-        swap       = "swap_bytes";
         dacpin     = "dac_gpio26";
       }
 
       if (device == "discrete") {
         controller = "gpio";
         backlight  = "backlight_on";
-        swap       = "swap_bytes";
         dacpin     = "dac_gpio25";
       }
 
       const manifestPath = "manifests/" +
-        device + "-" + display + "-" + backlight + "-" + swap + "-" + screen_freq + "-" +
+        device + "-" + display + "-" + backlight + "-" + invert + "-" + swap + "-" + screen_freq + "-" +
         controller + "-" + rotation + "-" + sd_freq + "-" + dacpin + "-" + debug + "-" + demo +
         ".json";
       console.log(manifestPath);
@@ -218,7 +222,8 @@
       document.getElementById("videoStandardOption").style.display = isComposite ? "" : "none";
       document.getElementById("dacOption").style.display       = (isHidden || isComposite) ? "none" : "";
       document.getElementById("backlightOption").style.display = (isHidden || isComposite) ? "none" : "";
-      document.getElementById("swapOption").style.display      = (isHidden || isComposite) ? "none" : "";
+      document.getElementById("invertOption").style.display = (isCyd || isComposite) ? "none" : "";
+      document.getElementById("swapOption").style.display      = (isCyd || isComposite) ? "none" : "";
       document.getElementById("controllerOption").style.display = (isModule || isDiscrete) ? "none" : "";
 
       const container = document.getElementById("controllerOption");

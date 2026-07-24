@@ -14,6 +14,7 @@ struct __attribute__((packed)) RuntimeConfig
     uint8_t sd_freq;
     bool backlight;
     bool demo_mode;
+    bool invert;
 };
 
 inline RuntimeConfig loadConfig()
@@ -32,6 +33,11 @@ inline RuntimeConfig loadConfig()
         .demo_mode = true,
 #else
         .demo_mode = false,
+#endif
+#ifdef TFT_INVERT
+        .invert = true,
+#else
+        .invert = false,
 #endif
     };
     // runtime_config.bin can make development difficult because it will override #defines
@@ -72,6 +78,7 @@ inline RuntimeConfig loadConfig()
     LOGF("runtime_config.sd_freq:    %dMHz\n", cfg.sd_freq);
     LOGF("runtime_config.backlight:  %d\n", cfg.backlight);
     LOGF("runtime_config.demo_mode:  %d\n", cfg.demo_mode);
+    LOGF("runtime_config.invert:     %d\n", cfg.invert);
     return cfg;
 }
 
