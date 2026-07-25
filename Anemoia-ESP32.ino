@@ -98,6 +98,7 @@ void setup()
     #endif
     screen.fillScreen(BG_COLOR);
     screen.startWrite();
+    screen.invertDisplay(runtime_config.invert);
 
     ui.initializeSettings();
 #else
