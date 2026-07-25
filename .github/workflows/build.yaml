@@ -438,7 +438,7 @@ jobs:
                           rm -rf "tmp/fs_stage"
 
                           printf '{\n  "name": "Anemoia-ESP32",\n  "version": "1.0.0",\n  "funding_url": "https://ko-fi.com/manalotoshim",\n  "builds": [{\n    "chipFamily": "ESP32",\n    "parts": [\n      { "path": "../%s/bootloader.bin", "offset": 4096 },\n      { "path": "../%s/partitions.bin", "offset": 32768 },\n      { "path": "../%s/firmware.bin",   "offset": 65536 },\n      { "path": "../configs/%s",        "offset": 3866624 }\n    ]\n  }]\n}' \
-                            "$FW_DEST" "$FW_DEST" "$FW_DEST" "$CFG_NAME" \
+                            "$FW_DEST" "$FW_DEST" "$FW_DEST" "{$CFG_NAME}-config.bin" \
                             > "WebFlash/manifests/${CFG_NAME}.json"
                         done
                       done
@@ -488,16 +488,16 @@ jobs:
                     demo_mode_on)  DM_VAL=1 ;;
                   esac
 
-                  CFG_NAME="composite-$VIDEO_STANDARD-$CONTROLLER-$SD_FREQ-$DEBUG-$DEMO_MODE-config.bin"
+                  CFG_NAME="composite-$VIDEO_STANDARD-$CONTROLLER-$SD_FREQ-$DEBUG-$DEMO_MODE"
                   mkdir -p tmp/fs_stage
                   printf "$(printf '\\%03o' 1 0 $CONTROLLER_VAL $SD_VAL 0 $DM_VAL)" \
                       > tmp/fs_stage/runtime_config.bin
-                  mklittlefs -c tmp/fs_stage -s 0x0F000 "WebFlash/configs/$CFG_NAME"
+                  mklittlefs -c tmp/fs_stage -s 0x0F000 "WebFlash/configs/${CFG_NAME}-config.bin"
                   rm -rf "tmp/fs_stage"
 
                   printf '{\n  "name": "Anemoia-ESP32",\n  "version": "1.0.0",\n  "funding_url": "https://ko-fi.com/manalotoshim",\n  "builds": [{\n    "chipFamily": "ESP32",\n    "parts": [\n      { "path": "../%s/bootloader.bin", "offset": 4096 },\n      { "path": "../%s/partitions.bin", "offset": 32768 },\n      { "path": "../%s/firmware.bin",   "offset": 65536 },\n      { "path": "../configs/%s",        "offset": 3866624 }\n    ]\n  }]\n}' \
-                    "$FW_DEST" "$FW_DEST" "$FW_DEST" "$CFG_NAME" \
-                    > "WebFlash/manifests/composite-$VIDEO_STANDARD-$CONTROLLER-$SD_FREQ-$DEBUG-$DEMO_MODE.json"
+                    "$FW_DEST" "$FW_DEST" "$FW_DEST" "${CFG_NAME}-config.bin" \
+                    > "WebFlash/manifests/${CFG_NAME}.json"
                 done
               done
             done
