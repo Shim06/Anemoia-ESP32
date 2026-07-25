@@ -13,7 +13,7 @@
 #define BL_FREQ       5000
 #define BL_RESOLUTION 8
 
-#ifndef SCREEN_SWAP_BYTES
+#ifdef SCREEN_SWAP_BYTES
     #define BG_COLOR            0x0015
     #define BAR_COLOR           0xAD55
     #define TEXT_COLOR          0xFFFF
