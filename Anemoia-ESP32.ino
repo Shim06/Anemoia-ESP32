@@ -82,6 +82,7 @@ void setup()
         }
     }
 
+#ifndef COMPOSITE_VIDEO
     if (runtime_config.backlight)
     {
         // Initialize backlight but keep it off
