@@ -83,15 +83,7 @@ void setup()
     }
 
 #ifndef COMPOSITE_VIDEO
-    if (runtime_config.backlight)
-    {
-        // Initialize backlight but keep it off
-        // Keeping the backlight off until the screen is drawn hides glitchy visuals
-        pinMode(TFT_BACKLIGHT_PIN, OUTPUT);
-        ledcAttach(TFT_BACKLIGHT_PIN, BL_FREQ, BL_RESOLUTION);
-        ledcWrite(TFT_BACKLIGHT_PIN, 0); // backlight is off
-    }
-
+    if (runtime_config.backlight) initBacklight();
     setupI2SDAC();
 
     // Initialize TFT screen
@@ -256,6 +248,15 @@ IRAM_ATTR void emulate()
 }
 #undef FRAME_TIME
 
+void initBacklight()
+{
+    // Initialize backlight but keep it off
+    // Keeping the backlight off until the screen is drawn hides glitchy visuals
+    pinMode(TFT_BACKLIGHT_PIN, OUTPUT);
+    ledcAttach(TFT_BACKLIGHT_PIN, BL_FREQ, BL_RESOLUTION);
+    ledcWrite(TFT_BACKLIGHT_PIN, 0); // backlight is off
+}
+
 bool initSD()
 {
     LOG("Initializing SD...");
@@ -263,7 +264,11 @@ bool initSD()
     if (!SD.begin(SD_CS_PIN, SD_SPI, runtime_config.sd_freq * 1000000))
     {
         // Turn backlight on so error message can be seen
-        if (runtime_config.backlight) { ledcWrite(TFT_BACKLIGHT_PIN, 255); }
+        if (runtime_config.backlight)
+        {
+            initBacklight();
+            ledcWrite(TFT_BACKLIGHT_PIN, 255);
+        }
 
         LOG("SD Card Mount Failed");
 #ifndef COMPOSITE_VIDEO
