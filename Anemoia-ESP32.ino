@@ -55,10 +55,6 @@ void setup()
     esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);
 
     runtime_config = loadConfig();
-    // Initialize microsd card
-    if (!initSD())
-        while (true);
-
     if (runtime_config.demo_mode)
     {
         if (reset_reason == ESP_RST_SW)
@@ -96,9 +92,16 @@ void setup()
     screen.startWrite();
     screen.invertDisplay(runtime_config.invert);
 
-    ui.initializeSettings();
 #else
     initCompositeVideo();
+#endif
+
+    // Initialize microsd card
+    if (!initSD())
+        while (true);
+
+#ifndef COMPOSITE_VIDEO
+    ui.initializeSettings();
 #endif
 
     // Setup buttons
@@ -264,11 +267,7 @@ bool initSD()
     if (!SD.begin(SD_CS_PIN, SD_SPI, runtime_config.sd_freq * 1000000))
     {
         // Turn backlight on so error message can be seen
-        if (runtime_config.backlight)
-        {
-            initBacklight();
-            ledcWrite(TFT_BACKLIGHT_PIN, 255);
-        }
+        if (runtime_config.backlight) ledcWrite(TFT_BACKLIGHT_PIN, 255);
 
         LOG("SD Card Mount Failed");
 #ifndef COMPOSITE_VIDEO
