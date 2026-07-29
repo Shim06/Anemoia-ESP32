@@ -54,12 +54,11 @@ void setup()
     esp_bt_mem_release(ESP_BT_MODE_BTDM);
     esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);
 
+    runtime_config = loadConfig();
     // Initialize microsd card
     if (!initSD())
         while (true);
 
-    runtime_config = loadConfig();
-#ifndef COMPOSITE_VIDEO
     if (runtime_config.demo_mode)
     {
         if (reset_reason == ESP_RST_SW)
