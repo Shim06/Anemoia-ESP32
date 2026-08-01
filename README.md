@@ -304,7 +304,7 @@ A PCB that offers a more complete, permanent, and compact handheld by using disc
 These are the recommended parts to use for this project.<br>
 *These are affiliate links. Buying through them helps support me at no extra cost to you. Thank you for your support.*
 
-- [ESP32](https://s.click.aliexpress.com/e/_c3B4YJhz)
+- [ESP32](https://s.click.aliexpress.com/e/_c3kJmgd9)
 - [240x320 ST7789 Display](https://s.click.aliexpress.com/e/_c2wkMWbV)
 - [PAM8403 Amplifier Module](https://s.click.aliexpress.com/e/_c3EWffgT)
 - [MicroSD Card Module](https://s.click.aliexpress.com/e/_c3ORlv7p)
