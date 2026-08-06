@@ -4,7 +4,7 @@
 #define READ_PALETTE(x) palette_table[((x) & 0x1F) ^ (((x) & 0x13) == 0x10 ? 0x10 : 0x00)]
 
 #ifndef COMPOSITE_VIDEO
-    #ifdef ILI9341_DRIVER
+    #ifdef DOUBLE_BUFFERING
 DMA_ATTR uint16_t Ppu2C02::display_buffer_front[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
 DMA_ATTR uint16_t Ppu2C02::display_buffer_back[SCANLINE_SIZE * SCANLINES_PER_BUFFER];
 uint16_t* Ppu2C02::ptr_display = Ppu2C02::display_buffer_front;
@@ -32,7 +32,7 @@ Ppu2C02::Ppu2C02()
     memset(scanline_metadata, 0, sizeof(scanline_metadata));
     memset(sprite, 0, sizeof(sprite));
 #ifndef COMPOSITE_VIDEO
-    #ifdef ILI9341_DRIVER
+    #ifdef DOUBLE_BUFFERING
     memset(display_buffer_front, 0, sizeof(display_buffer_front));
     memset(display_buffer_back, 0, sizeof(display_buffer_back));
     #else
@@ -518,7 +518,7 @@ inline void Ppu2C02::finishScanline()
 
 // Transfer internal scanline buffer to display buffer
 #ifndef COMPOSITE_VIDEO
-    #ifdef ILI9341_DRIVER
+    #ifdef DOUBLE_BUFFERING
     uint16_t* display = ptr_back_buffer + ((uint32_t)scanline_counter * SCANLINE_SIZE);
     #else
     uint16_t* display = ptr_display + ((uint32_t)scanline_counter * SCANLINE_SIZE);
@@ -529,7 +529,7 @@ inline void Ppu2C02::finishScanline()
     scanline_counter++;
     if (scanline_counter >= SCANLINES_PER_BUFFER)
     {
-    #ifdef ILI9341_DRIVER
+    #ifdef DOUBLE_BUFFERING
         uint16_t* temp = ptr_display;
         ptr_display = ptr_back_buffer;
         ptr_back_buffer = temp;

@@ -16,6 +16,7 @@
 #ifdef ILI9341_DRIVER
     #undef SCANLINES_PER_BUFFER
     #define SCANLINES_PER_BUFFER 4
+    #define DOUBLE_BUFFERING
 #endif
 
 class Bus;
