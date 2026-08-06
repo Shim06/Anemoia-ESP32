@@ -270,6 +270,7 @@ jobs:
           PLATFORM_FLAGS="-DOPTIMIZATION_FLAGS -Ofast -ffunction-sections -fdata-sections -fno-exceptions -fno-rtti -funroll-loops -fno-tree-vectorize -frename-registers -fno-plt -flto"
           echo "DEFINES=$DEFINES" >> $GITHUB_ENV
           echo "PLATFORM_FLAGS=$PLATFORM_FLAGS" >> $GITHUB_ENV
+          echo "VS_VAL=$VS_VAL" >> $GITHUB_ENV
 
       - name: Configure platform.txt
         run: |
@@ -277,10 +278,12 @@ jobs:
 
       - name: Log build configuration
         run: |
+          RESOLVED=$(echo "" | g++ -E -dM ${{ env.DEFINES }} -I. -include config.h -x c++ - \
+                    | grep -m1 '^#define VIDEO_STANDARD' | awk '{print $3}')
           echo "========== BUILD CONFIGURATION =========="
           echo "Device:         composite"
-          echo "Video standard: ${{ matrix.video_standard }}"
-          echo "Debug:          ${{ matrix.debug }}"
+          echo "Video standard (matrix):  ${{ matrix.video_standard }} (VS_VAL=${{ env.VS_VAL }})"
+          echo "Video standard (config.h): $RESOLVED"
           echo ""
           echo "========== COMPILER DEFINES =========="
           echo "Extra defines: ${{ env.DEFINES }}"
