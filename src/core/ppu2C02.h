@@ -14,9 +14,12 @@
 #define PIXELS_PER_TILE      8
 
 #ifdef ILI9341_DRIVER
+    #define DOUBLE_BUFFERING
+#endif
+
+#ifdef DOUBLE_BUFFERING
     #undef SCANLINES_PER_BUFFER
     #define SCANLINES_PER_BUFFER 4
-    #define DOUBLE_BUFFERING
 #endif
 
 class Bus;
