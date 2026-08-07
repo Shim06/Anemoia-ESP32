@@ -37,7 +37,6 @@ public:
     void IRQ();
     void NMI();
     void OAM_Write(uint8_t addr, uint8_t data);
-    uint16_t ppu_scanline = 0;
     void renderImage(uint16_t scanline);
 
     void saveState();
@@ -48,7 +47,6 @@ private:
     TFT_eSPI* ptr_screen;
     uint8_t controller_state;
     uint8_t controller_strobe = 0x00;
-    bool frame_latch = false;
 };
 
 #endif

@@ -17,11 +17,11 @@ IRAM_ATTR void Bus::cpuWrite(uint16_t addr, uint8_t data)
     if (cart->cpuWrite(addr, data)) {}
     else if ((addr & 0xE000) == 0x0000) { RAM[addr & 0x07FF] = data; }
     else if ((addr & 0xE000) == 0x2000) { ppu.cpuWrite(addr & 0x0007, data); }
+    else if (addr == 0x4014) { cpu.OAM_DMA(data); }
     else if ((addr & 0xF000) == 0x4000 && (addr <= 0x4013 || addr == 0x4015 || addr == 0x4017))
     {
         cpu.apuWrite(addr, data);
     }
-    else if (addr == 0x4014) { cpu.OAM_DMA(data); }
     else if (addr == 0x4016)
     {
         controller_strobe = data & 1;
@@ -63,7 +63,9 @@ IRAM_ATTR void Bus::clock()
     // Using a counter/for loop with += 341 & -= 3 is too big of a performance hit.
     // 1 scanline == ~113.67 CPU clocks, so for every 3 scanlines, two scanlines will have an extra
     // CPU clock
-    for (ppu_scanline = 0; ppu_scanline < 240; ppu_scanline += 3)
+
+    static bool frame_latch = false;
+    for (int ppu_scanline = 0; ppu_scanline < 240; ppu_scanline += 3)
     {
         cpu.clock(113);
         if (!frame_latch) ppu.renderScanline(ppu_scanline);
