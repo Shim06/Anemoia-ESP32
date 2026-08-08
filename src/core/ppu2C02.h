@@ -9,7 +9,7 @@
 
 #define BUFFER_SIZE          (256 + 8 + 8)
 #define SCANLINE_SIZE        256
-#define SCANLINES_PER_BUFFER 8
+#define SCANLINES_PER_BUFFER 120
 #define TILES_PER_SCANLINE   32
 #define PIXELS_PER_TILE      8
 

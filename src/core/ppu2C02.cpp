@@ -524,7 +524,7 @@ inline void Ppu2C02::finishScanline()
     uint16_t* display = ptr_display + ((uint32_t)scanline_counter * SCANLINE_SIZE);
     #endif
     uint8_t* buffer = ptr_buffer;
-    for (int i = 0; i < SCANLINE_SIZE; i++) display[i] = nes_palette[mask.emphasize][buffer[i]];
+    for (int i = 0; i < SCANLINE_SIZE; i++) display[i] = palette_NTSC565[0][buffer[i]];
 
     scanline_counter++;
     if (scanline_counter >= SCANLINES_PER_BUFFER)

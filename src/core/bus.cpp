@@ -63,21 +63,16 @@ IRAM_ATTR void Bus::clock()
     // Using a counter/for loop with += 341 & -= 3 is too big of a performance hit.
     // 1 scanline == ~113.67 CPU clocks, so for every 3 scanlines, two scanlines will have an extra
     // CPU clock
-
-    static bool frame_latch = false;
     for (int ppu_scanline = 0; ppu_scanline < 240; ppu_scanline += 3)
     {
         cpu.clock(113);
-        if (!frame_latch) ppu.renderScanline(ppu_scanline);
-        else ppu.fakeSpriteHit(ppu_scanline);
+        ppu.renderScanline(ppu_scanline);
 
         cpu.clock(114);
-        if (!frame_latch) ppu.renderScanline(ppu_scanline + 1);
-        else ppu.fakeSpriteHit(ppu_scanline + 1);
+        ppu.renderScanline(ppu_scanline + 1);
 
         cpu.clock(114);
-        if (!frame_latch) ppu.renderScanline(ppu_scanline + 2);
-        else ppu.fakeSpriteHit(ppu_scanline + 2);
+        ppu.renderScanline(ppu_scanline + 2);
     }
 
     // Setup for the next frame
@@ -91,10 +86,6 @@ IRAM_ATTR void Bus::clock()
 
     ppu.clearVBlank();
     cpu.clock(114);
-
-#ifdef FRAMESKIP
-    frame_latch = !frame_latch;
-#endif
 }
 
 IRAM_ATTR void Bus::setPPUMirrorMode(Cartridge::MIRROR mirror)
