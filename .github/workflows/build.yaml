@@ -371,17 +371,14 @@ jobs:
               CONTROLLER_LIST="no_controller nes uart"
               DACPIN_LIST="dac_gpio26"
               BACKLIGHT_LIST="backlight_on"
-              DEMO_MODE_LIST="demo_mode_on"
             elif [ "$DEVICE" = "module" ]; then
               CONTROLLER_LIST="gpio"
               DACPIN_LIST="dac_gpio26"
               BACKLIGHT_LIST="backlight_off"
-              DEMO_MODE_LIST="demo_mode_off"
             elif [ "$DEVICE" = "discrete" ]; then
               CONTROLLER_LIST="gpio"
               DACPIN_LIST="dac_gpio25"
               BACKLIGHT_LIST="backlight_on"
-              DEMO_MODE_LIST="demo_mode_off"
             fi
 
             for CONTROLLER in $CONTROLLER_LIST; do
