@@ -131,7 +131,8 @@ unsigned long frame_count = 0;
 #endif
 IRAM_ATTR void emulate()
 {
-    Bus nes;
+    Bus* bus = new Bus();
+    Bus& nes = *bus;
 #ifdef COMPOSITE_VIDEO
     nes.connectFramebuffer(cv_framebuffer);
 #else

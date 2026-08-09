@@ -1,22 +1,6 @@
 #include "mapper000.h"
+#include "../bus.h"
 #include "../cartridge.h"
-
-bool mapper000_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
-{
-    if (addr < 0x8000) return false;
-
-    Mapper000_state* state = (Mapper000_state*)mapper->state;
-    uint16_t offset = addr & 0x3FFF;
-    uint8_t bank_id = (addr >> 14) & 1;
-
-    data = state->PRG_banks[bank_id][offset];
-    return true;
-}
-
-bool mapper000_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
-{
-    return false;
-}
 
 bool mapper000_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
 {
@@ -74,6 +58,17 @@ void mapper000_reset(Mapper* mapper)
         state->CHR_bank =
             (state->number_CHR_banks == 0) ? state->CHR_ROM : (uint8_t*)state->mROM->chr_base;
     }
+}
+
+void mapper000_mapPages(Mapper* mapper, Bus* bus)
+{
+    Mapper000_state* state = (Mapper000_state*)mapper->state;
+
+    // $8000-$BFFF: bank 0, $C000-$FFFF: bank 1 (mirrors bank 0 if only 1 bank present)
+    for (int p = 0x80; p <= 0xBF; p++)
+        bus->read_pages[p] = state->PRG_banks[0] + ((p - 0x80) * 256);
+    for (int p = 0xC0; p <= 0xFF; p++)
+        bus->read_pages[p] = state->PRG_banks[1] + ((p - 0xC0) * 256);
 }
 
 void mapper000_dumpState(Mapper* mapper, File& state)

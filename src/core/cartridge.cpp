@@ -74,11 +74,7 @@ bool Cartridge::cpuRead(uint16_t addr, uint8_t& data)
 {
     switch (mapper_ID)
     {
-    case 0: return mapper000_cpuRead(&mapper, addr, data);
-    case 1: return mapper001_cpuRead(&mapper, addr, data);
-    case 2: return mapper002_cpuRead(&mapper, addr, data);
     case 3: return mapper003_cpuRead(&mapper, addr, data);
-    case 4: return mapper004_cpuRead(&mapper, addr, data);
     case 69: return mapper069_cpuRead(&mapper, addr, data);
     default: return false;
     }
@@ -88,11 +84,7 @@ bool Cartridge::cpuWrite(uint16_t addr, uint8_t data)
 {
     switch (mapper_ID)
     {
-    case 0: return mapper000_cpuWrite(&mapper, addr, data);
-    case 1: return mapper001_cpuWrite(&mapper, addr, data);
-    case 2: return mapper002_cpuWrite(&mapper, addr, data);
     case 3: return mapper003_cpuWrite(&mapper, addr, data);
-    case 4: return mapper004_cpuWrite(&mapper, addr, data);
     case 69: return mapper069_cpuWrite(&mapper, addr, data);
     default: return false;
     }
@@ -169,6 +161,18 @@ void Cartridge::reset()
     case 4: return mapper004_reset(&mapper);
     case 69: return mapper069_reset(&mapper);
     default: return;
+    }
+}
+
+void Cartridge::mapPages(Bus* bus)
+{
+    switch (mapper_ID)
+    {
+    case 0: mapper000_mapPages(&mapper, bus); break;
+    case 1: mapper001_mapPages(&mapper, bus); break;
+    case 2: mapper002_mapPages(&mapper, bus); break;
+    case 4: mapper004_mapPages(&mapper, bus); break;
+    default: break;
     }
 }
 
@@ -251,9 +255,7 @@ void Cartridge::createMapper(uint8_t number_PRG_banks, uint8_t number_CHR_banks,
     case 0: mapper = createMapper000(number_PRG_banks, number_CHR_banks, backend, this); break;
     case 1: mapper = createMapper001(number_PRG_banks, number_CHR_banks, backend, this); break;
     case 2: mapper = createMapper002(number_PRG_banks, number_CHR_banks, backend, this); break;
-    case 3: mapper = createMapper003(number_PRG_banks, number_CHR_banks, backend, this); break;
     case 4: mapper = createMapper004(number_PRG_banks, number_CHR_banks, backend, this); break;
-    case 69: mapper = createMapper069(number_PRG_banks, number_CHR_banks, backend, this); break;
     default: is_valid = false; break;
     }
 }

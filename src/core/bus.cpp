@@ -14,41 +14,26 @@ Bus::~Bus()
 
 IRAM_ATTR void Bus::cpuWrite(uint16_t addr, uint8_t data)
 {
-    if (cart->cpuWrite(addr, data)) {}
-    else if ((addr & 0xE000) == 0x0000) { RAM[addr & 0x07FF] = data; }
-    else if ((addr & 0xE000) == 0x2000) { ppu.cpuWrite(addr & 0x0007, data); }
-    else if (addr == 0x4014) { cpu.OAM_DMA(data); }
-    else if ((addr & 0xF000) == 0x4000 && (addr <= 0x4013 || addr == 0x4015 || addr == 0x4017))
+    if (uint8_t* p = write_pages[addr >> 8])
     {
-        cpu.apuWrite(addr, data);
+        p[addr & 0xFF] = data;
+        return;
     }
-    else if (addr == 0x4016)
-    {
-        controller_strobe = data & 1;
-        if (controller_strobe) { controller_state = controller; }
-    }
+    write_handlers[addr >> 8](this, addr, data);
 }
 
 IRAM_ATTR uint8_t Bus::cpuRead(uint16_t addr)
 {
-    uint8_t data = 0x00;
-
-    if (cart->cpuRead(addr, data)) {}
-    else if ((addr & 0xE000) == 0x0000) { data = RAM[addr & 0x07FF]; }
-    else if ((addr & 0xE000) == 0x2000) { data = ppu.cpuRead(addr & 0x0007); }
-    else if (addr == 0x4016)
-    {
-        uint8_t value = controller_state & 1;
-        if (!controller_strobe) controller_state >>= 1;
-        data = value | 0x40;
-    }
-    return data;
+    if (uint8_t* p = read_pages[addr >> 8]) return p[addr & 0xFF];
+    return read_handlers[addr >> 8](this, addr);
 }
 
 void Bus::reset()
 {
+    buildPageTables();
     for (auto& i : RAM) i = 0x00;
     cart->reset();
+    cart->mapPages(this);
     cpu.reset();
     ppu.reset();
 }
@@ -140,6 +125,65 @@ IRAM_ATTR void Bus::IRQ()
 IRAM_ATTR void Bus::NMI()
 {
     cpu.NMI();
+}
+
+static void defaultWriteHandler(Bus* b, uint16_t a, uint8_t d)
+{
+    return;
+}
+
+static uint8_t defaultReadHandler(Bus* b, uint16_t a)
+{
+    return 0x00;
+}
+
+// Builds the memory map for bus read and writes
+void Bus::buildPageTables()
+{
+    for (int p = 0; p < NUM_PAGES; p++)
+    {
+        read_pages[p] = nullptr;
+        write_pages[p] = nullptr;
+        read_handlers[p] = defaultReadHandler;
+        write_handlers[p] = defaultWriteHandler;
+    }
+
+    // $0000 - $1FFF: 2KB RAM mirrored x4
+    for (int p = 0x00; p <= 0x1F; p++)
+    {
+        uint8_t* base = &RAM[(p % 8) * PAGE_SIZE];
+        read_pages[p] = base;
+        write_pages[p] = base;
+    }
+
+    // $2000 - $3FFF: PPU registers, mirrored every 8 bytes
+    for (int p = 0x20; p <= 0x3F; p++)
+    {
+        read_handlers[p] = [](Bus* b, uint16_t a) -> uint8_t { return b->ppu.cpuRead(a & 0x0007); };
+        write_handlers[p] = [](Bus* b, uint16_t a, uint8_t d) { b->ppu.cpuWrite(a & 0x0007, d); };
+    }
+
+    // $4000 - $401F: APU/IO
+    read_handlers[0x40] = [](Bus* b, uint16_t a) -> uint8_t
+    {
+        if (a == 0x4016)
+        {
+            uint8_t value = b->controller_state & 1;
+            if (!b->controller_strobe) b->controller_state >>= 1;
+            return value | 0x40;
+        }
+        return 0x00;
+    };
+    write_handlers[0x40] = [](Bus* b, uint16_t a, uint8_t d)
+    {
+        if (a == 0x4014) b->cpu.OAM_DMA(d);
+        else if (a <= 0x4013 || a == 0x4015 || a == 0x4017) b->cpu.apuWrite(a, d);
+        else if (a == 0x4016)
+        {
+            b->controller_strobe = d & 1;
+            if (b->controller_strobe) b->controller_state = b->controller;
+        }
+    };
 }
 
 void Bus::saveState()

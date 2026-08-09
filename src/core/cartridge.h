@@ -40,6 +40,8 @@ public:
     void cpuCycle(int cycles);
     void reset();
 
+    void mapPages(Bus* bus);
+
     void loadPRGBank(uint8_t* bank, uint16_t size, uint32_t offset);
     void loadCHRBank(uint8_t* bank, uint16_t size, uint32_t offset);
     void setMirrorMode(MIRROR mirror);
@@ -61,6 +63,7 @@ public:
     uint8_t mirror = HORIZONTAL;
     uint32_t CRC32 = ~0U;
     MappedROM mROM;
+    Mapper mapper;
 
 private:
     Bus* bus = nullptr;
@@ -69,7 +72,6 @@ private:
     uint32_t chr_base;
 
     File rom;
-    Mapper mapper;
     uint8_t mapper_ID = 0;
     void createMapper(uint8_t number_PRG_banks, uint8_t number_CHR_banks, ROMBackend backend);
     uint32_t crc32(const void* buf, size_t size, uint32_t seed = ~0U);

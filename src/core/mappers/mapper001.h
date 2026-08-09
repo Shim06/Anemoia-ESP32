@@ -7,10 +7,10 @@
 #define MAPPER001_NUM_CHR_BANKS_8K  1
 #define MAPPER001_NUM_CHR_BANKS_4K  5
 
+class Bus;
 Mapper createMapper001(uint8_t PRG_banks, uint8_t CHR_banks, ROMBackend backend, Cartridge* cart);
 
-bool mapper001_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data);
-bool mapper001_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data);
+void mapper001_mapPages(Mapper* mapper, Bus* bus);
 bool mapper001_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data);
 bool mapper001_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data);
 uint8_t* mapper001_ppuReadPtr(Mapper* mapper, uint16_t addr);

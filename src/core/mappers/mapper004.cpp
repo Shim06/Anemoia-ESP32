@@ -1,4 +1,5 @@
 #include "mapper004.h"
+#include "../bus.h"
 #include "../cartridge.h"
 
 struct Mapper004_state
@@ -36,108 +37,98 @@ constexpr Cartridge::MIRROR Mapper004_state::mirror[2];
 static inline uint8_t* getPRGBank(Mapper004_state* state, uint8_t index);
 static inline uint8_t* getCHRBank(Mapper004_state* state, uint8_t index);
 
-bool mapper004_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
+static void mapper004_remapWindows(Mapper004_state* state, Bus* bus)
 {
-    if (addr < 0x6000) return false;
-
-    Mapper004_state* state = (Mapper004_state*)mapper->state;
-    if (addr < 0x8000)
+    uint8_t* windows[4] = { state->ptr_PRG_bank_8K[0], state->ptr_PRG_bank_8K[1],
+                            state->ptr_PRG_bank_8K[2], state->ptr_PRG_bank_8K[3] };
+    for (int i = 0; i < 4; i++)
     {
-        data = state->RAM[addr & 0x1FFF];
-        return true;
+        int base = 0x80 + (i * 0x20);
+        for (int p = 0; p < 0x20; p++) bus->read_pages[base + p] = windows[i] + (p * 256);
     }
-
-    uint8_t bank = (addr >> 13) & 0x03;
-    data = state->ptr_PRG_bank_8K[bank][addr & 0x1FFF];
-    return true;
 }
 
-bool mapper004_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
+static void mapper004_bankWrite(Bus* bus, uint16_t addr, uint8_t data)
 {
-    if (addr < 0x6000) return false;
-
-    Mapper004_state* state = (Mapper004_state*)mapper->state;
-    if (addr < 0x8000)
+    Mapper004_state* state = (Mapper004_state*)bus->cart->mapper.state;
+    if (!(addr & 0x01))
     {
-        state->RAM[addr & 0x1FFF] = data;
-        return true;
-    }
-
-    // Bank select (even address) | Bank data (odd address)
-    uint8_t bank_register[10];
-    switch (addr & 0xE001)
-    {
-    case 0x8000:
         state->bank_select = data & 0x07;
         state->PRG_ROM_bank_mode = (data >> 6) & 0x01;
         state->CHR_ROM_bank_mode = (data >> 7) & 0x01;
-        break;
-
-    case 0x8001:
-        state->bank_register[state->bank_select] = data;
-
-        bank_register[0] = (state->bank_register[0] & 0xFE) & state->CHR_mask;
-        bank_register[1] = (state->bank_register[1] & 0xFE) & state->CHR_mask;
-        bank_register[2] = state->bank_register[2] & state->CHR_mask;
-        bank_register[3] = state->bank_register[3] & state->CHR_mask;
-        bank_register[4] = state->bank_register[4] & state->CHR_mask;
-        bank_register[5] = state->bank_register[5] & state->CHR_mask;
-        bank_register[6] = state->bank_register[6] & state->PRG_mask;
-        bank_register[7] = state->bank_register[7] & state->PRG_mask;
-        bank_register[8] = ((state->bank_register[0] & 0xFE) + 1) & state->CHR_mask;
-        bank_register[9] = ((state->bank_register[1] & 0xFE) + 1) & state->CHR_mask;
-        if (state->CHR_ROM_bank_mode)
-        {
-            state->ptr_CHR_bank_1K[0] = getCHRBank(state, bank_register[2]);
-            state->ptr_CHR_bank_1K[1] = getCHRBank(state, bank_register[3]);
-            state->ptr_CHR_bank_1K[2] = getCHRBank(state, bank_register[4]);
-            state->ptr_CHR_bank_1K[3] = getCHRBank(state, bank_register[5]);
-            state->ptr_CHR_bank_1K[4] = getCHRBank(state, bank_register[0]);
-            state->ptr_CHR_bank_1K[5] = getCHRBank(state, bank_register[8]);
-            state->ptr_CHR_bank_1K[6] = getCHRBank(state, bank_register[1]);
-            state->ptr_CHR_bank_1K[7] = getCHRBank(state, bank_register[9]);
-        }
-        else
-        {
-            state->ptr_CHR_bank_1K[0] = getCHRBank(state, bank_register[0]);
-            state->ptr_CHR_bank_1K[1] = getCHRBank(state, bank_register[8]);
-            state->ptr_CHR_bank_1K[2] = getCHRBank(state, bank_register[1]);
-            state->ptr_CHR_bank_1K[3] = getCHRBank(state, bank_register[9]);
-            state->ptr_CHR_bank_1K[4] = getCHRBank(state, bank_register[2]);
-            state->ptr_CHR_bank_1K[5] = getCHRBank(state, bank_register[3]);
-            state->ptr_CHR_bank_1K[6] = getCHRBank(state, bank_register[4]);
-            state->ptr_CHR_bank_1K[7] = getCHRBank(state, bank_register[5]);
-        }
-
-        if (state->PRG_ROM_bank_mode)
-        {
-            state->ptr_PRG_bank_8K[0] = getPRGBank(state, (state->number_PRG_banks * 2) - 2);
-            state->ptr_PRG_bank_8K[2] = getPRGBank(state, bank_register[6]);
-        }
-        else
-        {
-            state->ptr_PRG_bank_8K[0] = getPRGBank(state, bank_register[6]);
-            state->ptr_PRG_bank_8K[2] = getPRGBank(state, (state->number_PRG_banks * 2) - 2);
-        }
-        state->ptr_PRG_bank_8K[1] = getPRGBank(state, bank_register[7]);
-        state->ptr_PRG_bank_8K[3] = getPRGBank(state, (state->number_PRG_banks * 2) - 1);
-        break;
-
-    // Mirroring (even address)
-    case 0xA000: state->cart->setMirrorMode(state->mirror[data & 0x01]); break;
-
-    // IRQ latch (even address) | IRQ reload (odd address)
-    case 0xC000: state->IRQ_latch = data; break;
-
-    case 0xC001: state->IRQ_counter = 0; break;
-
-    // IRQ disable (even address) | IRQ enable (odd address)
-    case 0xE000: state->IRQ_enable = false; break;
-
-    case 0xE001: state->IRQ_enable = true; break;
+        return;
     }
 
-    return false;
+    state->bank_register[state->bank_select] = data;
+
+    uint8_t bank_register[10];
+    bank_register[0] = (state->bank_register[0] & 0xFE) & state->CHR_mask;
+    bank_register[1] = (state->bank_register[1] & 0xFE) & state->CHR_mask;
+    bank_register[2] = state->bank_register[2] & state->CHR_mask;
+    bank_register[3] = state->bank_register[3] & state->CHR_mask;
+    bank_register[4] = state->bank_register[4] & state->CHR_mask;
+    bank_register[5] = state->bank_register[5] & state->CHR_mask;
+    bank_register[6] = state->bank_register[6] & state->PRG_mask;
+    bank_register[7] = state->bank_register[7] & state->PRG_mask;
+    bank_register[8] = ((state->bank_register[0] & 0xFE) + 1) & state->CHR_mask;
+    bank_register[9] = ((state->bank_register[1] & 0xFE) + 1) & state->CHR_mask;
+    if (state->CHR_ROM_bank_mode)
+    {
+        state->ptr_CHR_bank_1K[0] = getCHRBank(state, bank_register[2]);
+        state->ptr_CHR_bank_1K[1] = getCHRBank(state, bank_register[3]);
+        state->ptr_CHR_bank_1K[2] = getCHRBank(state, bank_register[4]);
+        state->ptr_CHR_bank_1K[3] = getCHRBank(state, bank_register[5]);
+        state->ptr_CHR_bank_1K[4] = getCHRBank(state, bank_register[0]);
+        state->ptr_CHR_bank_1K[5] = getCHRBank(state, bank_register[8]);
+        state->ptr_CHR_bank_1K[6] = getCHRBank(state, bank_register[1]);
+        state->ptr_CHR_bank_1K[7] = getCHRBank(state, bank_register[9]);
+    }
+    else
+    {
+        state->ptr_CHR_bank_1K[0] = getCHRBank(state, bank_register[0]);
+        state->ptr_CHR_bank_1K[1] = getCHRBank(state, bank_register[8]);
+        state->ptr_CHR_bank_1K[2] = getCHRBank(state, bank_register[1]);
+        state->ptr_CHR_bank_1K[3] = getCHRBank(state, bank_register[9]);
+        state->ptr_CHR_bank_1K[4] = getCHRBank(state, bank_register[2]);
+        state->ptr_CHR_bank_1K[5] = getCHRBank(state, bank_register[3]);
+        state->ptr_CHR_bank_1K[6] = getCHRBank(state, bank_register[4]);
+        state->ptr_CHR_bank_1K[7] = getCHRBank(state, bank_register[5]);
+    }
+
+    if (state->PRG_ROM_bank_mode)
+    {
+        state->ptr_PRG_bank_8K[0] = getPRGBank(state, (state->number_PRG_banks * 2) - 2);
+        state->ptr_PRG_bank_8K[2] = getPRGBank(state, bank_register[6]);
+    }
+    else
+    {
+        state->ptr_PRG_bank_8K[0] = getPRGBank(state, bank_register[6]);
+        state->ptr_PRG_bank_8K[2] = getPRGBank(state, (state->number_PRG_banks * 2) - 2);
+    }
+    state->ptr_PRG_bank_8K[1] = getPRGBank(state, bank_register[7]);
+    state->ptr_PRG_bank_8K[3] = getPRGBank(state, (state->number_PRG_banks * 2) - 1);
+
+    mapper004_remapWindows(state, bus);
+    return;
+}
+
+static void mapper004_mirrorWrite(Bus* bus, uint16_t addr, uint8_t data)
+{
+    Mapper004_state* state = (Mapper004_state*)bus->cart->mapper.state;
+    if (!(addr & 0x01)) state->cart->setMirrorMode(state->mirror[data & 0x01]);
+}
+
+static void mapper004_irqLatchWrite(Bus* bus, uint16_t addr, uint8_t data)
+{
+    Mapper004_state* state = (Mapper004_state*)bus->cart->mapper.state;
+    if (!(addr & 0x01)) state->IRQ_latch = data;
+    else state->IRQ_counter = 0;
+}
+
+static void mapper004_irqEnableWrite(Bus* bus, uint16_t addr, uint8_t data)
+{
+    Mapper004_state* state = (Mapper004_state*)bus->cart->mapper.state;
+    state->IRQ_enable = (addr & 0x01);
 }
 
 bool mapper004_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
@@ -228,6 +219,34 @@ void mapper004_reset(Mapper* mapper)
     state->PRG_mask = (state->number_PRG_banks * 2) - 1;
     state->CHR_mask = (state->number_CHR_banks * 8) - 1;
     state->cart->setMirrorMode(Cartridge::MIRROR::HORIZONTAL);
+}
+
+void mapper004_mapPages(Mapper* mapper, Bus* bus)
+{
+    Mapper004_state* state = (Mapper004_state*)mapper->state;
+
+    // $6000-$7FFF: 8KB PRG-RAM
+    for (int p = 0x60; p <= 0x7F; p++)
+    {
+        bus->read_pages[p] = state->RAM + ((p - 0x60) * 256);
+        bus->write_pages[p] = state->RAM + ((p - 0x60) * 256);
+    }
+
+    // Map bank writes
+    // $8000-$9FFF: Bank select (even address) | Bank data (odd address)
+    for (int p = 0x80; p <= 0x9F; p++) bus->write_handlers[p] = mapper004_bankWrite;
+
+    // $A000-$BFFF: Mirroring (even address)
+    for (int p = 0xA0; p <= 0xBF; p++) bus->write_handlers[p] = mapper004_mirrorWrite;
+
+    // $C000-$DFFF: IRQ latch (even address) | IRQ reload (odd address)
+    for (int p = 0xC0; p <= 0xDF; p++) bus->write_handlers[p] = mapper004_irqLatchWrite;
+
+    // $E000-$FFFF: IRQ disable (even address) | IRQ enable (odd address)
+    for (int p = 0xE0; p <= 0xFF; p++) bus->write_handlers[p] = mapper004_irqEnableWrite;
+
+    // Map bank reads
+    mapper004_remapWindows(state, bus);
 }
 
 void mapper004_dumpState(Mapper* mapper, File& state)
