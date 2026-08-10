@@ -19,38 +19,6 @@ static void mapper002_bankWrite(Bus* bus, uint16_t addr, uint8_t data)
     mapper002_remapWindows(state, bus);
 }
 
-bool mapper002_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
-{
-    if (addr > 0x1FFF) return false;
-
-    Mapper002_state* state = (Mapper002_state*)mapper->state;
-    data = state->CHR_bank[addr];
-    return true;
-}
-
-bool mapper002_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
-{
-    if (addr > 0x1FFF) return false;
-
-    Mapper002_state* state = (Mapper002_state*)mapper->state;
-    if (state->number_CHR_banks == 0)
-    {
-        // Treat as RAM
-        state->CHR_bank[addr] = data;
-        return true;
-    }
-
-    return false;
-}
-
-uint8_t* mapper002_ppuReadPtr(Mapper* mapper, uint16_t addr)
-{
-    if (addr > 0x1FFF) return nullptr;
-
-    Mapper002_state* state = (Mapper002_state*)mapper->state;
-    return &state->CHR_bank[addr];
-}
-
 void mapper002_reset(Mapper* mapper)
 {
     Mapper002_state* state = (Mapper002_state*)mapper->state;

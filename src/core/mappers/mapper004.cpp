@@ -145,16 +145,6 @@ static void mapper004_irqEnableWrite(Bus* bus, uint16_t addr, uint8_t data)
     state->IRQ_enable = (addr & 0x01);
 }
 
-bool mapper004_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
-{
-    if (addr > 0x1FFF) return false;
-
-    Mapper004_state* state = (Mapper004_state*)mapper->state;
-    uint8_t bank = (addr >> 10) & 0x07;
-    data = state->ptr_CHR_bank_1K[bank][addr & 0x03FF];
-    return true;
-}
-
 void mapper004_scanline(Mapper* mapper)
 {
     Mapper004_state* state = (Mapper004_state*)mapper->state;

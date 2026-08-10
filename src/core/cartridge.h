@@ -24,11 +24,6 @@ public:
     Cartridge(const char* filename, ROMBackend backend = ROMBackend::LRU);
     ~Cartridge();
 
-    bool cpuRead(uint16_t addr, uint8_t& data);
-    bool cpuWrite(uint16_t addr, uint8_t data);
-    bool ppuRead(uint16_t addr, uint8_t& data);
-    uint8_t* ppuReadPtr(uint16_t addr);
-    bool ppuWrite(uint16_t addr, uint8_t data);
     void ppuScanline();
     void cpuCycle(int cycles);
     void reset();

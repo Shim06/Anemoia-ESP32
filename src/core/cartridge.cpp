@@ -71,68 +71,6 @@ Cartridge::~Cartridge()
 {
 }
 
-bool Cartridge::cpuRead(uint16_t addr, uint8_t& data)
-{
-    switch (mapper_ID)
-    {
-    case 3: return mapper003_cpuRead(&mapper, addr, data);
-    case 69: return mapper069_cpuRead(&mapper, addr, data);
-    default: return false;
-    }
-}
-
-bool Cartridge::cpuWrite(uint16_t addr, uint8_t data)
-{
-    switch (mapper_ID)
-    {
-    case 3: return mapper003_cpuWrite(&mapper, addr, data);
-    case 69: return mapper069_cpuWrite(&mapper, addr, data);
-    default: return false;
-    }
-}
-
-bool Cartridge::ppuRead(uint16_t addr, uint8_t& data)
-{
-    switch (mapper_ID)
-    {
-    case 0: return mapper000_ppuRead(&mapper, addr, data);
-    case 1: return mapper001_ppuRead(&mapper, addr, data);
-    case 2: return mapper002_ppuRead(&mapper, addr, data);
-    case 3: return mapper003_ppuRead(&mapper, addr, data);
-    case 4: return mapper004_ppuRead(&mapper, addr, data);
-    case 69: return mapper069_ppuRead(&mapper, addr, data);
-    default: return false;
-    }
-}
-
-bool Cartridge::ppuWrite(uint16_t addr, uint8_t data)
-{
-    switch (mapper_ID)
-    {
-    case 0: return mapper000_ppuWrite(&mapper, addr, data);
-    case 1: return mapper001_ppuWrite(&mapper, addr, data);
-    case 2: return mapper002_ppuWrite(&mapper, addr, data);
-    case 3: return mapper003_ppuWrite(&mapper, addr, data);
-    case 4: return mapper004_ppuWrite(&mapper, addr, data);
-    case 69: return mapper069_ppuWrite(&mapper, addr, data);
-    default: return false;
-    }
-}
-
-uint8_t* Cartridge::ppuReadPtr(uint16_t addr)
-{
-    switch (mapper_ID)
-    {
-    case 0: return mapper000_ppuReadPtr(&mapper, addr);
-    case 1: return mapper001_ppuReadPtr(&mapper, addr);
-    case 2: return mapper002_ppuReadPtr(&mapper, addr);
-    case 3: return mapper003_ppuReadPtr(&mapper, addr);
-    case 4: return mapper004_ppuReadPtr(&mapper, addr);
-    case 69: return mapper069_ppuReadPtr(&mapper, addr);
-    default: return nullptr;
-    }
-}
-
 void Cartridge::ppuScanline()
 {
     switch (mapper_ID)

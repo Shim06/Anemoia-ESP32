@@ -20,9 +20,6 @@ Mapper createMapper000(uint8_t PRG_banks, uint8_t CHR_banks, ROMBackend backend,
 
 void mapper000_mapPages(Mapper* mapper, Bus* bus);
 void mapper000_mapPPUPages(Mapper* mapper, Ppu2C02* ppu);
-bool mapper000_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data);
-bool mapper000_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data);
-uint8_t* mapper000_ppuReadPtr(Mapper* mapper, uint16_t addr);
 void mapper000_reset(Mapper* mapper);
 void mapper000_dumpState(Mapper* mapper, File& state);
 void mapper000_loadState(Mapper* mapper, File& state);
