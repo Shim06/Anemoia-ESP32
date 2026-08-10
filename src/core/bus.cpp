@@ -30,10 +30,14 @@ IRAM_ATTR uint8_t Bus::cpuRead(uint16_t addr)
 
 void Bus::reset()
 {
-    buildPageTables();
     for (auto& i : RAM) i = 0x00;
+
+    buildPageTables();
     cart->reset();
     cart->mapPages(this);
+    ppu.buildPPUPageTables();
+    cart->mapPPUPages(&ppu);
+
     cpu.reset();
     ppu.reset();
 }
@@ -73,12 +77,12 @@ IRAM_ATTR void Bus::clock()
     cpu.clock(114);
 }
 
-IRAM_ATTR void Bus::setPPUMirrorMode(Cartridge::MIRROR mirror)
+IRAM_ATTR void Bus::setPPUMirrorMode(MIRROR mirror)
 {
     ppu.setMirror(mirror);
 }
 
-Cartridge::MIRROR Bus::getPPUMirrorMode()
+MIRROR Bus::getPPUMirrorMode()
 {
     return ppu.getMirror();
 }

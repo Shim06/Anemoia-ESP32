@@ -1,30 +1,7 @@
 #include "mapper000.h"
 #include "../bus.h"
 #include "../cartridge.h"
-
-bool mapper000_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
-{
-    if (addr > 0x1FFF) return false;
-
-    Mapper000_state* state = (Mapper000_state*)mapper->state;
-    data = state->CHR_bank[addr];
-    return true;
-}
-
-bool mapper000_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
-{
-    if (addr > 0x1FFF) return false;
-
-    Mapper000_state* state = (Mapper000_state*)mapper->state;
-    if (state->number_CHR_banks == 0)
-    {
-        // Treat as RAM
-        state->CHR_bank[addr] = data;
-        return true;
-    }
-
-    return false;
-}
+#include "../ppu2C02.h"
 
 uint8_t* mapper000_ppuReadPtr(Mapper* mapper, uint16_t addr)
 {
@@ -69,6 +46,18 @@ void mapper000_mapPages(Mapper* mapper, Bus* bus)
         bus->read_pages[p] = state->PRG_banks[0] + ((p - 0x80) * 256);
     for (int p = 0xC0; p <= 0xFF; p++)
         bus->read_pages[p] = state->PRG_banks[1] + ((p - 0xC0) * 256);
+}
+
+void mapper000_mapPPUPages(Mapper* mapper, Ppu2C02* ppu)
+{
+    Mapper000_state* state = (Mapper000_state*)mapper->state;
+
+    // $0000-1FFF: CHR-ROM/RAM
+    for (int p = 0x00; p <= 0x1F; p++)
+    {
+        ppu->ppu_read_pages[p] = state->CHR_bank + (p * 256);
+        if (state->number_CHR_banks == 0) ppu->ppu_write_pages[p] = state->CHR_bank + (p * 256);
+    }
 }
 
 void mapper000_dumpState(Mapper* mapper, File& state)

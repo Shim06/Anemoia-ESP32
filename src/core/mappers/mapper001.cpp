@@ -34,12 +34,10 @@ struct Mapper001_state
     uint8_t CHR_bank_1 = 0x00; // CHR Bank 1 Register
     uint8_t PRG_bank = 0x00;   // PRG Bank Register
 
-    static constexpr Cartridge::MIRROR mirror[4] = { Cartridge::MIRROR::ONESCREEN_LOW,
-                                                     Cartridge::MIRROR::ONESCREEN_HIGH,
-                                                     Cartridge::MIRROR::VERTICAL,
-                                                     Cartridge::MIRROR::HORIZONTAL };
+    static constexpr MIRROR mirror[4] = { MIRROR::ONESCREEN_LOW, MIRROR::ONESCREEN_HIGH,
+                                          MIRROR::VERTICAL, MIRROR::HORIZONTAL };
 };
-constexpr Cartridge::MIRROR Mapper001_state::mirror[4];
+constexpr MIRROR Mapper001_state::mirror[4];
 static inline uint8_t* getPRGBank(Mapper001_state* state, uint8_t index);
 static inline uint8_t* getCHRBank8K(Mapper001_state* state, uint8_t index);
 static inline uint8_t* getCHRBank4K(Mapper001_state* state, uint8_t index);
@@ -256,7 +254,7 @@ void mapper001_reset(Mapper* mapper)
     state->CHR_bank_0 = 0x00;
     state->CHR_bank_1 = 0x00;
     state->PRG_bank = 0x00;
-    state->cart->setMirrorMode(Cartridge::MIRROR::HORIZONTAL);
+    state->cart->setMirrorMode(MIRROR::HORIZONTAL);
 }
 
 void mapper001_mapPages(Mapper* mapper, Bus* bus)
@@ -280,7 +278,7 @@ void mapper001_mapPages(Mapper* mapper, Bus* bus)
 void mapper001_dumpState(Mapper* mapper, File& state)
 {
     Mapper001_state* s = (Mapper001_state*)mapper->state;
-    Cartridge::MIRROR mirror = s->cart->getMirrorMode();
+    MIRROR mirror = s->cart->getMirrorMode();
     state.write((uint8_t*)&s->load, sizeof(s->load));
     state.write((uint8_t*)&s->control, sizeof(s->control));
     state.write((uint8_t*)&s->load_writes, sizeof(s->load_writes));
@@ -337,7 +335,7 @@ void mapper001_dumpState(Mapper* mapper, File& state)
 void mapper001_loadState(Mapper* mapper, File& state)
 {
     Mapper001_state* s = (Mapper001_state*)mapper->state;
-    Cartridge::MIRROR mirror;
+    MIRROR mirror;
     state.read((uint8_t*)&s->load, sizeof(s->load));
     state.read((uint8_t*)&s->control, sizeof(s->control));
     state.read((uint8_t*)&s->load_writes, sizeof(s->load_writes));

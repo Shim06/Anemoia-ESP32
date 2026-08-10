@@ -4,6 +4,7 @@
 #include "../mapper.h"
 
 class Bus;
+class Ppu2C02;
 struct Mapper000_state
 {
     Cartridge* cart = nullptr;
@@ -20,6 +21,7 @@ struct Mapper000_state
 Mapper createMapper000(uint8_t PRG_banks, uint8_t CHR_banks, ROMBackend backend, Cartridge* cart);
 
 void mapper000_mapPages(Mapper* mapper, Bus* bus);
+void mapper000_mapPPUPages(Mapper* mapper, Ppu2C02* ppu);
 bool mapper000_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data);
 bool mapper000_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data);
 uint8_t* mapper000_ppuReadPtr(Mapper* mapper, uint16_t addr);

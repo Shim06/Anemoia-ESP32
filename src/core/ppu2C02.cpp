@@ -1,5 +1,6 @@
 #include "ppu2C02.h"
 #include "bus.h"
+#include "cartridge.h"
 
 #define READ_PALETTE(x) palette_table[((x) & 0x1F) ^ (((x) & 0x13) == 0x10 ? 0x10 : 0x00)]
 
@@ -48,44 +49,26 @@ Ppu2C02::~Ppu2C02()
 inline void Ppu2C02::ppuWrite(uint16_t addr, uint8_t data)
 {
     addr &= 0x3FFF;
-
-    if (cart->ppuWrite(addr, data)) return;
-    else if (addr >= 0x2000 && addr <= 0x3EFF)
+    if (uint8_t* p = ppu_write_pages[addr >> 8])
     {
-        ptr_nametable[(addr >> 10) & 3][addr & 0x03FF] = data;
+        p[addr & 0xFF] = data;
+        return;
     }
-    else if (addr >= 0x3F00 && addr <= 0x3FFF)
-    {
-        addr = palette_mirror[addr & 0x001F];
-        palette_table[addr] = data;
-    }
+    ppu_write_handlers[addr >> 8](this, addr, data);
 }
 
 inline uint8_t Ppu2C02::ppuRead(uint16_t addr)
 {
-    uint8_t data = 0x00;
     addr &= 0x3FFF;
+    if (uint8_t* p = ppu_read_pages[addr >> 8]) return p[addr & 0xFF];
+    return ppu_read_handlers[addr >> 8](this, addr);
+}
 
-    if (cart->ppuRead(addr, data)) return data;
-    else if (addr >= 0x2000 && addr <= 0x3EFF)
-    {
-        data = ptr_nametable[(addr >> 10) & 3][addr & 0x03FF];
-    }
-    else if (addr >= 0x3F00 && addr <= 0x3FFF)
-    {
-        addr &= 0x001F;
-        switch (addr)
-        {
-        case 0x0010: addr = 0x0000; break;
-        case 0x0014: addr = 0x0004; break;
-        case 0x0018: addr = 0x0008; break;
-        case 0x001C: addr = 0x000C; break;
-        default: break;
-        }
-        data = palette_table[addr] & (mask.grayscale ? 0x30 : 0x3F);
-    }
-
-    return data;
+inline uint8_t* Ppu2C02::ppuReadPtr(uint16_t addr)
+{
+    addr &= 0x3FFF;
+    if (uint8_t* p = ppu_read_pages[addr >> 8]) return p + (addr & 0xFF);
+    return nullptr;
 }
 
 IRAM_ATTR void Ppu2C02::cpuWrite(uint16_t addr, uint8_t data)
@@ -253,7 +236,7 @@ inline void Ppu2C02::renderBackground()
     for (int tile = 0; tile < 33; tile++)
     {
         tile_index = *ptr_tile++;
-        ptr_pattern_tile = cart->ppuReadPtr(offset + (tile_index << 4));
+        ptr_pattern_tile = ppuReadPtr(offset + (tile_index << 4));
 
         // draw to framebuffer
         uint16_t pattern = ((ptr_pattern_tile[8] & 0xAA) << 8) |
@@ -341,7 +324,7 @@ inline void Ppu2C02::renderSprites()
         // If 8x16 sprite mode
         tile_addr = (control.sprite_size) ? ((tile_index & 0x01) << 12) | ((tile_index & 0xFE) << 4)
                                           : offset + (tile_index << 4);
-        ptr_tile = cart->ppuReadPtr(tile_addr);
+        ptr_tile = ppuReadPtr(tile_addr);
 
         y_offset = (int16_t)(scanline - sprite_y);
         if (y_offset > 7) y_offset += 8;
@@ -458,7 +441,7 @@ void Ppu2C02::fakeSpriteHit(uint16_t current_scanline)
 
     tile_addr = (control.sprite_size) ? ((tile_index & 0x01) << 12) | ((tile_index & 0xFE) << 4)
                                       : offset + (tile_index << 4);
-    uint8_t* ptr_tile = cart->ppuReadPtr(tile_addr);
+    uint8_t* ptr_tile = ppuReadPtr(tile_addr);
 
     y_offset = (int16_t)(scanline - sprite_y);
     if (y_offset > 7) y_offset += 8;
@@ -557,62 +540,116 @@ void Ppu2C02::reset()
     PPUDATA_buffer = 0x00;
 }
 
+void Ppu2C02::buildPPUPageTables()
+{
+    for (int p = 0; p <= 0x3F; p++)
+    {
+        ppu_read_pages[p] = nullptr;
+        ppu_write_handlers[p] = nullptr;
+        ppu_read_handlers[p] = defaultPPUReadHandler;
+        ppu_write_handlers[p] = defaultPPUWriteHandler;
+    }
+
+    // $2000-3EFF: Nametables
+    remapNametablePages();
+
+    // $3F00-3FFF: Palettes
+    ppu_read_pages[0x3F] = nullptr;
+    ppu_write_pages[0x3F] = nullptr;
+    ppu_read_handlers[0x3F] = paletteReadHandler;
+    ppu_write_handlers[0x3F] = paletteWriteHandler;
+}
+
+void Ppu2C02::remapNametablePages()
+{
+    for (int p = 0x20; p <= 0x3E; p++)
+    {
+        int quadrant = (p >> 2) & 3;
+        int offset = (p & 3) * PPU_PAGE_SIZE;
+        ppu_read_pages[p] = ptr_nametable[quadrant] + offset;
+        ppu_write_pages[p] = ptr_nametable[quadrant] + offset;
+    }
+}
+
+uint8_t Ppu2C02::paletteReadHandler(Ppu2C02* ppu, uint16_t addr)
+{
+    addr = ppu->palette_mirror[addr & 0x001F];
+    return ppu->palette_table[addr] & (ppu->mask.grayscale ? 0x30 : 0x3F);
+}
+
+void Ppu2C02::paletteWriteHandler(Ppu2C02* ppu, uint16_t addr, uint8_t data)
+{
+    addr = ppu->palette_mirror[addr & 0x001F];
+    ppu->palette_table[addr] = data;
+}
+
+uint8_t Ppu2C02::defaultPPUReadHandler(Ppu2C02* ppu, uint16_t addr)
+{
+    return 0x00;
+}
+
+void Ppu2C02::defaultPPUWriteHandler(Ppu2C02* ppu, uint16_t addr, uint8_t data)
+{
+    return;
+}
+
 void Ppu2C02::connectCartridge(Cartridge* cartridge)
 {
     cart = cartridge;
-    setMirror((Cartridge::MIRROR)cart->hardware_mirror);
+    setMirror((MIRROR)cart->hardware_mirror);
 }
 
-void Ppu2C02::setMirror(Cartridge::MIRROR mirror)
+void Ppu2C02::setMirror(MIRROR mirror)
 {
     switch (mirror)
     {
-    case Cartridge::MIRROR::VERTICAL:
+    case MIRROR::VERTICAL:
         ptr_nametable[0] = &nametable[0x0000];
         ptr_nametable[1] = &nametable[0x0400];
         ptr_nametable[2] = &nametable[0x0000];
         ptr_nametable[3] = &nametable[0x0400];
         break;
 
-    case Cartridge::MIRROR::HORIZONTAL:
+    case MIRROR::HORIZONTAL:
         ptr_nametable[0] = &nametable[0x0000];
         ptr_nametable[1] = &nametable[0x0000];
         ptr_nametable[2] = &nametable[0x0400];
         ptr_nametable[3] = &nametable[0x0400];
         break;
 
-    case Cartridge::MIRROR::ONESCREEN_LOW:
+    case MIRROR::ONESCREEN_LOW:
         ptr_nametable[0] = ptr_nametable[1] = ptr_nametable[2] = ptr_nametable[3] =
             &nametable[0x0000];
         break;
 
-    case Cartridge::MIRROR::ONESCREEN_HIGH:
+    case MIRROR::ONESCREEN_HIGH:
         ptr_nametable[0] = ptr_nametable[1] = ptr_nametable[2] = ptr_nametable[3] =
             &nametable[0x0400];
         break;
     default: break;
     }
+    remapNametablePages();
 }
 
-Cartridge::MIRROR Ppu2C02::getMirror()
+MIRROR Ppu2C02::getMirror()
 {
     if (ptr_nametable[0] == &nametable[0x0000] && ptr_nametable[1] == &nametable[0x0000] &&
         ptr_nametable[2] == &nametable[0x0400] && ptr_nametable[3] == &nametable[0x0400])
-        return Cartridge::MIRROR::HORIZONTAL;
+        return MIRROR::HORIZONTAL;
 
     else if (ptr_nametable[0] == &nametable[0x0000] && ptr_nametable[1] == &nametable[0x0400] &&
              ptr_nametable[2] == &nametable[0x0000] && ptr_nametable[3] == &nametable[0x0400])
-        return Cartridge::MIRROR::VERTICAL;
+        return MIRROR::VERTICAL;
 
     else if (ptr_nametable[0] == &nametable[0x0000] && ptr_nametable[1] == &nametable[0x0000] &&
              ptr_nametable[2] == &nametable[0x0000] && ptr_nametable[3] == &nametable[0x0000])
-        return Cartridge::MIRROR::ONESCREEN_LOW;
+        return MIRROR::ONESCREEN_LOW;
 
     else if (ptr_nametable[0] == &nametable[0x0400] && ptr_nametable[1] == &nametable[0x0400] &&
              ptr_nametable[2] == &nametable[0x0400] && ptr_nametable[3] == &nametable[0x0400])
-        return Cartridge::MIRROR::ONESCREEN_HIGH;
+        return MIRROR::ONESCREEN_HIGH;
 
-    return Cartridge::MIRROR::HORIZONTAL;
+    return MIRROR::HORIZONTAL;
 }
 
 void Ppu2C02::setPalette(uint8_t palette)

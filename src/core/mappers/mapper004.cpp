@@ -30,10 +30,9 @@ struct Mapper004_state
     uint16_t PRG_mask = 0;
     uint16_t CHR_mask = 0;
 
-    static constexpr Cartridge::MIRROR mirror[2] = { Cartridge::MIRROR::VERTICAL,
-                                                     Cartridge::MIRROR::HORIZONTAL };
+    static constexpr MIRROR mirror[2] = { MIRROR::VERTICAL, MIRROR::HORIZONTAL };
 };
-constexpr Cartridge::MIRROR Mapper004_state::mirror[2];
+constexpr MIRROR Mapper004_state::mirror[2];
 static inline uint8_t* getPRGBank(Mapper004_state* state, uint8_t index);
 static inline uint8_t* getCHRBank(Mapper004_state* state, uint8_t index);
 
@@ -218,7 +217,7 @@ void mapper004_reset(Mapper* mapper)
     state->CHR_ROM_bank_mode = 0;
     state->PRG_mask = (state->number_PRG_banks * 2) - 1;
     state->CHR_mask = (state->number_CHR_banks * 8) - 1;
-    state->cart->setMirrorMode(Cartridge::MIRROR::HORIZONTAL);
+    state->cart->setMirrorMode(MIRROR::HORIZONTAL);
 }
 
 void mapper004_mapPages(Mapper* mapper, Bus* bus)
@@ -260,7 +259,7 @@ void mapper004_dumpState(Mapper* mapper, File& state)
     state.write((uint8_t*)&s->PRG_ROM_bank_mode, sizeof(s->PRG_ROM_bank_mode));
     state.write((uint8_t*)&s->CHR_ROM_bank_mode, sizeof(s->CHR_ROM_bank_mode));
 
-    Cartridge::MIRROR mirror = s->cart->getMirrorMode();
+    MIRROR mirror = s->cart->getMirrorMode();
     state.write((uint8_t*)&mirror, sizeof(mirror));
 
     uint8_t PRG_bank_8K[4];
@@ -301,7 +300,7 @@ void mapper004_loadState(Mapper* mapper, File& state)
     state.read((uint8_t*)&s->IRQ_enable, sizeof(s->IRQ_enable));
     state.read((uint8_t*)&s->PRG_ROM_bank_mode, sizeof(s->PRG_ROM_bank_mode));
     state.read((uint8_t*)&s->CHR_ROM_bank_mode, sizeof(s->CHR_ROM_bank_mode));
-    Cartridge::MIRROR mirror;
+    MIRROR mirror;
     state.read((uint8_t*)&mirror, sizeof(mirror));
     s->cart->setMirrorMode(mirror);
 

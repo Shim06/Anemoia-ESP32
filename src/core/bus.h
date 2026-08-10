@@ -25,8 +25,8 @@ public:
 
     void cpuWrite(uint16_t addr, uint8_t data);
     uint8_t cpuRead(uint16_t addr);
-    void setPPUMirrorMode(Cartridge::MIRROR mirror);
-    Cartridge::MIRROR getPPUMirrorMode();
+    void setPPUMirrorMode(MIRROR mirror);
+    MIRROR getPPUMirrorMode();
 
     void insertCartridge(Cartridge* cartridge);
     void connectScreen(TFT_eSPI* screen);

@@ -6,6 +6,7 @@
 
 #include "../../config.h"
 #include "cartridge.h"
+#include "mirror_mode.h"
 
 #define BUFFER_SIZE          (256 + 8 + 8)
 #define SCANLINE_SIZE        256
@@ -22,6 +23,7 @@
     #define SCANLINES_PER_BUFFER 4
 #endif
 
+class Cartridge;
 class Bus;
 class Ppu2C02
 {
@@ -29,9 +31,22 @@ public:
     Ppu2C02();
     ~Ppu2C02();
 
-public:
+    static constexpr int PPU_PAGE_SIZE = 256;
+    static constexpr int NUM_PPU_PAGES = 0x4000 / PPU_PAGE_SIZE;
+    using PPUReadHandler = uint8_t (*)(Ppu2C02*, uint16_t);
+    using PPUWriteHandler = void (*)(Ppu2C02*, uint16_t, uint8_t);
+
+    uint8_t* ppu_read_pages[NUM_PPU_PAGES] = {};
+    uint8_t* ppu_write_pages[NUM_PPU_PAGES] = {};
+    PPUReadHandler ppu_read_handlers[NUM_PPU_PAGES] = {};
+    PPUWriteHandler ppu_write_handlers[NUM_PPU_PAGES] = {};
+
+    void buildPPUPageTables();
+    void remapNametablePages();
+
     void ppuWrite(uint16_t addr, uint8_t data);
     uint8_t ppuRead(uint16_t addr);
+    uint8_t* ppuReadPtr(uint16_t addr);
     void cpuWrite(uint16_t addr, uint8_t data);
     uint8_t cpuRead(uint16_t addr);
 
@@ -47,8 +62,8 @@ public:
     }
     void connectCartridge(Cartridge* cartridge);
     void connectFramebuffer(uint8_t* framebuffer);
-    void setMirror(Cartridge::MIRROR mirror);
-    Cartridge::MIRROR getMirror();
+    void setMirror(MIRROR mirror);
+    MIRROR getMirror();
 
     void dumpState(File& state);
     void loadState(File& state);
@@ -859,6 +874,11 @@ private:
     // Rendering
     uint16_t scanline = 0x00;
     uint8_t* ptr_scanline_meta = nullptr;
+
+    static uint8_t paletteReadHandler(Ppu2C02* ppu, uint16_t addr);
+    static void paletteWriteHandler(Ppu2C02* ppu, uint16_t addr, uint8_t data);
+    static uint8_t defaultPPUReadHandler(Ppu2C02* ppu, uint16_t addr);
+    static void defaultPPUWriteHandler(Ppu2C02* ppu, uint16_t addr, uint8_t data);
 
 public:
     uint8_t* ptr_sprite = (uint8_t*)sprite;

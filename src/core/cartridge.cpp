@@ -1,5 +1,6 @@
 #include "cartridge.h"
 #include "bus.h"
+#include "ppu2C02.h"
 
 Cartridge::Cartridge(const char* filename, ROMBackend backend)
 {
@@ -24,7 +25,7 @@ Cartridge::Cartridge(const char* filename, ROMBackend backend)
     if (header.mapper1 & 0x04) rom.seek(rom.position() + 512);
 
     mapper_ID = (header.mapper2 & 0xF0) | header.mapper1 >> 4;
-    hardware_mirror = (header.mapper1 & 0x01) ? VERTICAL : HORIZONTAL;
+    hardware_mirror = (header.mapper1 & 0x01) ? MIRROR::VERTICAL : MIRROR::HORIZONTAL;
 
     uint8_t number_PRG_banks = 0;
     uint8_t number_CHR_banks = 0;
@@ -176,6 +177,18 @@ void Cartridge::mapPages(Bus* bus)
     }
 }
 
+void Cartridge::mapPPUPages(Ppu2C02* ppu)
+{
+    switch (mapper_ID)
+    {
+    case 0: mapper000_mapPPUPages(&mapper, ppu); break;
+    // case 1: mapper001_mapPPUPages(&mapper, ppu); break;
+    // case 2: mapper002_mapPPUPages(&mapper, ppu); break;
+    // case 4: mapper004_mapPPUPages(&mapper, ppu); break;
+    default: break;
+    }
+}
+
 IRAM_ATTR void Cartridge::loadPRGBank(uint8_t* bank, uint16_t size, uint32_t offset)
 {
     rom.seek(prg_base + offset);
@@ -193,7 +206,7 @@ IRAM_ATTR void Cartridge::setMirrorMode(MIRROR mirror)
     bus->setPPUMirrorMode(mirror);
 }
 
-Cartridge::MIRROR Cartridge::getMirrorMode()
+MIRROR Cartridge::getMirrorMode()
 {
     return bus->getPPUMirrorMode();
 }
@@ -205,7 +218,6 @@ void Cartridge::IRQ()
 
 void Cartridge::dumpState(File& state)
 {
-    // mapper.vtable->dumpState(&mapper, state);
     switch (mapper_ID)
     {
     case 0: return mapper000_dumpState(&mapper, state);
@@ -220,7 +232,6 @@ void Cartridge::dumpState(File& state)
 
 void Cartridge::loadState(File& state)
 {
-    // mapper.vtable->loadState(&mapper, state);
     switch (mapper_ID)
     {
     case 0: return mapper000_loadState(&mapper, state);
