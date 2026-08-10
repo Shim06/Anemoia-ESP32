@@ -1,6 +1,7 @@
 #include "mapper001.h"
 #include "../bus.h"
 #include "../cartridge.h"
+#include "../ppu2C02.h"
 
 struct Mapper001_state
 {
@@ -60,6 +61,33 @@ static void mapper001_remapWindows(Mapper001_state* state, Bus* bus)
 
     for (int p = 0x80; p <= 0xBF; p++) bus->read_pages[p] = windows[0] + ((p - 0x80) * 256);
     for (int p = 0xC0; p <= 0xFF; p++) bus->read_pages[p] = windows[1] + ((p - 0xC0) * 256);
+}
+
+static void mapper001_remapCHRPages(Mapper001_state* state, Ppu2C02* ppu)
+{
+    if (state->CHR_ROM_bank_mode == 0)
+    {
+        for (int p = 0x00; p <= 0x1F; p++)
+        {
+            ppu->ppu_read_pages[p] = state->ptr_CHR_bank_8K + (p * 256);
+            if (state->number_CHR_banks == 0)
+                ppu->ppu_write_pages[p] = state->ptr_CHR_bank_8K + (p * 256);
+        }
+        return;
+    }
+
+    for (int p = 0x00; p <= 0x0F; p++)
+    {
+        ppu->ppu_read_pages[p] = state->ptr_CHR_bank_4K[0] + (p * 256);
+        if (state->number_CHR_banks == 0)
+            ppu->ppu_write_pages[p] = state->ptr_CHR_bank_4K[0] + (p * 256);
+    }
+    for (int p = 0x10; p <= 0x1F; p++)
+    {
+        ppu->ppu_read_pages[p] = state->ptr_CHR_bank_4K[1] + (p * 256);
+        if (state->number_CHR_banks == 0)
+            ppu->ppu_write_pages[p] = state->ptr_CHR_bank_4K[1] + (p * 256);
+    }
 }
 
 static void mapper001_shiftWrite(Bus* bus, uint16_t addr, uint8_t data)
@@ -149,6 +177,7 @@ static void mapper001_shiftWrite(Bus* bus, uint16_t addr, uint8_t data)
             state->load_writes = 0;
 
             mapper001_remapWindows(state, bus);
+            mapper001_remapCHRPages(state, &bus->ppu);
         }
     }
     else
@@ -273,6 +302,12 @@ void mapper001_mapPages(Mapper* mapper, Bus* bus)
 
     // Map bank reads
     mapper001_remapWindows(state, bus);
+}
+
+void mapper001_mapPPUPages(Mapper* mapper, Ppu2C02* ppu);
+{
+    Mapper001_state* state = (Mapper001_state*)mapper->state;
+    mapper001_remapCHRPages(state, ppu);
 }
 
 void mapper001_dumpState(Mapper* mapper, File& state)

@@ -94,6 +94,16 @@ void mapper002_mapPages(Mapper* mapper, Bus* bus)
     mapper002_remapWindows(state, bus);
 }
 
+void mapper002_mapPPUPages(Mapper* mapper, Ppu2C02* ppu)
+{
+    Mapper002_state* state = (Mapper002_state*)mapper->state;
+    for (int p = 0x00; p <= 0x1F; p++)
+    {
+        ppu->ppu_read_pages[p] = state->CHR_bank + (p * 256);
+        if (state->number_CHR_banks == 0) ppu->ppu_write_pages[p] = state->CHR_bank + (p * 256);
+    }
+}
+
 void mapper002_dumpState(Mapper* mapper, File& state)
 {
     Mapper002_state* s = (Mapper002_state*)mapper->state;

@@ -43,7 +43,21 @@ static void mapper004_remapWindows(Mapper004_state* state, Bus* bus)
     for (int i = 0; i < 4; i++)
     {
         int base = 0x80 + (i * 0x20);
-        for (int p = 0; p < 0x20; p++) bus->read_pages[base + p] = windows[i] + (p * 256);
+        for (int p = 0; p <= 0x1F; p++) bus->read_pages[base + p] = windows[i] + (p * 256);
+    }
+}
+
+static void mapper004_remapCHRPages(Mapper004_state* state, Ppu2C02* ppu)
+{
+    for (int b = 0; b < 8; b++)
+    {
+        uint8_t* bank = state->ptr_CHR_bank_1K[b];
+        for (int i = 0; i < 4; i++)
+        {
+            int p = b * 4 + i;
+            ppu->ppu_read_pages[p] = bank + (i * 256);
+            ppu->ppu_write_pages[p] = nullptr;
+        }
     }
 }
 
@@ -108,6 +122,7 @@ static void mapper004_bankWrite(Bus* bus, uint16_t addr, uint8_t data)
     state->ptr_PRG_bank_8K[3] = getPRGBank(state, (state->number_PRG_banks * 2) - 1);
 
     mapper004_remapWindows(state, bus);
+    mapper004_remapCHRPages(state, &bus->ppu);
     return;
 }
 
@@ -138,20 +153,6 @@ bool mapper004_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
     uint8_t bank = (addr >> 10) & 0x07;
     data = state->ptr_CHR_bank_1K[bank][addr & 0x03FF];
     return true;
-}
-
-bool mapper004_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
-{
-    return false;
-}
-
-uint8_t* mapper004_ppuReadPtr(Mapper* mapper, uint16_t addr)
-{
-    if (addr > 0x1FFF) return nullptr;
-
-    Mapper004_state* state = (Mapper004_state*)mapper->state;
-    uint8_t bank = (addr >> 10) & 0x07;
-    return &state->ptr_CHR_bank_1K[bank][addr & 0x03FF];
 }
 
 void mapper004_scanline(Mapper* mapper)
@@ -288,6 +289,12 @@ void mapper004_dumpState(Mapper* mapper, File& state)
         state.write(s->RAM, 8U * 1024U);
         return;
     }
+}
+
+void mapper004_mapPPUPages(Mapper* mapper, Ppu2C02* ppu)
+{
+    Mapper004_state* state = (Mapper004_state*)mapper->state;
+    mapper004_remapCHRPages(state, ppu);
 }
 
 void mapper004_loadState(Mapper* mapper, File& state)

@@ -3,8 +3,6 @@
 
 #include "../mapper.h"
 
-class Bus;
-class Ppu2C02;
 struct Mapper000_state
 {
     Cartridge* cart = nullptr;

@@ -14,6 +14,8 @@
 #include "rom_types.h"
 
 class Cartridge;
+class Bus;
+class Ppu2C02;
 class Mapper
 {
 public:

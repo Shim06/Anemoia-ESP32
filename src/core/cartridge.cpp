@@ -182,9 +182,9 @@ void Cartridge::mapPPUPages(Ppu2C02* ppu)
     switch (mapper_ID)
     {
     case 0: mapper000_mapPPUPages(&mapper, ppu); break;
-    // case 1: mapper001_mapPPUPages(&mapper, ppu); break;
-    // case 2: mapper002_mapPPUPages(&mapper, ppu); break;
-    // case 4: mapper004_mapPPUPages(&mapper, ppu); break;
+    case 1: mapper001_mapPPUPages(&mapper, ppu); break;
+    case 2: mapper002_mapPPUPages(&mapper, ppu); break;
+    case 4: mapper004_mapPPUPages(&mapper, ppu); break;
     default: break;
     }
 }
