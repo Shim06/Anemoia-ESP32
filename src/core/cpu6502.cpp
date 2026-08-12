@@ -48,6 +48,7 @@ IRAM_ATTR void Cpu6502::clock(int i)
         if (cycles > 0)
         {
             cycles--;
+            cart->cpuCycle(1);
             continue;
         }
 
@@ -334,12 +335,14 @@ IRAM_ATTR void Cpu6502::clock(int i)
         if (remaining_cycles >= cycles)
         {
             remaining_cycles -= (cycles - 1);
+            cart->cpuCycle(cycles);
             cycles = 0;
             continue;
         }
         else
         {
             cycles -= remaining_cycles;
+            cart->cpuCycle(remaining_cycles);
             return;
         }
     }
