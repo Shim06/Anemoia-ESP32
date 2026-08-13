@@ -84,9 +84,9 @@ static void mapper001_remapCHRPages(Mapper001_state* state, Ppu2C02* ppu)
     }
     for (int p = 0x10; p <= 0x1F; p++)
     {
-        ppu->ppu_read_pages[p] = state->ptr_CHR_bank_4K[1] + (p * 256);
+        ppu->ppu_read_pages[p] = state->ptr_CHR_bank_4K[1] + ((p - 0x10) * 256);
         if (state->number_CHR_banks == 0)
-            ppu->ppu_write_pages[p] = state->ptr_CHR_bank_4K[1] + (p * 256);
+            ppu->ppu_write_pages[p] = state->ptr_CHR_bank_4K[1] + ((p - 0x10) * 256);
     }
 }
 
