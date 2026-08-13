@@ -8,7 +8,7 @@
 #include "cartridge.h"
 #include "mirror_mode.h"
 
-#define BUFFER_SIZE          (256 + 8 + 8)
+#define BUFFER_SIZE          (256 + 8)
 #define SCANLINE_SIZE        256
 #define SCANLINES_PER_BUFFER 8
 #define TILES_PER_SCANLINE   32
