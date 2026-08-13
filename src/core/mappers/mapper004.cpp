@@ -49,15 +49,14 @@ static void mapper004_remapWindows(Mapper004_state* state, Bus* bus)
 
 static void mapper004_remapCHRPages(Mapper004_state* state, Ppu2C02* ppu)
 {
-    for (int b = 0; b < 8; b++)
+    uint8_t* windows[8] = { state->ptr_CHR_bank_1K[0], state->ptr_CHR_bank_1K[1],
+                            state->ptr_CHR_bank_1K[2], state->ptr_CHR_bank_1K[3],
+                            state->ptr_CHR_bank_1K[4], state->ptr_CHR_bank_1K[5],
+                            state->ptr_CHR_bank_1K[6], state->ptr_CHR_bank_1K[7] };
+    for (int i = 0; i < 8; i++)
     {
-        uint8_t* bank = state->ptr_CHR_bank_1K[b];
-        for (int i = 0; i < 4; i++)
-        {
-            int p = b * 4 + i;
-            ppu->ppu_read_pages[p] = bank + (i * 256);
-            ppu->ppu_write_pages[p] = nullptr;
-        }
+        int base = 0x00 + (i * 0x04);
+        for (int p = 0; p <= 0x03; p++) ppu->ppu_read_pages[base + p] = windows[i] + (p * 256);
     }
 }
 
