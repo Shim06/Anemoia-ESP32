@@ -110,7 +110,9 @@ void Cartridge::mapPages(Bus* bus)
     case 0: mapper000_mapPages(&mapper, bus); break;
     case 1: mapper001_mapPages(&mapper, bus); break;
     case 2: mapper002_mapPages(&mapper, bus); break;
+    case 3: mapper003_mapPages(&mapper, bus); break;
     case 4: mapper004_mapPages(&mapper, bus); break;
+    case 69: mapper069_mapPages(&mapper, bus); break;
     default: break;
     }
 }
@@ -122,7 +124,9 @@ void Cartridge::mapPPUPages(Ppu2C02* ppu)
     case 0: mapper000_mapPPUPages(&mapper, ppu); break;
     case 1: mapper001_mapPPUPages(&mapper, ppu); break;
     case 2: mapper002_mapPPUPages(&mapper, ppu); break;
+    case 3: mapper003_mapPPUPages(&mapper, ppu); break;
     case 4: mapper004_mapPPUPages(&mapper, ppu); break;
+    case 69: mapper069_mapPPUPages(&mapper, ppu); break;
     default: break;
     }
 }
@@ -204,7 +208,9 @@ void Cartridge::createMapper(uint8_t number_PRG_banks, uint8_t number_CHR_banks,
     case 0: mapper = createMapper000(number_PRG_banks, number_CHR_banks, backend, this); break;
     case 1: mapper = createMapper001(number_PRG_banks, number_CHR_banks, backend, this); break;
     case 2: mapper = createMapper002(number_PRG_banks, number_CHR_banks, backend, this); break;
+    case 3: mapper = createMapper003(number_PRG_banks, number_CHR_banks, backend, this); break;
     case 4: mapper = createMapper004(number_PRG_banks, number_CHR_banks, backend, this); break;
+    case 69: mapper = createMapper069(number_PRG_banks, number_CHR_banks, backend, this); break;
     default: is_valid = false; break;
     }
 }

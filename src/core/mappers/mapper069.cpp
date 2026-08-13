@@ -1,5 +1,7 @@
 #include "mapper069.h"
+#include "../bus.h"
 #include "../cartridge.h"
+#include "../ppu2C02.h"
 
 struct Mapper069_state
 {
@@ -36,85 +38,94 @@ constexpr MIRROR Mapper069_state::mirror[4];
 static inline uint8_t* getPRGBank(Mapper069_state* state, uint8_t index);
 static inline uint8_t* getCHRBank(Mapper069_state* state, uint8_t index);
 
-bool mapper069_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
+static void mapper069_remapWindows(Mapper069_state* state, Bus* bus)
 {
-    if (addr < 0x6000) return false;
-
-    Mapper069_state* state = (Mapper069_state*)mapper->state;
-    if (addr < 0x8000)
+    uint8_t* windows[4] = { state->ptr_PRG_bank_8K[1], state->ptr_PRG_bank_8K[2],
+                            state->ptr_PRG_bank_8K[3], state->ptr_PRG_bank_8K[4] };
+    for (int i = 0; i < 4; i++)
     {
-        // PRG RAM
-        if (state->PRG_RAM_select)
-        {
-            if (state->PRG_RAM_enable) data = state->RAM[addr & 0x1FFF];
-            return true;
-        }
-
-        // PRG ROM
-        data = state->ptr_PRG_bank_8K[0][addr & 0x1FFF];
-        return true;
+        int base = 0x80 + (i * 0x20);
+        for (int p = 0; p <= 0x1F; p++) bus->read_pages[base + p] = windows[i] + (p * 256);
     }
-
-    uint8_t bank = (addr >> 13) & 0x03;
-    data = state->ptr_PRG_bank_8K[bank + 1][addr & 0x1FFF];
-    return true;
 }
 
-bool mapper069_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
+static void mapper069_remapCHRPages(Mapper069_state* state, Ppu2C02* ppu)
 {
-    if (addr < 0x6000) return false;
-
-    Mapper069_state* state = (Mapper069_state*)mapper->state;
-    if (addr < 0x8000)
+    uint8_t* windows[8] = { state->ptr_CHR_bank_1K[0], state->ptr_CHR_bank_1K[1],
+                            state->ptr_CHR_bank_1K[2], state->ptr_CHR_bank_1K[3],
+                            state->ptr_CHR_bank_1K[4], state->ptr_CHR_bank_1K[5],
+                            state->ptr_CHR_bank_1K[6], state->ptr_CHR_bank_1K[7] };
+    for (int i = 0; i < 8; i++)
     {
-        if (state->PRG_RAM_select && state->PRG_RAM_enable) state->RAM[addr & 0x1FFF] = data;
-        return true;
+        int base = 0x00 + (i * 0x04);
+        for (int p = 0; p <= 0x03; p++) ppu->ppu_read_pages[base + p] = windows[i] + (p * 256);
     }
+}
 
-    // Command Register ($8000-$9FFF) | Parameter Register ($A000-$BFFF)
-    uint16_t masked_addr = addr & 0xE000;
-    if (masked_addr == 0x8000) state->command_register = data & 0x0F;
-    else if (masked_addr == 0xA000)
+static void mapper069_commandWrite(Bus* bus, uint16_t addr, uint8_t data)
+{
+    Mapper069_state* state = (Mapper069_state*)bus->cart->mapper.state;
+    state->command_register = data & 0x0F;
+}
+
+static void mapper069_parameterWrite(Bus* bus, uint16_t addr, uint8_t data)
+{
+    Mapper069_state* state = (Mapper069_state*)bus->cart->mapper.state;
+    uint8_t command = state->command_register;
+    switch (command)
     {
-        uint8_t command = state->command_register;
-        switch (command)
-        {
-        case 0x00:
-        case 0x01:
-        case 0x02:
-        case 0x03:
-        case 0x04:
-        case 0x05:
-        case 0x06:
-        case 0x07:
-            state->ptr_CHR_bank_1K[command] = getCHRBank(state, data & state->CHR_mask);
-            break;
+    case 0x00:
+    case 0x01:
+    case 0x02:
+    case 0x03:
+    case 0x04:
+    case 0x05:
+    case 0x06:
+    case 0x07:
+        state->ptr_CHR_bank_1K[command] = getCHRBank(state, data & state->CHR_mask);
+        mapper069_remapCHRPages(state, &bus->ppu);
+        break;
 
-        case 0x08:
-            state->ptr_PRG_bank_8K[command & 0x03] =
-                getPRGBank(state, (data & 0x3F) & state->PRG_mask);
-            state->PRG_RAM_select = (data & 0x40) != 0;
-            state->PRG_RAM_enable = (data & 0x80) != 0;
-            break;
+    case 0x08:
+        state->ptr_PRG_bank_8K[command & 0x03] = getPRGBank(state, (data & 0x3F) & state->PRG_mask);
+        state->PRG_RAM_select = (data & 0x40) != 0;
+        state->PRG_RAM_enable = (data & 0x80) != 0;
+        mapper069_remapWindows(state, bus);
+        break;
 
-        case 0x09:
-        case 0x0A:
-        case 0x0B:
-            state->ptr_PRG_bank_8K[command & 0x03] =
-                getPRGBank(state, (data & 0x3F) & state->PRG_mask);
-            break;
+    case 0x09:
+    case 0x0A:
+    case 0x0B:
+        state->ptr_PRG_bank_8K[command & 0x03] = getPRGBank(state, (data & 0x3F) & state->PRG_mask);
+        mapper069_remapWindows(state, bus);
+        break;
 
-        case 0x0C: state->cart->setMirrorMode(state->mirror[data & 0x03]); break;
+    case 0x0C: state->cart->setMirrorMode(state->mirror[data & 0x03]); break;
 
-        case 0x0D:
-            state->IRQ_enable = (data & 0x01) != 0;
-            state->IRQ_counter_enable = (data & 0x80) != 0;
-            break;
-        case 0x0E: state->IRQ_counter = (state->IRQ_counter & 0xFF00) | data; break;
-        case 0x0F: state->IRQ_counter = (state->IRQ_counter & 0x00FF) | (data << 8); break;
-        }
+    case 0x0D:
+        state->IRQ_enable = (data & 0x01) != 0;
+        state->IRQ_counter_enable = (data & 0x80) != 0;
+        break;
+    case 0x0E: state->IRQ_counter = (state->IRQ_counter & 0xFF00) | data; break;
+    case 0x0F: state->IRQ_counter = (state->IRQ_counter & 0x00FF) | (data << 8); break;
     }
-    return false;
+}
+
+static uint8_t mapper069_PRGRead(Bus* bus, uint16_t addr)
+{
+    Mapper069_state* state = (Mapper069_state*)bus->cart->mapper.state;
+
+    // PRG RAM
+    if (state->PRG_RAM_select && state->PRG_RAM_enable) return state->RAM[addr & 0x1FFF];
+
+    // PRG ROM
+    return state->ptr_PRG_bank_8K[0][addr & 0x1FFF];
+}
+
+static void mapper069_PRGWrite(Bus* bus, uint16_t addr, uint8_t data)
+{
+    Mapper069_state* state = (Mapper069_state*)bus->cart->mapper.state;
+    if (state->PRG_RAM_select && state->PRG_RAM_enable) state->RAM[addr & 0x1FFF] = data;
 }
 
 bool mapper069_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
@@ -125,20 +136,6 @@ bool mapper069_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
     uint8_t bank = (addr >> 10) & 0x07;
     data = state->ptr_CHR_bank_1K[bank][addr & 0x03FF];
     return true;
-}
-
-bool mapper069_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
-{
-    return false;
-}
-
-uint8_t* mapper069_ppuReadPtr(Mapper* mapper, uint16_t addr)
-{
-    if (addr > 0x1FFF) return nullptr;
-
-    Mapper069_state* state = (Mapper069_state*)mapper->state;
-    uint8_t bank = (addr >> 10) & 0x07;
-    return &state->ptr_CHR_bank_1K[bank][addr & 0x03FF];
 }
 
 void mapper069_cycle(Mapper* mapper, int cycles)
@@ -205,6 +202,33 @@ void mapper069_reset(Mapper* mapper)
     state->PRG_mask = (state->number_PRG_banks * 2) - 1;
     state->CHR_mask = (state->number_CHR_banks * 8) - 1;
     state->cart->setMirrorMode(MIRROR::HORIZONTAL);
+}
+
+void mapper069_mapPages(Mapper* mapper, Bus* bus)
+{
+    Mapper069_state* state = (Mapper069_state*)mapper->state;
+
+    // $6000-$7FFF: PRG-ROM/PRG-RAM r/w
+    for (int p = 0x60; p <= 0x7F; p++)
+    {
+        bus->read_handlers[p] = mapper069_PRGRead;
+        bus->write_handlers[p] = mapper069_PRGWrite;
+    }
+
+    // Command Register ($8000-$9FFF)
+    for (int p = 0x80; p <= 0x9F; p++) bus->write_handlers[p] = mapper069_commandWrite;
+
+    // Parameter Register ($A000-$BFFF)
+    for (int p = 0xA0; p <= 0xBF; p++) bus->write_handlers[p] = mapper069_parameterWrite;
+
+    // Map bank reads
+    mapper069_remapWindows(state, bus);
+}
+
+void mapper069_mapPPUPages(Mapper* mapper, Ppu2C02* ppu)
+{
+    Mapper069_state* state = (Mapper069_state*)mapper->state;
+    mapper069_remapCHRPages(state, ppu);
 }
 
 void mapper069_dumpState(Mapper* mapper, File& state)

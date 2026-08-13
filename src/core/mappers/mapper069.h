@@ -8,11 +8,8 @@
 
 Mapper createMapper069(uint8_t PRG_banks, uint8_t CHR_banks, ROMBackend backend, Cartridge* cart);
 
-bool mapper069_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data);
-bool mapper069_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data);
-bool mapper069_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data);
-bool mapper069_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data);
-uint8_t* mapper069_ppuReadPtr(Mapper* mapper, uint16_t addr);
+void mapper069_mapPages(Mapper* mapper, Bus* bus);
+void mapper069_mapPPUPages(Mapper* mapper, Ppu2C02* ppu);
 void mapper069_cycle(Mapper* mapper, int cycles);
 void mapper069_reset(Mapper* mapper);
 void mapper069_dumpState(Mapper* mapper, File& state);

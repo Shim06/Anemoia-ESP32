@@ -1,47 +1,21 @@
 #include "mapper003.h"
+#include "../bus.h"
 #include "../cartridge.h"
+#include "../ppu2C02.h"
 
-bool mapper003_cpuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
+static void mapper003_remapCHRPages(Mapper003_state* state, Ppu2C02* ppu)
 {
-    if (addr < 0x8000) return false;
-
-    Mapper003_state* state = (Mapper003_state*)mapper->state;
-    data = state->PRG_bank[addr & 0x7FFF];
-    return true;
+    for (int p = 0; p <= 0x1F; p++) ppu->ppu_read_pages[p] = state->ptr_CHR_bank_8K + (p * 256);
 }
 
-bool mapper003_cpuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
+static void mapper003_bankWrite(Bus* bus, uint16_t addr, uint8_t data)
 {
-    if (addr < 0x8000) return false;
-
-    Mapper003_state* state = (Mapper003_state*)mapper->state;
+    Mapper003_state* state = (Mapper003_state*)bus->cart->mapper.state;
     uint8_t bank = data & 0x03;
     if (state->backend == ROMBackend::LRU)
         state->ptr_CHR_bank_8K = getBank(&state->CHR_cache_8K, bank, RomType::CHR);
     else state->ptr_CHR_bank_8K = (uint8_t*)(state->mROM->chr_base + bank * 8U * 1024U);
-    return true;
-}
-
-bool mapper003_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
-{
-    if (addr > 0x1FFF) return false;
-
-    Mapper003_state* state = (Mapper003_state*)mapper->state;
-    data = state->ptr_CHR_bank_8K[addr];
-    return true;
-}
-
-bool mapper003_ppuWrite(Mapper* mapper, uint16_t addr, uint8_t data)
-{
-    return false;
-}
-
-uint8_t* mapper003_ppuReadPtr(Mapper* mapper, uint16_t addr)
-{
-    if (addr > 0x1FFF) return nullptr;
-
-    Mapper003_state* state = (Mapper003_state*)mapper->state;
-    return &state->ptr_CHR_bank_8K[addr];
+    mapper003_remapCHRPages(state, &bus->ppu);
 }
 
 void mapper003_reset(Mapper* mapper)
@@ -59,6 +33,23 @@ void mapper003_reset(Mapper* mapper)
         state->PRG_bank = (uint8_t*)state->mROM->prg_base;
         return;
     }
+}
+
+void mapper003_mapPages(Mapper* mapper, Bus* bus)
+{
+    Mapper003_state* state = (Mapper003_state*)mapper->state;
+
+    // $8000-$FFFF: Bank write to switch CHR banks
+    for (int p = 0x80; p <= 0xFF; p++) bus->write_handlers[p] = mapper003_bankWrite;
+
+    // $8000-$FFFF: 32KB unbanked PRG-ROM
+    for (int p = 0x80; p <= 0xFF; p++) bus->read_pages[p] = state->PRG_bank + ((p - 0x80) * 256);
+}
+
+void mapper003_mapPPUPages(Mapper* mapper, Ppu2C02* ppu)
+{
+    Mapper003_state* state = (Mapper003_state*)mapper->state;
+    mapper003_remapCHRPages(state, ppu);
 }
 
 void mapper003_dumpState(Mapper* mapper, File& state)
