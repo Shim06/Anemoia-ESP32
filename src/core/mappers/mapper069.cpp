@@ -62,6 +62,21 @@ static void mapper069_remapCHRPages(Mapper069_state* state, Ppu2C02* ppu)
     }
 }
 
+static void mapper069_remapRAMWindow(Mapper069_state* state, Bus* bus)
+{
+    // Read side: safe to point at ROM unconditionally when RAM is deselected
+    uint8_t* read_ptr = state->PRG_RAM_select ? state->RAM : state->ptr_PRG_bank_8K[0];
+    for (int p = 0x60; p <= 0x7F; p++) bus->read_pages[p] = read_ptr + ((p - 0x60) * 256);
+
+    // Write side: null falls through to mapper069_PRGWrite (no-op) when RAM disabled
+    for (int p = 0x60; p <= 0x7F; p++)
+    {
+        if (state->PRG_RAM_select && state->PRG_RAM_enable)
+            bus->write_pages[p] = state->RAM + ((p - 0x60) * 256);
+        else bus->write_pages[p] = nullptr;
+    }
+}
+
 static void mapper069_commandWrite(Bus* bus, uint16_t addr, uint8_t data)
 {
     Mapper069_state* state = (Mapper069_state*)bus->cart->mapper.state;
@@ -90,7 +105,7 @@ static void mapper069_parameterWrite(Bus* bus, uint16_t addr, uint8_t data)
         state->ptr_PRG_bank_8K[command & 0x03] = getPRGBank(state, (data & 0x3F) & state->PRG_mask);
         state->PRG_RAM_select = (data & 0x40) != 0;
         state->PRG_RAM_enable = (data & 0x80) != 0;
-        mapper069_remapWindows(state, bus);
+        mapper069_remapRAMWindow(state, bus);
         break;
 
     case 0x09:
@@ -109,33 +124,6 @@ static void mapper069_parameterWrite(Bus* bus, uint16_t addr, uint8_t data)
     case 0x0E: state->IRQ_counter = (state->IRQ_counter & 0xFF00) | data; break;
     case 0x0F: state->IRQ_counter = (state->IRQ_counter & 0x00FF) | (data << 8); break;
     }
-}
-
-static uint8_t mapper069_PRGRead(Bus* bus, uint16_t addr)
-{
-    Mapper069_state* state = (Mapper069_state*)bus->cart->mapper.state;
-
-    // PRG RAM
-    if (state->PRG_RAM_select && state->PRG_RAM_enable) return state->RAM[addr & 0x1FFF];
-
-    // PRG ROM
-    return state->ptr_PRG_bank_8K[0][addr & 0x1FFF];
-}
-
-static void mapper069_PRGWrite(Bus* bus, uint16_t addr, uint8_t data)
-{
-    Mapper069_state* state = (Mapper069_state*)bus->cart->mapper.state;
-    if (state->PRG_RAM_select && state->PRG_RAM_enable) state->RAM[addr & 0x1FFF] = data;
-}
-
-bool mapper069_ppuRead(Mapper* mapper, uint16_t addr, uint8_t& data)
-{
-    if (addr > 0x1FFF) return false;
-
-    Mapper069_state* state = (Mapper069_state*)mapper->state;
-    uint8_t bank = (addr >> 10) & 0x07;
-    data = state->ptr_CHR_bank_1K[bank][addr & 0x03FF];
-    return true;
 }
 
 void mapper069_cycle(Mapper* mapper, int cycles)
@@ -209,11 +197,7 @@ void mapper069_mapPages(Mapper* mapper, Bus* bus)
     Mapper069_state* state = (Mapper069_state*)mapper->state;
 
     // $6000-$7FFF: PRG-ROM/PRG-RAM r/w
-    for (int p = 0x60; p <= 0x7F; p++)
-    {
-        bus->read_handlers[p] = mapper069_PRGRead;
-        bus->write_handlers[p] = mapper069_PRGWrite;
-    }
+    mapper069_remapRAMWindow(state, bus);
 
     // Command Register ($8000-$9FFF)
     for (int p = 0x80; p <= 0x9F; p++) bus->write_handlers[p] = mapper069_commandWrite;
