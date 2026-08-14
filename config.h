@@ -8,6 +8,10 @@
 #endif
 #define AUDIO_PIN 18
 
+// Uncomment #define FRAMESKIP if you are using less than 80MHz display SPI frequency
+// This will skip displaying every other frame (effectively displaying 30 FPS)
+// #define FRAMESKIP
+
 // #define CHEAP_YELLOW_DISPLAY_CONF // Uncomment this line if using the CYD
 // #define MODULE_BASED_PCB_CONF // Uncomment this line if using the module PCB
 // #define DISCRETE_PCB_CONF // Uncomment this line if using the discrete PCB
@@ -87,7 +91,6 @@
     #define I2S_LRC_PIN              39 // Word select / Left-Right clock (LRC / WS)
     #define I2S_DOUT_PIN             40 // Serial data output (DIN)
 
-    #define FRAMESKIP
     // #define DEBUG // Uncomment this line if you want debug prints from serial
 
 #endif
