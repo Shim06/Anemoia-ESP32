@@ -25,6 +25,8 @@ SPIClass SD_SPI(SD_SPI_PORT);
 TFT_eSPI screen = TFT_eSPI();
 UI ui(&screen);
 #endif
+
+static Bus nes;
 Cartridge* cart;
 
 RTC_NOINIT_ATTR bool demo_mode_reset;
@@ -131,8 +133,6 @@ unsigned long frame_count = 0;
 #endif
 IRAM_ATTR void emulate()
 {
-    Bus* bus = new Bus();
-    Bus& nes = *bus;
 #ifdef COMPOSITE_VIDEO
     nes.connectFramebuffer(cv_framebuffer);
 #else
