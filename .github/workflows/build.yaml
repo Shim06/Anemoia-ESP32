@@ -121,11 +121,12 @@ jobs:
       - name: Build defines and platform flags
         run: |
           DEFINES=""
-          [ "${{ matrix.swap }}"   = "swap_bytes" ] && DEFINES="$DEFINES -DSCREEN_SWAP_BYTES" || DEFINES="$DEFINES -USCREEN_SWAP_BYTES"
-          [ "${{ matrix.debug }}"  = "debug_on"   ] && DEFINES="$DEFINES -DDEBUG"             || DEFINES="$DEFINES -UDEBUG"
-          [ "${{ matrix.device }}" = "cyd"        ] && DEFINES="$DEFINES -DCHEAP_YELLOW_DISPLAY_CONF"
-          [ "${{ matrix.device }}" = "module"     ] && DEFINES="$DEFINES -DMODULE_BASED_PCB_CONF"
-          [ "${{ matrix.device }}" = "discrete"   ] && DEFINES="$DEFINES -DDISCRETE_PCB_CONF"
+          [ "${{ matrix.swap }}"        = "swap_bytes" ]        && DEFINES="$DEFINES -DSCREEN_SWAP_BYTES" || DEFINES="$DEFINES -USCREEN_SWAP_BYTES"
+          [ "${{ matrix.debug }}"       = "debug_on"   ]        && DEFINES="$DEFINES -DDEBUG"             || DEFINES="$DEFINES -UDEBUG"
+          [ "${{ matrix.device }}"      = "cyd"        ]        && DEFINES="$DEFINES -DCHEAP_YELLOW_DISPLAY_CONF"
+          [ "${{ matrix.device }}"      = "module"     ]        && DEFINES="$DEFINES -DMODULE_BASED_PCB_CONF"
+          [ "${{ matrix.device }}"      = "discrete"   ]        && DEFINES="$DEFINES -DDISCRETE_PCB_CONF"
+          [ "${{ matrix.screen_freq }}" = "screen_freq_40MHz" ] && DEFINES="$DEFINES -DFRAMESKIP" || DEFINES="$DEFINES -UFRAMESKIP"
           PLATFORM_FLAGS="-DOPTIMIZATION_FLAGS -Ofast -ffunction-sections -fdata-sections -fno-exceptions -fno-rtti -funroll-loops -fno-tree-vectorize -frename-registers -fno-plt -flto"
 
           echo "DEFINES=$DEFINES" >> $GITHUB_ENV
