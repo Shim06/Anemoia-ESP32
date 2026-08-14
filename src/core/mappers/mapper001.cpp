@@ -132,6 +132,7 @@ static void mapper001_shiftWrite(Bus* bus, uint16_t addr, uint8_t data)
                                    state->CHR_bank_0 * 4U * 1024);
                     else state->ptr_CHR_bank_4K[0] = getCHRBank4K(state, state->CHR_bank_0);
                 }
+                mapper001_remapCHRPages(state, &bus->ppu);
                 break;
 
             // CHR bank 1 Register
@@ -145,6 +146,7 @@ static void mapper001_shiftWrite(Bus* bus, uint16_t addr, uint8_t data)
                                    state->CHR_bank_1 * 4U * 1024);
                     else state->ptr_CHR_bank_4K[1] = getCHRBank4K(state, state->CHR_bank_1);
                 }
+                mapper001_remapWindows(state, bus);
                 break;
 
             // PRG bank Register
@@ -168,16 +170,15 @@ static void mapper001_shiftWrite(Bus* bus, uint16_t addr, uint8_t data)
                     break;
                 default: break;
                 }
+                mapper001_remapWindows(state, bus);
                 break;
+
             default: break;
             }
 
             // Reset Load Register and counter
             state->load = 0x00;
             state->load_writes = 0;
-
-            mapper001_remapWindows(state, bus);
-            mapper001_remapCHRPages(state, &bus->ppu);
         }
     }
     else
