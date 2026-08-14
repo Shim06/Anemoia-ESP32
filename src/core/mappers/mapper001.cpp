@@ -146,7 +146,7 @@ static void mapper001_shiftWrite(Bus* bus, uint16_t addr, uint8_t data)
                                    state->CHR_bank_1 * 4U * 1024);
                     else state->ptr_CHR_bank_4K[1] = getCHRBank4K(state, state->CHR_bank_1);
                 }
-                mapper001_remapWindows(state, bus);
+                mapper001_remapCHRPages(state, &bus->ppu);
                 break;
 
             // PRG bank Register
