@@ -3,7 +3,7 @@
 
 #include "../mapper.h"
 
-#define MAPPER003_NUM_CHR_BANKS_8K 16
+#define MAPPER003_NUM_CHR_BANKS_8K 14
 struct Mapper003_state
 {
     Cartridge* cart = nullptr;
