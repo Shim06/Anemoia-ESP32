@@ -341,7 +341,7 @@ jobs:
 
           CONTROLLERS="no_controller gpio nes snes psx uart"
           ROTATIONS="rotation1 rotation3"
-          SD_FREQS="sd_freq_80MHz sd_freq_40MHz"
+          SD_FREQS="sd_freq_80MHz sd_freq_40MHz sd_freq_1MHz"
           DACPINS="dac_gpio25 dac_gpio26"
           BACKLIGHTS="backlight_off backlight_on"
           DEMO_MODES="demo_mode_off demo_mode_on"
@@ -413,6 +413,7 @@ jobs:
                           case "$SD_FREQ" in
                             sd_freq_80MHz) SD_VAL=80 ;;
                             sd_freq_40MHz) SD_VAL=40 ;;
+                            sd_freq_1MHz)  SD_VAL=1  ;;
                           esac
 
                           case "$BACKLIGHT" in
@@ -482,6 +483,7 @@ jobs:
                   case "$SD_FREQ" in
                     sd_freq_80MHz) SD_VAL=80 ;;
                     sd_freq_40MHz) SD_VAL=40 ;;
+                    sd_freq_1MHz)  SD_VAL=1  ;;
                   esac
 
                   case "$DEMO_MODE" in
