@@ -106,6 +106,7 @@ Feel free to open an issue if a game has glitches or fails to boot.
 
 ## Hardware Overview
 Anemoia-ESP32 requires a dual-core ESP32 with a minimum of 1 MB flash memory and <u><strong>NO PSRAM IS REQUIRED</strong></u>.
+<hr>
 
 ### Composite Video Output
 
@@ -151,6 +152,7 @@ Then set your video standard and audio pin as needed:
 
 > [!IMPORTANT]
 > Composite video and TFT output are mutually exclusive. Enabling `COMPOSITE_VIDEO` disables the SPI display pipeline entirely.
+<hr>
 
 ### Original Hardware
 
@@ -175,7 +177,18 @@ Then set your video standard and audio pin as needed:
 > ST7789-based displays are recommended as they seem to fare better with 80MHz SPI speeds and are the most compatible.
 
 > [!IMPORTANT]
-> **ILI9341 users:** ILI9341-based screens may experience display problems at 80MHz. Reduce the SPI frequency to **40MHz** in your `User_Setup.h`. This will cause the emulator to run a few FPS slower than ST7789 screens.
+> ILI9341-based screens may experience display problems at 80MHz. Reduce the SPI frequency to **40MHz** in your `User_Setup.h`. This will cause the emulator to run a few FPS slower than ST7789 screens.
+
+> [!IMPORTANT]
+> <img width="169" alt="3V3-microsd-module-img" src="https://github.com/user-attachments/assets/be990b45-e1c7-4b2b-b575-c105c55849c9" />
+>
+> If using this **3.3V microSD card module**, the pull-up resistor on **MISO (GPIO12)** must be **removed**. GPIO12 is a bootstrapping pin (MTDI) that must be LOW during boot. The external pull-up on the microSD module conflicts with the boot strapping process, preventing the ESP32 from booting correctly.
+
+> [!IMPORTANT]
+> <img width="169" alt="5V-microsd-module-img" src="https://github.com/user-attachments/assets/aedfa395-4baf-45c7-845f-25f1c38ad194">
+>
+> Using a **5V microSD card module with a logic-level shifter** is **not recommended**, but is workable at low SD SPI speed combined with the flash ROM backend. The logic-level shifter adds propagation delay to the SPI lines, and at higher SD SPI frequencies this delay causes signal integrity issues. If you must use one, lower the SD SPI frequency to **1 MHz** and switch to the **Flash ROM backend** (See: [ROM backend](#rom-backends)) to run games at full speed. For best reliability, a **3.3V microSD module** wired directly is the recommended setup.
+
 
 ### Default Pin Setup
 ![Default pin schematic](https://github.com/user-attachments/assets/ded0f955-20be-4b0b-87f4-d7528cb23e67)
@@ -197,11 +210,6 @@ Then set your video standard and audio pin as needed:
 | MISO     | GPIO12         |
 | SCLK     | GPIO14         |
 | CS       | GND            |
-
-> [!IMPORTANT]
-> <img width="169" alt="3V3-microsd-module-img" src="https://github.com/user-attachments/assets/be990b45-e1c7-4b2b-b575-c105c55849c9" />
->
-> If using this **3.3V microSD card module**, the pull-up resistor on **MISO (GPIO12)** must be **removed**. GPIO12 is a bootstrapping pin (MTDI) that must be LOW during boot. The external pull-up on the microSD module conflicts with the boot strapping process, preventing the ESP32 from booting correctly.
 
 ### Audio Amplifier
 | Signal   | ESP32 Pins     |
